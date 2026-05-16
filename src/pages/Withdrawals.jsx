@@ -236,47 +236,52 @@ export default function Withdrawals() {
                 <p className={styles.sheetSuccessNote}>It will be reviewed and processed within 24 hours.</p>
               </div>
             ) : (
-              <form className={styles.sheetForm} onSubmit={handleWithdrawSubmit} noValidate>
-                <div className={styles.sheetBalanceHint}>
-                  Balance: <strong>₵{walletBalance.toFixed(2)}</strong> · Min. ₵50
+              <form onSubmit={handleWithdrawSubmit} noValidate style={{ display: 'contents' }}>
+                <div className={styles.sheetBody}>
+                  <div className={styles.sheetBalanceHint}>
+                    Balance: <strong>₵{walletBalance.toFixed(2)}</strong> · Min. ₵50
+                  </div>
+
+                  <div className={styles.sheetForm}>
+                    <div className={styles.sheetField}>
+                      <label className={styles.sheetLabel}>Amount (₵)</label>
+                      <input
+                        type="number"
+                        className={styles.sheetInput}
+                        placeholder="e.g. 100"
+                        min="50"
+                        max={walletBalance}
+                        step="0.01"
+                        value={withdrawAmount}
+                        onChange={e => setWithdrawAmount(e.target.value)}
+                        autoFocus
+                      />
+                    </div>
+
+                    <div className={styles.sheetField}>
+                      <label className={styles.sheetLabel}>MoMo Number</label>
+                      <input
+                        type="tel"
+                        className={styles.sheetInput}
+                        placeholder="0XX XXX XXXX"
+                        value={momoNumber}
+                        onChange={e => setMomoNumber(e.target.value)}
+                        maxLength={15}
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div className={styles.sheetField}>
-                  <label className={styles.sheetLabel}>Amount (₵)</label>
-                  <input
-                    type="number"
-                    className={styles.sheetInput}
-                    placeholder="e.g. 100"
-                    min="50"
-                    max={walletBalance}
-                    step="0.01"
-                    value={withdrawAmount}
-                    onChange={e => setWithdrawAmount(e.target.value)}
-                    autoFocus
-                  />
+                <div className={styles.sheetFooter}>
+                  {formError && <p className={styles.sheetError}>{formError}</p>}
+                  <button
+                    type="submit"
+                    className={styles.sheetSubmitBtn}
+                    disabled={submitting}
+                  >
+                    {submitting ? 'Submitting…' : 'Submit Request'}
+                  </button>
                 </div>
-
-                <div className={styles.sheetField}>
-                  <label className={styles.sheetLabel}>MoMo Number</label>
-                  <input
-                    type="tel"
-                    className={styles.sheetInput}
-                    placeholder="0XX XXX XXXX"
-                    value={momoNumber}
-                    onChange={e => setMomoNumber(e.target.value)}
-                    maxLength={15}
-                  />
-                </div>
-
-                {formError && <p className={styles.sheetError}>{formError}</p>}
-
-                <button
-                  type="submit"
-                  className={styles.sheetSubmitBtn}
-                  disabled={submitting}
-                >
-                  {submitting ? 'Submitting…' : 'Submit Request'}
-                </button>
               </form>
             )}
           </div>
