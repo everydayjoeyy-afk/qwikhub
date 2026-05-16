@@ -1,16 +1,21 @@
 import { useState } from 'react'
-import { WalletMoney, Refresh } from 'iconsax-react'
+import { WalletMoney, Refresh, TickCircle } from 'iconsax-react'
 import styles from './BalanceCard.module.css'
 import effect from '../../assets/effect.png'
 
 export default function BalanceCard({ balance = '0.00', onAddMoney, onRefresh }) {
-  const [spinning, setSpinning] = useState(false)
+  // 'idle' | 'spinning' | 'done'
+  const [refreshState, setRefreshState] = useState('idle')
 
   const handleRefresh = async () => {
-    if (spinning) return
-    setSpinning(true)
-    await onRefresh?.()
-    setTimeout(() => setSpinning(false), 800)
+    if (refreshState !== 'idle') return
+    setRefreshState('spinning')
+    try {
+      await onRefresh?.()
+    } finally {
+      setRefreshState('done')
+      setTimeout(() => setRefreshState('idle'), 1500)
+    }
   }
 
   return (
@@ -26,16 +31,21 @@ export default function BalanceCard({ balance = '0.00', onAddMoney, onRefresh })
         </button>
 
         <button
-          className={styles.refreshBtn}
+          className={`${styles.refreshBtn} ${refreshState === 'done' ? styles.refreshDone : ''}`}
           onClick={handleRefresh}
           aria-label="Refresh balance"
+          disabled={refreshState !== 'idle'}
         >
-          <Refresh
-            size={18}
-            color="currentColor"
-            variant="Bold"
-            className={spinning ? styles.spinning : ''}
-          />
+          {refreshState === 'done' ? (
+            <TickCircle size={20} color="currentColor" variant="Bold" />
+          ) : (
+            <Refresh
+              size={20}
+              color="currentColor"
+              variant="Bold"
+              className={refreshState === 'spinning' ? styles.spinning : ''}
+            />
+          )}
         </button>
       </div>
     </div>
