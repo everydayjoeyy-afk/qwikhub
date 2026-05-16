@@ -235,7 +235,7 @@ export default function MyStore() {
     <div className={styles.page}>
       {/* Header */}
       <div className={styles.topHeader}>
-        <button className={styles.backBtn} onClick={() => navigate('/store')} aria-label="Go back">
+        <button className={styles.backBtn} onClick={() => navigate('/')} aria-label="Go back">
           <ArrowLeft size={20} color="currentColor" />
         </button>
         <span className={styles.pageTitle}>My Store</span>
