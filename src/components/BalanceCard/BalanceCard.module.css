@@ -86,30 +86,26 @@
 .refreshBtn {
   width: 44px;
   height: 44px;
+  padding: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-bg);
-  border: 1.5px solid var(--color-border);
-  border-radius: 50%;
+  background: #000000;
+  border: none;
+  border-radius: 999px;
   cursor: pointer;
-  color: var(--color-text-secondary);
-  transition: background 0.15s, transform 0.15s, color 0.2s, border-color 0.2s;
+  color: #FFFFFF;
+  transition: opacity 0.15s, transform 0.15s, background 0.2s;
   flex-shrink: 0;
 }
-.refreshBtn:hover:not(:disabled) {
-  background: var(--color-surface-hover);
-  color: var(--color-text-primary);
-  border-color: #FFCC08;
-}
+.refreshBtn:hover:not(:disabled) { opacity: 0.85; }
 .refreshBtn:active:not(:disabled) { transform: scale(0.92); }
 .refreshBtn:focus-visible { outline: 2px solid #FFCC08; outline-offset: 2px; }
-.refreshBtn:disabled { cursor: default; }
+.refreshBtn:disabled { cursor: default; opacity: 0.7; }
 
 .refreshDone {
-  color: #22c55e !important;
-  border-color: #22c55e !important;
-  background: rgba(34, 197, 94, 0.08) !important;
+  background: #22c55e !important;
+  color: #FFFFFF !important;
 }
 
 @keyframes spin {

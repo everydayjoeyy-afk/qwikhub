@@ -11,7 +11,11 @@ export default function BalanceCard({ balance = '0.00', onAddMoney, onRefresh })
     if (refreshState !== 'idle') return
     setRefreshState('spinning')
     try {
-      await onRefresh?.()
+      // Race against a 5s timeout so it never spins forever
+      await Promise.race([
+        onRefresh?.() ?? Promise.resolve(),
+        new Promise((resolve) => setTimeout(resolve, 5000)),
+      ])
     } finally {
       setRefreshState('done')
       setTimeout(() => setRefreshState('idle'), 1500)
