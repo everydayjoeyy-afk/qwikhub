@@ -61,6 +61,7 @@ export default function MyStore() {
   const saveTimer    = useRef(null)
   const initialised  = useRef(false)
 
+  const [fetchKey, setFetchKey]      = useState(0)   // increment to re-run the load effect
   const [hasNoStore, setHasNoStore]  = useState(false)
   const [createStoreOpen, setCreateStoreOpen] = useState(false)
   const [tab, setTab]               = useState('orders')
@@ -139,7 +140,7 @@ export default function MyStore() {
     })()
 
     return () => clearTimeout(timer)
-  }, [user])
+  }, [user, fetchKey])
 
   // ── Auto-save settings (localStorage immediately, Supabase debounced) ──
   useEffect(() => {
@@ -219,7 +220,13 @@ export default function MyStore() {
       <CreateStoreModal
         open={createStoreOpen}
         onClose={() => setCreateStoreOpen(false)}
-        onCreated={() => { setCreateStoreOpen(false); setHasNoStore(false); setLoadingStore(true) }}
+        onCreated={() => {
+        setCreateStoreOpen(false)
+        setHasNoStore(false)
+        setLoadingStore(true)
+        initialised.current = false
+        setFetchKey(k => k + 1)   // re-run the load effect to fetch the new store
+      }}
       />
     </div>
   )
