@@ -1,64 +1,113 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, SearchNormal1, Filter } from 'iconsax-react'
 import FilterSheet from '../components/FilterSheet/FilterSheet'
+import { useAuth } from '../context/AuthContext'
+import { getMyStore, getStoreOrders } from '../lib/db'
 import styles from './StoreOrders.module.css'
-
-const STORE_ORDERS = [
-  { id:  1, network: 'MTN',        bundle: '5GB',  phone: '0244***234', time: '10 mins ago', date: 'Today',     amountPaid: 18.00, profit: 3.00, status: 'Delivered' },
-  { id:  2, network: 'MTN',        bundle: '10GB', phone: '0244***111', time: '32 mins ago', date: 'Today',     amountPaid: 33.00, profit: 3.00, status: 'Delivered' },
-  { id:  3, network: 'Telecel',    bundle: '2GB',  phone: '0201***900', time: '1 hr ago',    date: 'Today',     amountPaid: 12.00, profit: 2.00, status: 'Pending'   },
-  { id:  4, network: 'MTN',        bundle: '1GB',  phone: '0557***410', time: '2 hrs ago',   date: 'Today',     amountPaid:  6.50, profit: 0.50, status: 'Delivered' },
-  { id:  5, network: 'AirtelTigo', bundle: '5GB',  phone: '0271***780', time: '3 hrs ago',   date: 'Today',     amountPaid: 18.00, profit: 3.00, status: 'Delivered' },
-  { id:  6, network: 'Telecel',    bundle: '6GB',  phone: '0201***334', time: '5 hrs ago',   date: 'Today',     amountPaid: 24.00, profit: 4.00, status: 'Delivered' },
-  { id:  7, network: 'MTN',        bundle: '10GB', phone: '0244***520', time: '8:14 AM',     date: 'Yesterday', amountPaid: 33.00, profit: 3.00, status: 'Delivered' },
-  { id:  8, network: 'AirtelTigo', bundle: '2GB',  phone: '0277***067', time: '7:52 AM',     date: 'Yesterday', amountPaid: 12.00, profit: 2.00, status: 'Delivered' },
-  { id:  9, network: 'Telecel',    bundle: '5GB',  phone: '0201***441', time: '6:30 AM',     date: 'Yesterday', amountPaid: 18.00, profit: 3.00, status: 'Pending'   },
-  { id: 10, network: 'MTN',        bundle: '1GB',  phone: '0550***899', time: '11:45 PM',    date: '2 days ago', amountPaid:  6.50, profit: 0.50, status: 'Delivered' },
-  { id: 11, network: 'MTN',        bundle: '5GB',  phone: '0243***312', time: '9:20 PM',     date: '2 days ago', amountPaid: 18.00, profit: 3.00, status: 'Delivered' },
-  { id: 12, network: 'AirtelTigo', bundle: '10GB', phone: '0270***654', time: '4:05 PM',     date: '2 days ago', amountPaid: 33.00, profit: 3.00, status: 'Delivered' },
-]
 
 const FILTER_SECTIONS = [
   { key: 'network', label: 'Network', options: ['All', 'MTN', 'Telecel', 'AirtelTigo'] },
-  { key: 'status',  label: 'Status',  options: ['All', 'Delivered', 'Pending'] },
-  { key: 'date',    label: 'Date',    options: ['All', 'Today', 'Yesterday', '2 days ago'] },
+  { key: 'status',  label: 'Status',  options: ['All', 'Delivered', 'Pending', 'Failed'] },
+  { key: 'period',  label: 'Period',  options: ['All', 'Today', 'This week', 'This month'] },
 ]
 
-const DEFAULT_FILTERS = { network: 'All', status: 'All', date: 'All' }
+const DEFAULT_FILTERS = { network: 'All', status: 'All', period: 'All' }
+
+function formatDate(isoStr) {
+  const d         = new Date(isoStr)
+  const today     = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+  if (d.toDateString() === today.toDateString())     return 'Today'
+  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday'
+  const diffDays = Math.floor((today - d) / 86400000)
+  if (diffDays < 7) return `${diffDays} days ago`
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+function formatTime(isoStr) {
+  return new Date(isoStr).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+}
+
+function isInPeriod(isoStr, period) {
+  if (period === 'All') return true
+  const d     = new Date(isoStr)
+  const today = new Date()
+  if (period === 'Today') return d.toDateString() === today.toDateString()
+  if (period === 'This week') {
+    const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7)
+    return d >= weekAgo
+  }
+  if (period === 'This month') {
+    return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear()
+  }
+  return true
+}
 
 function groupByDate(orders) {
   const map = {}
   orders.forEach(o => {
-    if (!map[o.date]) map[o.date] = []
-    map[o.date].push(o)
+    const key = formatDate(o.created_at)
+    if (!map[key]) map[key] = []
+    map[key].push(o)
   })
   return Object.entries(map).map(([date, items]) => ({ date, items }))
 }
 
 export default function StoreOrders() {
-  const navigate = useNavigate()
+  const navigate     = useNavigate()
+  const { user }     = useAuth()
+  const [orders, setOrders]         = useState([])
+  const [loading, setLoading]       = useState(true)
   const [query, setQuery]           = useState('')
   const [filterOpen, setFilterOpen] = useState(false)
   const [filters, setFilters]       = useState(DEFAULT_FILTERS)
 
-  const hasActiveFilter = filters.network !== 'All' || filters.status !== 'All' || filters.date !== 'All'
+  useEffect(() => {
+    if (!user) return
+    const timer = setTimeout(() => setLoading(false), 8000)
 
-  const filtered = STORE_ORDERS.filter(o => {
+    ;(async () => {
+      try {
+        const { data: store } = await getMyStore(user.id)
+        if (!store) { setLoading(false); return }
+
+        const { data } = await getStoreOrders(store.id)
+        setOrders(data ?? [])
+      } catch (_) {}
+      finally {
+        clearTimeout(timer)
+        setLoading(false)
+      }
+    })()
+
+    return () => clearTimeout(timer)
+  }, [user])
+
+  const hasActiveFilter = filters.network !== 'All' || filters.status !== 'All' || filters.period !== 'All'
+
+  const filtered = orders.filter(o => {
+    const network  = o.bundle?.carrier ?? ''
+    const bundle   = o.bundle?.data_size ?? ''
+    const phone    = o.buyer_phone ?? ''
+    const status   = o.status ?? ''
+
     if (query.trim() && !(
-      o.network.toLowerCase().includes(query.toLowerCase()) ||
-      o.bundle.toLowerCase().includes(query.toLowerCase()) ||
-      o.phone.includes(query)
+      network.toLowerCase().includes(query.toLowerCase()) ||
+      bundle.toLowerCase().includes(query.toLowerCase()) ||
+      phone.includes(query)
     )) return false
-    if (filters.network !== 'All' && o.network !== filters.network) return false
-    if (filters.status  !== 'All' && o.status  !== filters.status)  return false
-    if (filters.date    !== 'All' && o.date    !== filters.date)    return false
+    if (filters.network !== 'All' && network !== filters.network) return false
+    if (filters.status  !== 'All' && status.toLowerCase() !== filters.status.toLowerCase()) return false
+    if (!isInPeriod(o.created_at, filters.period)) return false
     return true
   })
 
-  const groups       = groupByDate(filtered)
-  const totalOrders  = filtered.length
-  const totalProfit  = filtered.reduce((s, o) => s + o.profit, 0)
+  const groups      = groupByDate(filtered)
+  // Totals always from all orders, not filtered (same fix as Withdrawals #3)
+  const totalOrders = orders.length
+  const totalProfit = orders.reduce((s, o) => s + Number(o.profit ?? 0), 0)
 
   return (
     <div className={styles.page}>
@@ -104,7 +153,9 @@ export default function StoreOrders() {
 
       {/* Grouped list */}
       <div className={styles.list}>
-        {groups.length === 0 ? (
+        {loading ? (
+          <span className={styles.empty}>Loading…</span>
+        ) : groups.length === 0 ? (
           <span className={styles.empty}>No orders found</span>
         ) : (
           groups.map(group => (
@@ -115,15 +166,22 @@ export default function StoreOrders() {
                   <div key={order.id}>
                     <div className={styles.row}>
                       <div className={styles.info}>
-                        <span className={styles.name}>{order.network} {order.bundle} Bundle</span>
-                        <span className={styles.phone}>{order.phone} · MoMo</span>
-                        <span className={styles.time}>{order.time}</span>
+                        <span className={styles.name}>
+                          {order.bundle?.carrier} {order.bundle?.data_size} Bundle
+                        </span>
+                        <span className={styles.phone}>{order.buyer_phone} · MoMo</span>
+                        <span className={styles.time}>{formatTime(order.created_at)}</span>
                       </div>
                       <div className={styles.right}>
-                        <span className={styles.amountPaid}>₵{order.amountPaid.toFixed(2)}</span>
-                        <span className={styles.profit}>+₵{order.profit.toFixed(2)}</span>
-                        <span className={styles.status} data-status={order.status.toLowerCase()}>
-                          {order.status}
+                        <span className={styles.amountPaid}>₵{Number(order.amount_paid).toFixed(2)}</span>
+                        <span className={styles.profit}>+₵{Number(order.profit ?? 0).toFixed(2)}</span>
+                        <span
+                          className={styles.status}
+                          data-status={(order.status ?? 'pending').toLowerCase()}
+                        >
+                          {order.status
+                            ? order.status.charAt(0).toUpperCase() + order.status.slice(1)
+                            : 'Pending'}
                         </span>
                       </div>
                     </div>
