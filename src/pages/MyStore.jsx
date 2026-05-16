@@ -74,63 +74,75 @@ export default function MyStore() {
   // ── Load everything from Supabase on mount ──────────────────
   useEffect(() => {
     if (!user) return
+
+    // Safety: never stay on "Loading store…" forever on slow networks
+    const timer = setTimeout(() => setLoadingStore(false), 10000)
+
     ;(async () => {
-      // 1. Get or create store record
-      let { data: store } = await getMyStore(user.id)
-      if (!store) {
-        const saved = localStorage.getItem('qwikhub_store')
-        const local = saved ? JSON.parse(saved) : null
-        const { data: created } = await createStore(user.id, {
-          store_name: local?.name ?? 'My Store',
-          store_slug: local?.slug ?? user.id.slice(0, 8),
-          theme:      local?.theme ?? 'midnight',
-        })
-        store = created
-      }
-      if (!store) { setLoadingStore(false); return }
+      try {
+        // 1. Get or create store record
+        let { data: store } = await getMyStore(user.id)
+        if (!store) {
+          const saved = localStorage.getItem('qwikhub_store')
+          const local = saved ? JSON.parse(saved) : null
+          const { data: created } = await createStore(user.id, {
+            store_name: local?.name ?? 'My Store',
+            store_slug: local?.slug ?? user.id.slice(0, 8),
+            theme:      local?.theme ?? 'midnight',
+          })
+          store = created
+        }
+        if (!store) return
 
-      // 2. Build bundleMap from master bundles
-      const { data: masterBundles } = await getBundles()
-      const bMap = buildBundleMap(masterBundles ?? [])
+        // 2. Build bundleMap from master bundles
+        const { data: masterBundles } = await getBundles()
+        const bMap = buildBundleMap(masterBundles ?? [])
 
-      // 3. Build prices from store_bundles (with bundle join)
-      const { data: storeBundles } = await getStoreBundles(store.id)
-      const p = makeDefaultPrices()
-      if (storeBundles) {
-        for (const sb of storeBundles) {
-          const carrier     = sb.bundle?.carrier  // 'MTN'
-          const dataSize    = sb.bundle?.data_size // '1GB'
-          const networkId   = Object.keys(CARRIER_MAP).find(k => CARRIER_MAP[k] === carrier)
-          const bundleValue = dataSize?.toLowerCase() // '1gb'
-          if (networkId && bundleValue && p[networkId]) {
-            p[networkId][bundleValue] = Number(sb.custom_price).toFixed(2)
+        // 3. Build prices from store_bundles (with bundle join)
+        const { data: storeBundles } = await getStoreBundles(store.id)
+        const p = makeDefaultPrices()
+        if (storeBundles) {
+          for (const sb of storeBundles) {
+            const carrier     = sb.bundle?.carrier
+            const dataSize    = sb.bundle?.data_size
+            const networkId   = Object.keys(CARRIER_MAP).find(k => CARRIER_MAP[k] === carrier)
+            const bundleValue = dataSize?.toLowerCase()
+            if (networkId && bundleValue && p[networkId]) {
+              p[networkId][bundleValue] = Number(sb.custom_price).toFixed(2)
+            }
           }
         }
+
+        // 4. Load orders
+        const { data: storeOrders } = await getStoreOrders(store.id)
+
+        // 5. Hydrate state
+        setStoreId(store.id)
+        setStoreName(store.store_name)
+        setStoreSlug(store.store_slug)
+        setStoreTheme(store.theme)
+        setBundleMap(bMap)
+        setPrices(p)
+        setSavedPrices(JSON.parse(JSON.stringify(p)))
+        setOrders(storeOrders ?? [])
+
+        // Mirror to localStorage for storefront reads
+        localStorage.setItem('qwikhub_store', JSON.stringify({
+          name: store.store_name,
+          slug: store.store_slug,
+          theme: store.theme,
+        }))
+
+        initialised.current = true
+      } catch (err) {
+        console.error('[MyStore] load error:', err)
+      } finally {
+        clearTimeout(timer)
+        setLoadingStore(false)
       }
-
-      // 4. Load orders
-      const { data: storeOrders } = await getStoreOrders(store.id)
-
-      // 5. Hydrate state
-      setStoreId(store.id)
-      setStoreName(store.store_name)
-      setStoreSlug(store.store_slug)
-      setStoreTheme(store.theme)
-      setBundleMap(bMap)
-      setPrices(p)
-      setSavedPrices(JSON.parse(JSON.stringify(p)))
-      setOrders(storeOrders ?? [])
-
-      // Mirror to localStorage for storefront reads
-      localStorage.setItem('qwikhub_store', JSON.stringify({
-        name: store.store_name,
-        slug: store.store_slug,
-        theme: store.theme,
-      }))
-
-      initialised.current = true
-      setLoadingStore(false)
     })()
+
+    return () => clearTimeout(timer)
   }, [user])
 
   // ── Auto-save settings (localStorage immediately, Supabase debounced) ──
