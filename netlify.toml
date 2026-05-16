@@ -5,11 +5,16 @@
 [build.environment]
   NODE_VERSION = "20"
 
-# Proxy all Supabase API calls through Netlify's CDN edge.
-# Browser -> Netlify CDN (fast, close to user) -> Supabase (fast server link).
-# Eliminates cross-continental latency AND removes CORS preflight round-trips.
+# 1. Proxy Supabase API calls through Netlify's CDN edge (must come FIRST)
+#    Browser -> Netlify CDN (fast) -> Supabase (server-to-server, fast)
 [[redirects]]
   from = "/sb-proxy/*"
   to = "https://uihiihiusqquzjprxuyw.supabase.co/:splat"
   status = 200
   force = true
+
+# 2. SPA catch-all — serve index.html for every other route (must come LAST)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
