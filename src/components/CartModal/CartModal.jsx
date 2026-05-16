@@ -93,7 +93,7 @@ export default function CartModal({ open, onClose }) {
               <span className={styles.totalAmount}>₵{total.toFixed(2)}</span>
             </div>
             <button className={styles.payBtn}>
-              Proceed to Payment
+              Pay
             </button>
           </div>
         )}

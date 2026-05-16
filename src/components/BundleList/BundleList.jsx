@@ -37,6 +37,8 @@ function BundleCard({ network, isOpen, onToggle }) {
   const [bundle, setBundle] = useState(null)
   const { addToCart }       = useCart()
 
+  const phoneValid = /^0[235]\d{8}$/.test(phone.trim())
+
   const handleAdd = () => {
     const opt = BUNDLE_OPTIONS.find(o => o.value === bundle)
     if (!opt) return
@@ -75,20 +77,23 @@ function BundleCard({ network, isOpen, onToggle }) {
             <input
               id={`phone-${network.id}`}
               type="tel"
-              className={styles.input}
+              className={`${styles.input} ${phone.length > 0 && !phoneValid ? styles.inputError : ''}`}
               placeholder="eg. 024XXXXXXXX"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              maxLength={12}
+              onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+              maxLength={10}
               autoFocus
             />
+            {phone.length > 0 && !phoneValid && (
+              <span className={styles.inputHint}>Enter a valid 10-digit Ghana number (05X, 02X, 03X)</span>
+            )}
           </div>
 
           <BundleSelect value={bundle} onChange={setBundle} />
 
           <button
             className={styles.addBtn}
-            disabled={!phone.trim() || !bundle}
+            disabled={!phoneValid || !bundle}
             onClick={handleAdd}
           >
             <ShoppingCart size={20} color="currentColor" variant="Bold" />

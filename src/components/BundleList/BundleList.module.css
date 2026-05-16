@@ -125,6 +125,15 @@
 .input:focus {
   border-color: #FFCC08;
 }
+.inputError {
+  border-color: #f43f5e !important;
+}
+.inputHint {
+  font-size: 11px;
+  color: #f43f5e;
+  font-family: var(--font-sans);
+  font-weight: 500;
+}
 
 /* Add to cart button */
 .addBtn {
