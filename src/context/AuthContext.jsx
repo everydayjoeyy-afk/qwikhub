@@ -23,17 +23,30 @@ export function AuthProvider({ children }) {
     // Then fetch the full profile from the DB and overwrite
     const { data, error } = await supabase
       .from('users').select('*').eq('id', userId).single()
+
     if (data) {
       setProfile(data)
-    } else {
-      if (error) console.error('[fetchProfile]', error.message)
-      // Retry once after 3 s (handles race where users row isn't inserted yet)
-      setTimeout(async () => {
-        const { data: retry } = await supabase
-          .from('users').select('*').eq('id', userId).single()
-        if (retry) setProfile(retry)
-      }, 3000)
+      return
     }
+
+    // First attempt failed — log and retry once after 3 s.
+    // This handles the race condition where the users row isn't inserted yet
+    // immediately after sign-up.
+    console.warn('[fetchProfile] first attempt failed, retrying in 3s:', error?.message)
+
+    setTimeout(async () => {
+      const { data: retry, error: retryError } = await supabase
+        .from('users').select('*').eq('id', userId).single()
+
+      if (retry) {
+        setProfile(retry)
+      } else {
+        // Both attempts failed. Log clearly so it shows up in Vercel logs.
+        console.error('[fetchProfile] both attempts failed — user will see partial data:', retryError?.message)
+        // Keep whatever partial profile was set from metadata (name/phone).
+        // wallet_balance will show as ₵0.00 until a manual refresh works.
+      }
+    }, 3000)
   }
 
   useEffect(() => {
