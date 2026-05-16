@@ -124,7 +124,7 @@ export default function Withdrawals() {
     return true
   })
 
-  const totalWithdrawn = filtered.reduce((s, w) => s + Number(w.amount), 0)
+  const totalWithdrawn = withdrawals.reduce((s, w) => s + Number(w.amount), 0)
   const groups         = groupByDate(filtered)
   const walletBalance  = profile?.wallet_balance ?? 0
 
