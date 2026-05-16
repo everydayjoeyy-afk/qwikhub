@@ -33,10 +33,21 @@ export default function RecentTransactions() {
 
   useEffect(() => {
     if (!user) return
-    getTransactions(user.id).then(({ data }) => {
-      setTransactions((data ?? []).slice(0, 4))
-      setLoading(false)
-    })
+
+    // Safety: never stay stuck on "Loading…" forever on slow networks
+    const timer = setTimeout(() => setLoading(false), 8000)
+
+    getTransactions(user.id)
+      .then(({ data }) => {
+        setTransactions((data ?? []).slice(0, 4))
+      })
+      .catch(() => {})   // silent fail — empty list is fine
+      .finally(() => {
+        clearTimeout(timer)
+        setLoading(false)
+      })
+
+    return () => clearTimeout(timer)
   }, [user])
 
   return (

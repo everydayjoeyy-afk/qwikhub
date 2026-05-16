@@ -60,10 +60,12 @@ export default function Transactions() {
 
   useEffect(() => {
     if (!user) return
-    getTransactions(user.id).then(({ data }) => {
-      setTxs(data ?? [])
-      setLoading(false)
-    })
+    const timer = setTimeout(() => setLoading(false), 8000)
+    getTransactions(user.id)
+      .then(({ data }) => { setTxs(data ?? []) })
+      .catch(() => {})
+      .finally(() => { clearTimeout(timer); setLoading(false) })
+    return () => clearTimeout(timer)
   }, [user])
 
   const hasActiveFilter = filters.type !== 'All' || filters.period !== 'All'

@@ -74,10 +74,12 @@ export default function Withdrawals() {
   // ── Load withdrawals ────────────────────────────────────────
   useEffect(() => {
     if (!user) return
-    getWithdrawals(user.id).then(({ data }) => {
-      setWithdrawals(data ?? [])
-      setLoading(false)
-    })
+    const timer = setTimeout(() => setLoading(false), 8000)
+    getWithdrawals(user.id)
+      .then(({ data }) => { setWithdrawals(data ?? []) })
+      .catch(() => {})
+      .finally(() => { clearTimeout(timer); setLoading(false) })
+    return () => clearTimeout(timer)
   }, [user])
 
   // Pre-fill MoMo number from profile
