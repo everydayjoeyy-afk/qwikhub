@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ShoppingCart } from 'iconsax-react'
 import styles from './Bundles.module.css'
 import BundleSelect, { BUNDLE_OPTIONS } from '../components/BundleSelect/BundleSelect'
@@ -9,9 +9,9 @@ import telecel from '../assets/telecel.jpg'
 import tigo from '../assets/tigo.jpg'
 
 const NETWORKS = [
-  { id: 'mtn',     name: 'MTN Bundles',       logo: mtn     },
-  { id: 'telecel', name: 'Telecel Bundles',    logo: telecel },
-  { id: 'tigo',    name: 'AirtelTigo Bundles', logo: tigo    },
+  { id: 'mtn',     name: 'MTN',        fullName: 'MTN Bundles',       logo: mtn     },
+  { id: 'telecel', name: 'Telecel',    fullName: 'Telecel Bundles',    logo: telecel },
+  { id: 'tigo',    name: 'AirtelTigo', fullName: 'AirtelTigo Bundles', logo: tigo    },
 ]
 
 function BundleCard({ network }) {
@@ -23,7 +23,7 @@ function BundleCard({ network }) {
     <div className={styles.card}>
       <div className={styles.networkRow}>
         <img src={network.logo} alt={network.name} className={styles.logo} />
-        <span className={styles.networkName}>{network.name}</span>
+        <span className={styles.networkName}>{network.fullName}</span>
       </div>
 
       <div className={styles.fieldGroup}>
@@ -50,7 +50,7 @@ function BundleCard({ network }) {
           const opt = BUNDLE_OPTIONS.find(o => o.value === bundle)
           addToCart({
             networkId:   network.id,
-            networkName: network.name,
+            networkName: network.fullName,
             networkLogo: network.logo,
             bundleValue: bundle,
             bundleLabel: opt.label,
@@ -68,6 +68,10 @@ function BundleCard({ network }) {
 
 export default function Bundles() {
   const navigate = useNavigate()
+  const { sub } = useParams()
+
+  // Determine active network from URL param; default to first
+  const activeNetwork = NETWORKS.find(n => n.id === sub) ?? NETWORKS[0]
 
   return (
     <div className={styles.page}>
@@ -75,13 +79,33 @@ export default function Bundles() {
         <button className={styles.backBtn} onClick={() => navigate('/')} aria-label="Go back">
           <ArrowLeft size={20} color="currentColor" />
         </button>
-        <span className={styles.pageTitle}>All Bundles</span>
+        <span className={styles.pageTitle}>Buy Bundles</span>
       </div>
 
+      {/* Network tab bar */}
+      <div className={styles.tabs}>
+        {NETWORKS.map((network) => {
+          const isActive = network.id === activeNetwork.id
+          return (
+            <button
+              key={network.id}
+              className={`${styles.tab} ${isActive ? styles.tabActive : ''}`}
+              onClick={() => navigate(`/bundles/${network.id}`)}
+            >
+              <img
+                src={network.logo}
+                alt={network.name}
+                className={`${styles.tabLogo} ${isActive ? styles.tabLogoActive : ''}`}
+              />
+              <span className={styles.tabName}>{network.name}</span>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Show only the selected network's card */}
       <div className={styles.list}>
-        {NETWORKS.map((n) => (
-          <BundleCard key={n.id} network={n} />
-        ))}
+        <BundleCard key={activeNetwork.id} network={activeNetwork} />
       </div>
     </div>
   )
