@@ -69,14 +69,24 @@ export default function AddMoneyModal({ open, onClose }) {
     // show a manual "I've paid" button so the user isn't stuck forever
     fallbackTimer.current = setTimeout(() => setShowFallback(true), 8000)
 
-    const handleSuccess = (reference) => {
+    const handleSuccess = async (reference) => {
       clearTimeout(fallbackTimer.current)
       setShowFallback(false)
+
+      const { error: walletErr } = await creditWallet(
+        user.id, capturedAmount, 'Wallet top-up via Paystack', reference
+      )
+
+      if (walletErr) {
+        console.error('[AddMoney] creditWallet RPC error:', walletErr)
+        // Still show success for payment, but warn about balance
+        setStatus('wallet_error')
+        return
+      }
+
+      await refetchProfile()
       setStatus('success')
       setTimeout(() => onClose(), 1800)
-      creditWallet(user.id, capturedAmount, 'Wallet top-up via Paystack', reference)
-        .then(() => refetchProfile())
-        .catch((err) => console.error('[AddMoney] creditWallet error:', err))
     }
 
     initPaystack({
@@ -87,6 +97,28 @@ export default function AddMoneyModal({ open, onClose }) {
         setStatus('idle')
       },
     })
+  }
+
+  // ── Wallet error state (payment went through but DB update failed) ──
+  if (status === 'wallet_error') {
+    return (
+      <div className={styles.overlay} aria-modal="true" role="dialog">
+        <div className={styles.sheet}>
+          <div className={styles.handle} />
+          <div className={styles.successBody}>
+            <TickCircle size={56} color="#f59e0b" variant="Bold" />
+            <p className={styles.successTitle}>Payment received!</p>
+            <p className={styles.successSub}>
+              Your payment went through but your balance couldn't be updated right now.
+              Please contact support — your money is safe.
+            </p>
+            <button className={styles.proceedBtn} onClick={onClose} style={{ marginTop: 8 }}>
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   // ── Success state ────────────────────────────────────────────
