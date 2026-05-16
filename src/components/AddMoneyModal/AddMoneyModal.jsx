@@ -1,33 +1,32 @@
 import { useState, useEffect, useRef } from 'react'
 import { usePaystackPayment } from 'react-paystack'
-import { CloseCircle } from 'iconsax-react'
+import { CloseCircle, TickCircle } from 'iconsax-react'
 import { useAuth } from '../../context/AuthContext'
 import { creditWallet } from '../../lib/db'
 import styles from './AddMoneyModal.module.css'
 
 const PAYSTACK_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY
-const FEE_RATE     = 0.02   // 2% — we absorb the 0.5% difference from Paystack's 1.5%
+const FEE_RATE     = 0.02
 
 export default function AddMoneyModal({ open, onClose }) {
-  const { user, profile, refetchProfile } = useAuth()
-  const [amount, setAmount]   = useState('')
-  const [loading, setLoading] = useState(false)
+  const { user, refetchProfile } = useAuth()
+  const [amount, setAmount]     = useState('')
+  const [status, setStatus]     = useState('idle') // idle | loading | success | error
   const inputRef   = useRef(null)
   const overlayRef = useRef(null)
 
   const parsed      = parseFloat(amount) || 0
-  const isValid     = parsed >= 1                          // minimum ₵1
+  const isValid     = parsed >= 1
   const fee         = isValid ? parsed * FEE_RATE : 0
-  const totalCharge = isValid ? parsed + fee : 0           // what Paystack charges
-  const kobo        = Math.round(totalCharge * 100)        // Paystack uses pesewas (GHS×100)
+  const totalCharge = isValid ? parsed + fee : 0
+  const kobo        = Math.round(totalCharge * 100)
 
   const paystackConfig = {
-    reference:  `qwikhub_${Date.now()}`,
-    email:      user?.email ?? '',
-    amount:     kobo,
-    currency:   'GHS',
-    publicKey:  PAYSTACK_KEY,
-    metadata:   { credit_amount: parsed },                 // original amount to credit
+    reference: `qwikhub_${Date.now()}`,
+    email:     user?.email ?? '',
+    amount:    kobo,
+    currency:  'GHS',
+    publicKey: PAYSTACK_KEY,
   }
 
   const initPaystack = usePaystackPayment(paystackConfig)
@@ -49,34 +48,51 @@ export default function AddMoneyModal({ open, onClose }) {
       const t = setTimeout(() => inputRef.current?.focus(), 80)
       return () => clearTimeout(t)
     } else {
+      // Reset when modal closes
       setAmount('')
-      setLoading(false)
+      setStatus('idle')
     }
   }, [open])
 
   if (!open) return null
 
   const handleProceed = () => {
-    if (!isValid || loading) return
-    setLoading(true)
+    if (!isValid || status === 'loading') return
+    setStatus('loading')
 
     initPaystack({
       onSuccess: async (transaction) => {
-        // Credit the wallet with the original amount (before fee)
-        await creditWallet(
-          user.id,
-          parsed,
-          `Wallet top-up via Paystack`,
-          transaction.reference,
-        )
-        await refetchProfile()   // refresh wallet balance in UI
-        setLoading(false)
-        onClose()
+        try {
+          await creditWallet(user.id, parsed, 'Wallet top-up via Paystack', transaction.reference)
+          refetchProfile()          // fire-and-forget — don't await so we don't hang
+          setStatus('success')
+          setTimeout(() => onClose(), 1800)  // close after showing success
+        } catch (err) {
+          console.error('[AddMoney] creditWallet error:', err)
+          setStatus('error')
+        }
       },
       onClose: () => {
-        setLoading(false)
+        // User closed Paystack without paying
+        setStatus('idle')
       },
     })
+  }
+
+  // ── Success state ────────────────────────────────────────────
+  if (status === 'success') {
+    return (
+      <div className={styles.overlay} aria-modal="true" role="dialog">
+        <div className={styles.sheet}>
+          <div className={styles.handle} />
+          <div className={styles.successBody}>
+            <TickCircle size={56} color="#22c55e" variant="Bold" />
+            <p className={styles.successTitle}>Payment successful!</p>
+            <p className={styles.successSub}>₵{parsed.toFixed(2)} has been added to your wallet.</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -134,21 +150,26 @@ export default function AddMoneyModal({ open, onClose }) {
             A <strong>2% processing fee</strong> is charged on all top-ups (powered by Paystack).
           </p>
 
-          {/* Debit badge — only show when amount is entered */}
           {isValid && (
             <div className={styles.debitBadge}>
               You'll be debited <strong>₵{totalCharge.toFixed(2)}</strong>
             </div>
+          )}
+
+          {status === 'error' && (
+            <p className={styles.errorNote}>
+              Payment received but wallet update failed. Please contact support.
+            </p>
           )}
         </div>
 
         <div className={styles.footer}>
           <button
             className={styles.proceedBtn}
-            disabled={!isValid || loading}
+            disabled={!isValid || status === 'loading'}
             onClick={handleProceed}
           >
-            {loading ? 'Opening Paystack…' : 'Proceed'}
+            {status === 'loading' ? 'Opening Paystack…' : 'Proceed'}
           </button>
         </div>
       </div>

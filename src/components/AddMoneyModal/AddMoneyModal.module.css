@@ -189,6 +189,38 @@
   color: var(--color-text-secondary);
 }
 
+/* Success state */
+.successBody {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 24px 48px;
+  text-align: center;
+}
+.successTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  margin: 0;
+}
+.successSub {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+  margin: 0;
+}
+
+/* Error note */
+.errorNote {
+  font-size: 12px;
+  color: #f43f5e;
+  font-family: var(--font-sans);
+  text-align: center;
+  margin: 0;
+}
+
 /* Debit badge */
 .debitBadge {
   align-self: center;
