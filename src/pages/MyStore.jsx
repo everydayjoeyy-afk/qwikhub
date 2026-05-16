@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight2, ArrowDown2, Share, MoneyRecive } from 'iconsax-react'
+import LoadingScreen from '../components/LoadingScreen/LoadingScreen'
 import { BUNDLE_OPTIONS } from '../components/BundleSelect/BundleSelect'
 import { THEMES } from '../components/CreateStoreModal/CreateStoreModal'
 import { useAuth } from '../context/AuthContext'
@@ -195,22 +196,7 @@ export default function MyStore() {
     setTimeout(() => setLinkCopied(false), 2000)
   }
 
-  if (loadingStore) {
-    return (
-      <div className={styles.page}>
-        <div className={styles.topHeader}>
-          <button className={styles.backBtn} onClick={() => navigate('/store')} aria-label="Go back">
-            <ArrowLeft size={20} color="currentColor" />
-          </button>
-          <span className={styles.pageTitle}>My Store</span>
-          <div style={{ width: 32 }} />
-        </div>
-        <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-          Loading store…
-        </div>
-      </div>
-    )
-  }
+  if (loadingStore) return <LoadingScreen />
 
   return (
     <div className={styles.page}>

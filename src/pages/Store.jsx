@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Shop } from 'iconsax-react'
 import empty from '../assets/empty.svg'
 import CreateStoreModal from '../components/CreateStoreModal/CreateStoreModal'
+import LoadingScreen from '../components/LoadingScreen/LoadingScreen'
 import { useAuth } from '../context/AuthContext'
 import { getMyStore } from '../lib/db'
 import styles from './Store.module.css'
@@ -31,28 +32,7 @@ export default function Store() {
     return () => clearTimeout(timer)
   }, [user])
 
-  // Show a subtle spinner while checking — NOT a blank page
-  if (checking) {
-    return (
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: 200,
-      }}>
-        <div style={{
-          width: 28,
-          height: 28,
-          borderRadius: '50%',
-          border: '3px solid var(--color-border)',
-          borderTopColor: '#FFCC08',
-          animation: 'spin 0.7s linear infinite',
-        }} />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    )
-  }
+  if (checking) return <LoadingScreen />
 
   return (
     <div className={styles.page}>
