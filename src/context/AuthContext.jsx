@@ -50,15 +50,13 @@ export function AuthProvider({ children }) {
     const genCode = name.toUpperCase().replace(/\s+/g, '').slice(0, 5) +
       Math.random().toString(36).slice(2, 5).toUpperCase()
 
-    // Resolve referred_by user id from referral code
+    // Resolve referred_by user id from referral code.
+    // Uses an RPC (SECURITY DEFINER) because RLS prevents reading other users' rows directly.
     let referredBy = null
     if (referralCode) {
-      const { data: refUser } = await supabase
-        .from('users')
-        .select('id')
-        .eq('referral_code', referralCode)
-        .single()
-      referredBy = refUser?.id ?? null
+      const { data: refId } = await supabase
+        .rpc('get_referrer_id', { p_code: referralCode.trim().toUpperCase() })
+      referredBy = refId ?? null
     }
 
     // Insert into users table
