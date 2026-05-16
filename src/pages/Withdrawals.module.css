@@ -1,0 +1,417 @@
+.page {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.backBtn,
+.filterBtn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-primary);
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+.filterBtnActive { color: #FFCC08; }
+.backBtn:hover,
+.filterBtn:hover { background: var(--color-surface-hover); }
+.backBtn:focus-visible,
+.filterBtn:focus-visible { outline: 2px solid #FFCC08; outline-offset: 2px; }
+
+.pageTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  letter-spacing: -0.01em;
+}
+
+/* Summary */
+.summaryCard {
+  display: flex;
+  align-items: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 16px 20px;
+}
+
+[data-theme="dark"] .summaryCard {
+  border-color: rgba(255,255,255,0.08);
+}
+
+.summaryItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.summaryItem:last-child { align-items: flex-end; }
+
+.summaryLabel {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  font-family: var(--font-sans);
+}
+
+.summaryValue {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  letter-spacing: -0.02em;
+}
+
+.summaryDivider {
+  width: 1px;
+  height: 36px;
+  background: var(--color-border);
+  flex-shrink: 0;
+  margin: 0 20px;
+}
+
+[data-theme="dark"] .summaryDivider {
+  background: rgba(255,255,255,0.08);
+}
+
+/* Grouped list */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.empty {
+  font-size: 14px;
+  color: var(--color-text-tertiary);
+  font-family: var(--font-sans);
+  text-align: center;
+  padding: 32px 0;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dateLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #395362;
+  font-family: var(--font-sans);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.groupItems {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 4px 16px;
+}
+
+[data-theme="dark"] .groupItems {
+  border-color: rgba(255,255,255,0.08);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 0;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.amount {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  letter-spacing: -0.02em;
+}
+
+.destination {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+}
+
+.time {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  font-family: var(--font-sans);
+}
+
+.status {
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  padding: 2px 10px;
+  border-radius: 999px;
+  border-width: 1px;
+  border-style: solid;
+  flex-shrink: 0;
+}
+
+.status[data-status="completed"] {
+  background: #F3FAF7;
+  border-color: #DEF7EC;
+  color: #03543F;
+}
+
+.status[data-status="processing"] {
+  background: #FFF9E6;
+  border-color: #FFEBB0;
+  color: #8C6900;
+}
+
+.divider {
+  height: 1px;
+  background: var(--color-border);
+}
+
+[data-theme="dark"] .divider {
+  background: rgba(255,255,255,0.06);
+}
+
+/* Pending status */
+.status[data-status="pending"] {
+  background: #f0f9ff;
+  border-color: #bae6fd;
+  color: #0369a1;
+}
+
+[data-theme="dark"] .status[data-status="completed"]  { background: rgba(3,84,63,0.15);   border-color: rgba(3,84,63,0.3);   color: #34d399; }
+[data-theme="dark"] .status[data-status="processing"] { background: rgba(140,105,0,0.15); border-color: rgba(140,105,0,0.3); color: #fbbf24; }
+[data-theme="dark"] .status[data-status="pending"]    { background: rgba(3,105,161,0.15); border-color: rgba(3,105,161,0.3); color: #38bdf8; }
+
+/* Wallet balance card */
+.balanceCard {
+  background: #0f0f10;
+  border-radius: 16px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.balanceInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.balanceLabel {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.5);
+  font-family: var(--font-sans);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.balanceValue {
+  font-size: 26px;
+  font-weight: 700;
+  color: #ffffff;
+  font-family: var(--font-sans);
+  letter-spacing: -0.03em;
+}
+
+.withdrawRequestBtn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: #FFCC08;
+  color: #000;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.withdrawRequestBtn:hover   { opacity: 0.88; }
+.withdrawRequestBtn:active  { opacity: 0.75; }
+
+/* Withdrawal request bottom sheet */
+.sheetOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+}
+
+.sheet {
+  width: 100%;
+  background: var(--color-background);
+  border-radius: 24px 24px 0 0;
+  padding: 12px 20px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: slideUp 0.28s cubic-bezier(0.34,1.06,0.64,1);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.sheetHandle {
+  width: 36px;
+  height: 4px;
+  background: var(--color-border);
+  border-radius: 2px;
+  align-self: center;
+  margin-bottom: 4px;
+}
+
+.sheetHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sheetTitle {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  letter-spacing: -0.02em;
+}
+
+.sheetClose {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-tertiary);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sheetBalanceHint {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.sheetForm {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sheetField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sheetLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+}
+
+.sheetInput {
+  height: 48px;
+  border-radius: 12px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 15px;
+  font-family: var(--font-sans);
+  padding: 0 14px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+.sheetInput:focus { outline: none; border-color: #FFCC08; }
+
+.sheetError {
+  font-size: 13px;
+  color: #ef4444;
+  font-family: var(--font-sans);
+  text-align: center;
+}
+
+.sheetSubmitBtn {
+  height: 50px;
+  border-radius: 14px;
+  background: #FFCC08;
+  color: #000;
+  border: none;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: opacity 0.15s;
+  margin-top: 4px;
+}
+.sheetSubmitBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+.sheetSubmitBtn:not(:disabled):hover { opacity: 0.88; }
+
+/* Success state in sheet */
+.sheetSuccess {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 0 8px;
+  text-align: center;
+}
+
+.sheetSuccessText {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  margin: 0;
+}
+
+.sheetSuccessNote {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+  margin: 0;
+}

@@ -1,0 +1,83 @@
+.card {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  background: var(--color-surface);
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #E6EAEB;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+[data-theme="dark"] .card {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.effect {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 0;
+}
+
+/* Push all content above the overlay */
+.label,
+.amount,
+.addMoneyBtn {
+  position: relative;
+  z-index: 1;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+  text-align: center;
+}
+
+.amount {
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  font-family: var(--font-sans);
+}
+
+.addMoneyBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #FFCC08;
+  color: #000000;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+  margin-top: 4px;
+}
+.addMoneyBtn:hover {
+  opacity: 0.88;
+  transform: scale(1.02);
+}
+.addMoneyBtn:active {
+  transform: scale(0.98);
+}
+.addMoneyBtn:focus-visible {
+  outline: 2px solid #FFCC08;
+  outline-offset: 3px;
+}

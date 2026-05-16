@@ -1,0 +1,118 @@
+.card {
+  width: 100%;
+  background: var(--color-surface);
+  border: 1px solid #E6EAEB;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+[data-theme="dark"] .card {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  letter-spacing: -0.01em;
+}
+
+.seeAll {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #4D4F50;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+.seeAll:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
+}
+.seeAll:focus-visible {
+  outline: 2px solid #FFCC08;
+  outline-offset: 2px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.divider {
+  height: 1px;
+  background: #E6EAEB;
+  margin: 12px 0;
+}
+
+[data-theme="dark"] .divider {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #09042F;
+  font-family: var(--font-sans);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-theme="dark"] .name {
+  color: var(--color-text-primary);
+}
+
+.time {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  font-family: var(--font-sans);
+}
+
+.amount {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.amount[data-positive] {
+  color: #1B7A00;
+}
+
+[data-theme="dark"] .amount[data-positive] {
+  color: #4ade80;
+}

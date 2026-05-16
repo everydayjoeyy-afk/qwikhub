@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment variables (keep secrets off GitHub)
+.env
+.env.local
+.env.*.local
+
+# Vite
+*.local
+
+# Editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Scratch / prototype files
+mobile_sidebar_home_v4.html
+effect.png
+src/pages${page}.jsx

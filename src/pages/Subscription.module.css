@@ -1,0 +1,161 @@
+.page {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.backBtn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-primary);
+  border-radius: 8px;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.backBtn:hover {
+  background: var(--color-surface-hover);
+}
+.backBtn:focus-visible {
+  outline: 2px solid #FFCC08;
+  outline-offset: 2px;
+}
+
+.pageTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  letter-spacing: -0.01em;
+}
+
+/* Card */
+.card {
+  width: 100%;
+  background: var(--color-surface);
+  border: 1px solid #E6EAEB;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+[data-theme="dark"] .card {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Field group */
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fieldLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+}
+
+/* Text input */
+.input {
+  width: 100%;
+  height: 44px;
+  background: #FDFDFD;
+  border: 1px solid #DCE2E3;
+  border-radius: 10px;
+  padding: 0 12px;
+  font-size: 14px;
+  font-weight: 400;
+  color: #000000;
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.input::placeholder {
+  color: #395362;
+  opacity: 0.5;
+}
+.input:focus {
+  border-color: #FFCC08;
+}
+
+[data-theme="dark"] .input {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: var(--color-text-primary);
+}
+[data-theme="dark"] .input::placeholder {
+  color: var(--color-text-tertiary);
+  opacity: 1;
+}
+
+/* Price display */
+.priceDisplay {
+  width: 100%;
+  height: 44px;
+  background: var(--color-bg);
+  border: 1px solid #DCE2E3;
+  border-radius: 10px;
+  padding: 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  display: flex;
+  align-items: center;
+  letter-spacing: -0.01em;
+}
+
+[data-theme="dark"] .priceDisplay {
+  border-color: rgba(255, 255, 255, 0.10);
+}
+
+/* Add to cart button */
+.addBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  background: #FFCC08;
+  color: #000000;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.addBtn:hover:not(:disabled) {
+  opacity: 0.88;
+  transform: scale(1.02);
+}
+.addBtn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.addBtn:focus-visible {
+  outline: 2px solid #FFCC08;
+  outline-offset: 3px;
+}
+.addBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

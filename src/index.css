@@ -1,0 +1,72 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* Dark mode (default) */
+:root {
+  --color-bg: #0f0f10;
+  --color-surface: #1a1a1e;
+  --color-surface-hover: rgba(255,255,255,0.05);
+  --color-border: rgba(255,255,255,0.07);
+  --color-text-primary: #f0f0f2;
+  --color-text-secondary: #8a8a96;
+  --color-text-tertiary: #55555f;
+  --color-accent: #FFCC08;
+  --color-accent-subtle: rgba(255,204,8,0.10);
+  --font-sans: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+  --color-dropdown-bg: #1f1f23;
+  --color-dropdown-border: rgba(255,255,255,0.08);
+  --color-dropdown-shadow: 0px 1px 3px 0px rgba(0,0,0,0.40), 0px 1px 2px -1px rgba(0,0,0,0.40);
+}
+
+/* Light mode — follows system prefers-color-scheme */
+@media (prefers-color-scheme: light) {
+  :root {
+    --color-bg: #FDFDFD;
+    --color-surface: #ffffff;
+    --color-surface-hover: rgba(0,0,0,0.04);
+    --color-border: rgba(0,0,0,0.08);
+    --color-text-primary: #111113;
+    --color-text-secondary: #6b6b78;
+    --color-text-tertiary: #adadb8;
+    --color-accent: #FFCC08;
+    --color-accent-subtle: rgba(255,204,8,0.12);
+    --color-dropdown-bg: #FDFDFD;
+    --color-dropdown-border: #E6EAEB;
+    --color-dropdown-shadow: 0px 1px 3px 0px rgba(0,0,0,0.10), 0px 1px 2px -1px rgba(0,0,0,0.10);
+  }
+}
+
+/* Also support explicit data-theme attribute from JS */
+[data-theme="light"] {
+  --color-bg: #FDFDFD;
+  --color-surface: #ffffff;
+  --color-surface-hover: rgba(0,0,0,0.04);
+  --color-border: rgba(0,0,0,0.08);
+  --color-text-primary: #111113;
+  --color-text-secondary: #6b6b78;
+  --color-text-tertiary: #adadb8;
+  --color-accent: #FFCC08;
+  --color-accent-subtle: rgba(255,204,8,0.12);
+  --color-dropdown-bg: #FDFDFD;
+  --color-dropdown-border: #E6EAEB;
+  --color-dropdown-shadow: 0px 1px 3px 0px rgba(0,0,0,0.10), 0px 1px 2px -1px rgba(0,0,0,0.10);
+}
+
+[data-theme="dark"] {
+  --color-bg: #0f0f10;
+  --color-surface: #1a1a1e;
+  --color-surface-hover: rgba(255,255,255,0.05);
+  --color-border: rgba(255,255,255,0.07);
+  --color-text-primary: #f0f0f2;
+  --color-text-secondary: #8a8a96;
+  --color-text-tertiary: #55555f;
+  --color-dropdown-bg: #1f1f23;
+  --color-dropdown-border: rgba(255,255,255,0.08);
+  --color-dropdown-shadow: 0px 1px 3px 0px rgba(0,0,0,0.40), 0px 1px 2px -1px rgba(0,0,0,0.40);
+}
+
+html, body, #root {
+  height: 100%;
+  background: var(--color-bg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}

@@ -1,0 +1,71 @@
+.card {
+  width: 100%;
+  background: var(--color-surface);
+  border: 1px solid #E6EAEB;
+  border-radius: 16px;
+  padding: 16px 8px;
+  display: flex;
+  align-items: stretch;
+  transition: background 0.2s;
+}
+
+[data-theme="dark"] .card {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.cell {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+}
+
+.divider {
+  width: 1px;
+  background: #E6EAEB;
+  align-self: stretch;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .divider {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 10px;
+  transition: background 0.15s;
+  font-family: var(--font-sans);
+}
+.item:hover {
+  background: var(--color-surface-hover);
+}
+.item:focus-visible {
+  outline: 2px solid #FFCC08;
+  outline-offset: 2px;
+}
+
+.iconWrap {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  line-height: 1;
+}

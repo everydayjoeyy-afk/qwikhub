@@ -1,0 +1,211 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  background: var(--color-bg);
+  gap: 20px;
+}
+
+.logo {
+  height: 28px;
+  width: auto;
+  display: block;
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+[data-theme="dark"] .card {
+  border-color: rgba(255,255,255,0.08);
+}
+
+.heading {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  letter-spacing: -0.03em;
+  margin: 0 0 2px;
+}
+
+.subtext {
+  font-size: 13px;
+  color: var(--color-text-tertiary);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  margin: 0 0 10px;
+}
+
+/* Form */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  font-family: var(--font-sans);
+  letter-spacing: 0.02em;
+}
+
+.input {
+  width: 100%;
+  height: 48px;
+  background: var(--color-bg);
+  border: 1.5px solid var(--color-border);
+  border-radius: 14px;
+  padding: 0 16px;
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.input::placeholder { color: var(--color-text-tertiary); opacity: 0.55; }
+.input:focus { border-color: #FFCC08; }
+
+.inputWithIcon { padding-right: 48px; }
+
+.inputError { border-color: #f43f5e !important; }
+
+.inputWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.eyeBtn {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 6px;
+  transition: color 0.15s;
+}
+.eyeBtn:hover { color: var(--color-text-primary); }
+
+.forgotRow {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.forgotLink {
+  font-size: 13px;
+  font-weight: 600;
+  color: #5B4FCF;
+  font-family: var(--font-sans);
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+.forgotLink:hover { opacity: 0.75; }
+
+.errorText {
+  font-size: 11px;
+  font-weight: 500;
+  color: #f43f5e;
+  font-family: var(--font-sans);
+}
+
+/* Referral field */
+.refBadge {
+  margin-left: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #03543F;
+  background: #DEF7EC;
+  border-radius: 999px;
+  padding: 2px 8px;
+  letter-spacing: 0.02em;
+  vertical-align: middle;
+}
+
+.inputLocked {
+  background: var(--color-surface-hover) !important;
+  color: var(--color-text-secondary) !important;
+  cursor: not-allowed;
+}
+
+.lockIcon {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-tertiary);
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+/* Submit */
+.submitBtn {
+  width: 100%;
+  height: 52px;
+  background: #FFCC08;
+  color: #000000;
+  border: none;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  letter-spacing: -0.01em;
+  margin-top: 4px;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.submitBtn:hover:not(:disabled) { opacity: 0.88; }
+.submitBtn:active:not(:disabled) { transform: scale(0.99); }
+.submitBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+.submitBtn:focus-visible { outline: 2px solid #FFCC08; outline-offset: 3px; }
+
+/* Success icon */
+.successIconWrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+/* Switch link */
+.switchText {
+  font-size: 13px;
+  color: var(--color-text-tertiary);
+  font-family: var(--font-sans);
+  margin: 0;
+}
+
+.switchLink {
+  font-weight: 700;
+  color: #FFCC08;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+.switchLink:hover { opacity: 0.75; }

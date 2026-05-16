@@ -1,0 +1,70 @@
+.page {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 40px 0;
+}
+
+.illustration {
+  width: 220px;
+  height: auto;
+}
+
+.copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  max-width: 260px;
+}
+
+.heading {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.body {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.createBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #FFCC08;
+  color: #000000;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 28px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+  letter-spacing: -0.01em;
+}
+.createBtn:hover {
+  opacity: 0.88;
+  transform: scale(1.02);
+}
+.createBtn:active {
+  transform: scale(0.98);
+}
+.createBtn:focus-visible {
+  outline: 2px solid #FFCC08;
+  outline-offset: 3px;
+}

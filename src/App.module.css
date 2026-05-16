@@ -1,0 +1,190 @@
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+  transition: background 0.2s, color 0.2s;
+}
+
+.topbar {
+  height: 56px;
+  background: var(--color-surface);
+  border-bottom: 0.5px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+}
+
+.logo {
+  height: 15px;
+  width: auto;
+  display: block;
+  flex: 1;
+}
+
+.topbarRight {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.iconBtn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.iconBtn:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
+}
+.iconBtn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Cart badge */
+.cartBadge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #FDF2F2;
+  color: #9B1C1C;
+  font-size: 9px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  line-height: 1;
+}
+
+/* Profile avatar */
+.profileWrap {
+  position: relative;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #FFCC08;
+  color: #0f0f10;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+  flex-shrink: 0;
+}
+.avatar:hover {
+  opacity: 0.85;
+  transform: scale(1.05);
+}
+.avatar:focus-visible {
+  outline: 2px solid #FFCC08;
+  outline-offset: 2px;
+}
+
+/* Profile dropdown — exact Figma specs */
+.profileDropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--color-dropdown-bg);
+  border: 1px solid var(--color-dropdown-border);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  box-shadow: var(--color-dropdown-shadow);
+  animation: dropIn 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 100;
+}
+
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+.profileDropdownAvatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #FFCC08;
+  color: #0f0f10;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.profileDropdownInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.profileDropdownName {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+.profileDropdownPhone {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+/* Greeting */
+.greeting {
+  width: 300px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  letter-spacing: -0.01em;
+}
+
+/* Main content */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 20px;
+  padding-top: calc(56px + 24px);
+  gap: 16px;
+  background: var(--color-bg);
+  transition: background 0.2s;
+}
