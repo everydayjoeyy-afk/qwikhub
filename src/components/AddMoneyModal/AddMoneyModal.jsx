@@ -1,11 +1,36 @@
 import { useState, useEffect, useRef } from 'react'
+import { usePaystackPayment } from 'react-paystack'
 import { CloseCircle } from 'iconsax-react'
+import { useAuth } from '../../context/AuthContext'
+import { creditWallet } from '../../lib/db'
 import styles from './AddMoneyModal.module.css'
 
+const PAYSTACK_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY
+const FEE_RATE     = 0.02   // 2% — we absorb the 0.5% difference from Paystack's 1.5%
+
 export default function AddMoneyModal({ open, onClose }) {
-  const [amount, setAmount] = useState('')
-  const inputRef = useRef(null)
+  const { user, profile, refetchProfile } = useAuth()
+  const [amount, setAmount]   = useState('')
+  const [loading, setLoading] = useState(false)
+  const inputRef   = useRef(null)
   const overlayRef = useRef(null)
+
+  const parsed      = parseFloat(amount) || 0
+  const isValid     = parsed >= 1                          // minimum ₵1
+  const fee         = isValid ? parsed * FEE_RATE : 0
+  const totalCharge = isValid ? parsed + fee : 0           // what Paystack charges
+  const kobo        = Math.round(totalCharge * 100)        // Paystack uses pesewas (GHS×100)
+
+  const paystackConfig = {
+    reference:  `qwikhub_${Date.now()}`,
+    email:      user?.email ?? '',
+    amount:     kobo,
+    currency:   'GHS',
+    publicKey:  PAYSTACK_KEY,
+    metadata:   { credit_amount: parsed },                 // original amount to credit
+  }
+
+  const initPaystack = usePaystackPayment(paystackConfig)
 
   useEffect(() => {
     if (!open) return
@@ -19,20 +44,40 @@ export default function AddMoneyModal({ open, onClose }) {
     return () => { document.body.style.overflow = '' }
   }, [open])
 
-  // Auto-focus input when modal opens
   useEffect(() => {
     if (open) {
       const t = setTimeout(() => inputRef.current?.focus(), 80)
       return () => clearTimeout(t)
     } else {
       setAmount('')
+      setLoading(false)
     }
   }, [open])
 
   if (!open) return null
 
-  const parsed = parseFloat(amount.replace(/,/g, ''))
-  const isValid = !isNaN(parsed) && parsed > 0
+  const handleProceed = () => {
+    if (!isValid || loading) return
+    setLoading(true)
+
+    initPaystack({
+      onSuccess: async (transaction) => {
+        // Credit the wallet with the original amount (before fee)
+        await creditWallet(
+          user.id,
+          parsed,
+          `Wallet top-up via Paystack`,
+          transaction.reference,
+        )
+        await refetchProfile()   // refresh wallet balance in UI
+        setLoading(false)
+        onClose()
+      },
+      onClose: () => {
+        setLoading(false)
+      },
+    })
+  }
 
   return (
     <div
@@ -54,9 +99,7 @@ export default function AddMoneyModal({ open, onClose }) {
         </div>
 
         <div className={styles.body}>
-          <label className={styles.label} htmlFor="add-money-amount">
-            Amount
-          </label>
+          <label className={styles.label} htmlFor="add-money-amount">Amount</label>
 
           <div className={styles.inputWrap}>
             <span className={styles.prefix}>₵</span>
@@ -65,7 +108,7 @@ export default function AddMoneyModal({ open, onClose }) {
               id="add-money-amount"
               type="number"
               inputMode="decimal"
-              min="0"
+              min="1"
               step="0.01"
               className={styles.input}
               placeholder="0.00"
@@ -90,11 +133,22 @@ export default function AddMoneyModal({ open, onClose }) {
           <p className={styles.feeNote}>
             A <strong>2% processing fee</strong> is charged on all top-ups (powered by Paystack).
           </p>
+
+          {/* Debit badge — only show when amount is entered */}
+          {isValid && (
+            <div className={styles.debitBadge}>
+              You'll be debited <strong>₵{totalCharge.toFixed(2)}</strong>
+            </div>
+          )}
         </div>
 
         <div className={styles.footer}>
-          <button className={styles.proceedBtn} disabled={!isValid}>
-            Proceed
+          <button
+            className={styles.proceedBtn}
+            disabled={!isValid || loading}
+            onClick={handleProceed}
+          >
+            {loading ? 'Opening Paystack…' : 'Proceed'}
           </button>
         </div>
       </div>

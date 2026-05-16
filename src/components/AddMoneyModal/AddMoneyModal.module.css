@@ -189,6 +189,27 @@
   color: var(--color-text-secondary);
 }
 
+/* Debit badge */
+.debitBadge {
+  align-self: center;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  color: #92660A;
+  background: #FFF9E0;
+  border: 1px solid #FFCC08;
+  border-radius: 999px;
+  padding: 5px 14px;
+}
+.debitBadge strong {
+  font-weight: 700;
+}
+[data-theme="dark"] .debitBadge {
+  background: rgba(255, 204, 8, 0.12);
+  color: #FFCC08;
+  border-color: rgba(255, 204, 8, 0.35);
+}
+
 /* Footer */
 .footer {
   padding: 20px;
