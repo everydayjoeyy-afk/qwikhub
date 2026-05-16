@@ -14,7 +14,6 @@ import Home from './pages/Home'
 import Bundles from './pages/Bundles'
 import Subscription from './pages/Subscription'
 import BillingHistory from './pages/BillingHistory'
-import Store from './pages/Store'
 import MyStore from './pages/MyStore'
 import Orders from './pages/Orders'
 import Transactions from './pages/Transactions'
@@ -173,7 +172,6 @@ export default function App() {
           <Route path="/bundles/:sub"        element={<ProtectedRoute><Bundles /></ProtectedRoute>} />
           <Route path="/subscription"        element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
           <Route path="/subscription/billing" element={<ProtectedRoute><BillingHistory /></ProtectedRoute>} />
-          <Route path="/store"               element={<ProtectedRoute><Store /></ProtectedRoute>} />
           <Route path="/my-store"            element={<ProtectedRoute><MyStore /></ProtectedRoute>} />
           <Route path="/my-store/orders"     element={<ProtectedRoute><StoreOrders /></ProtectedRoute>} />
           <Route path="/withdrawals"         element={<ProtectedRoute><Withdrawals /></ProtectedRoute>} />

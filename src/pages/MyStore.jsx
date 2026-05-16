@@ -1,11 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, ArrowRight2, ArrowDown2, Share, MoneyRecive } from 'iconsax-react'
+import { ArrowLeft, ArrowRight2, ArrowDown2, Share, MoneyRecive, Shop } from 'iconsax-react'
 import LoadingScreen from '../components/LoadingScreen/LoadingScreen'
+import CreateStoreModal from '../components/CreateStoreModal/CreateStoreModal'
 import { BUNDLE_OPTIONS } from '../components/BundleSelect/BundleSelect'
 import { THEMES } from '../components/CreateStoreModal/CreateStoreModal'
 import { useAuth } from '../context/AuthContext'
 import { getMyStore, updateStore, getStoreBundles, upsertStoreBundle, getStoreOrders, getBundles } from '../lib/db'
+import empty from '../assets/empty.svg'
+import storeStyles from './Store.module.css'
 import mtnLogo      from '../assets/mtn.jpg'
 import telecelLogo  from '../assets/telecel.jpg'
 import tigoLogo     from '../assets/tigo.jpg'
@@ -58,6 +61,8 @@ export default function MyStore() {
   const saveTimer    = useRef(null)
   const initialised  = useRef(false)
 
+  const [hasNoStore, setHasNoStore]  = useState(false)
+  const [createStoreOpen, setCreateStoreOpen] = useState(false)
   const [tab, setTab]               = useState('orders')
   const [storeId, setStoreId]       = useState(null)
   const [storeName, setStoreName]   = useState('')
@@ -81,9 +86,9 @@ export default function MyStore() {
 
     ;(async () => {
       try {
-        // 1. Fetch existing store — if none exists, send back to /store
+        // 1. Fetch existing store — if none exists show empty state
         const { data: store } = await getMyStore(user.id)
-        if (!store) { navigate('/store', { replace: true }); return }
+        if (!store) { setHasNoStore(true); return }
 
         // 2. Build bundleMap from master bundles
         const { data: masterBundles } = await getBundles()
@@ -197,6 +202,27 @@ export default function MyStore() {
   }
 
   if (loadingStore) return <LoadingScreen />
+
+  if (hasNoStore) return (
+    <div className={storeStyles.page}>
+      <img src={empty} alt="" className={storeStyles.illustration} aria-hidden="true" />
+      <div className={storeStyles.copy}>
+        <h2 className={storeStyles.heading}>No store yet</h2>
+        <p className={storeStyles.body}>
+          Create your own store to sell data bundles at your own prices and earn on every sale.
+        </p>
+      </div>
+      <button className={storeStyles.createBtn} onClick={() => setCreateStoreOpen(true)}>
+        <Shop size={20} color="currentColor" variant="Bold" />
+        Create Store
+      </button>
+      <CreateStoreModal
+        open={createStoreOpen}
+        onClose={() => setCreateStoreOpen(false)}
+        onCreated={() => { setCreateStoreOpen(false); setHasNoStore(false); setLoadingStore(true) }}
+      />
+    </div>
+  )
 
   return (
     <div className={styles.page}>

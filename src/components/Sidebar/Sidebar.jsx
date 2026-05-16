@@ -53,7 +53,6 @@ export default function Sidebar({ open, onClose, isDark }) {
     if (p === '/orders') return 'bundles-orders'
     if (p.startsWith('/bundles')) return p === '/bundles' ? 'bundles-all' : p.replace('/bundles/', 'bundles-')
     if (p.startsWith('/subscription')) return p === '/subscription' ? 'sub-plan' : p.replace('/subscription/', 'sub-')
-    if (p === '/store') return 'store-mystore'
     if (p.startsWith('/my-store')) return 'store-mystore'
     if (p === '/withdrawals') return 'store-withdrawals'
     if (p === '/transactions') return 'transactions'
