@@ -8,24 +8,51 @@ import { getMyStore } from '../lib/db'
 import styles from './Store.module.css'
 
 export default function Store() {
-  const navigate     = useNavigate()
-  const { user }     = useAuth()
-  const [modalOpen, setModalOpen]   = useState(false)
-  const [checking, setChecking]     = useState(true)
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const [modalOpen, setModalOpen] = useState(false)
+  const [checking, setChecking]   = useState(true)
 
-  // If user already has a store, go straight to it
   useEffect(() => {
     if (!user) return
+
+    // Safety: never stay blank forever on slow networks
+    const timer = setTimeout(() => setChecking(false), 6000)
+
     getMyStore(user.id).then(({ data }) => {
+      clearTimeout(timer)
       if (data) {
         navigate('/my-store', { replace: true })
       } else {
         setChecking(false)
       }
     })
+
+    return () => clearTimeout(timer)
   }, [user])
 
-  if (checking) return null
+  // Show a subtle spinner while checking — NOT a blank page
+  if (checking) {
+    return (
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 200,
+      }}>
+        <div style={{
+          width: 28,
+          height: 28,
+          borderRadius: '50%',
+          border: '3px solid var(--color-border)',
+          borderTopColor: '#FFCC08',
+          animation: 'spin 0.7s linear infinite',
+        }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    )
+  }
 
   return (
     <div className={styles.page}>
