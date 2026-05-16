@@ -36,23 +36,45 @@ export function AuthProvider({ children }) {
   }
 
   useEffect(() => {
-    let settled = false
+    let loadingCleared = false
+    const clearLoadingOnce = () => {
+      if (!loadingCleared) { loadingCleared = true; setLoading(false) }
+    }
 
-    // Safety net: never stay in loading state forever.
-    // getSession() can stall on page-refresh when it tries to silently
-    // refresh an expired token over a slow network.  After 5 s we unblock
-    // the UI; onAuthStateChange will still update state once it resolves.
-    const fallback = setTimeout(() => {
-      if (!settled) { settled = true; setLoading(false) }
-    }, 5000)
+    // ── FAST PATH (synchronous) ──────────────────────────────────────────
+    // Read the cached session from localStorage instantly so returning users
+    // never see a blank/loading screen while the network token-refresh runs.
+    // The user object inside the session is valid even after the access token expires.
+    try {
+      const raw = localStorage.getItem('sb-qwikhub-session')
+      if (raw) {
+        const cachedUser = JSON.parse(raw)?.user
+        if (cachedUser?.id) {
+          setUser(cachedUser)
+          fetchProfile(cachedUser.id, cachedUser)
+          clearLoadingOnce()   // show the app immediately
+        }
+      }
+    } catch (_) {}
 
+    // Fallback for brand-new users who have nothing in localStorage yet
+    const fallback = setTimeout(clearLoadingOnce, 5000)
+
+    // ── SLOW PATH (async) ────────────────────────────────────────────────
+    // Proper token validation / refresh.  Corrects state if the cached
+    // session turned out to be invalid or was revoked.
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (settled) return          // fallback already fired
-      settled = true
       clearTimeout(fallback)
-      setUser(session?.user ?? null)
-      if (session?.user) fetchProfile(session.user.id, session.user)
-      setLoading(false)
+      if (session?.user) {
+        setUser(session.user)
+        fetchProfile(session.user.id, session.user)
+      } else {
+        // Refresh failed or no session — force sign-out
+        setUser(null)
+        setProfile(null)
+        localStorage.removeItem('sb-qwikhub-session')
+      }
+      clearLoadingOnce()
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
