@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Copy, Share, Shop, WalletMoney } from 'iconsax-react'
 import CreateStoreModal from '../components/CreateStoreModal/CreateStoreModal'
+import { useAuth } from '../context/AuthContext'
+import { getReferrals, getMyStore } from '../lib/db'
 import styles from './Refer.module.css'
 
-const REFERRAL_CODE = 'JOEL10'
-const REFERRAL_LINK = `https://qwikhub.com/signup?ref=${REFERRAL_CODE}`
 const COMMISSION_RATE = 0.05
 
 const STEPS = [
@@ -26,42 +26,71 @@ const STEPS = [
   },
 ]
 
-const REFERRED_USERS = [
-  { id: 1, phone: '0551***567', joinedDate: 'Today',      totalPurchases: 320.00 },
-  { id: 2, phone: '0241***890', joinedDate: 'Yesterday',  totalPurchases: 184.50 },
-  { id: 3, phone: '0271***213', joinedDate: 'Yesterday',  totalPurchases:  96.50 },
-  { id: 4, phone: '0201***774', joinedDate: '2 days ago', totalPurchases: 451.20 },
-  { id: 5, phone: '0557***038', joinedDate: '2 days ago', totalPurchases:  39.80 },
-]
+function maskPhone(phone) {
+  if (!phone) return '—'
+  return phone.slice(0, 4) + '***' + phone.slice(-3)
+}
 
-// simulate no store initially — flip to true to test the other state
-const USER_HAS_STORE = false
-
-function anonymise(phone) {
-  return phone
+function timeAgo(isoString) {
+  const d = new Date(isoString)
+  const now = new Date()
+  const diffDays = Math.floor((now - d) / 86400000)
+  if (diffDays === 0) return 'Today'
+  if (diffDays === 1) return 'Yesterday'
+  return `${diffDays} days ago`
 }
 
 export default function Refer() {
   const navigate = useNavigate()
+  const { user, profile } = useAuth()
+
+  const [referrals, setReferrals]           = useState([])
+  const [loading, setLoading]               = useState(true)
+  const [hasStore, setHasStore]             = useState(false)
   const [showNoStorePrompt, setShowNoStorePrompt] = useState(false)
-  const [createStoreOpen, setCreateStoreOpen] = useState(false)
+  const [createStoreOpen, setCreateStoreOpen]     = useState(false)
+  const [linkCopied, setLinkCopied]         = useState(false)
 
-  const totalEarnings = REFERRED_USERS.reduce(
-    (sum, u) => sum + u.totalPurchases * COMMISSION_RATE, 0
-  )
+  const referralCode = profile?.referral_code ?? '—'
+  const referralLink = `${window.location.origin}/signup?ref=${referralCode}`
 
-  const [linkCopied, setLinkCopied] = useState(false)
+  useEffect(() => {
+    if (!user) return
+    Promise.all([
+      getReferrals(user.id),
+      getMyStore(user.id),
+    ]).then(([{ data: refs }, { data: store }]) => {
+      setReferrals(refs ?? [])
+      setHasStore(!!store)
+      setLoading(false)
+    })
+  }, [user])
+
+  // Commission earned = sum of commission_amount recorded on each referral row
+  const totalEarnings = referrals.reduce((sum, r) => sum + (r.commission_amount ?? 0), 0)
+
   const handleCopy = () => {
-    navigator.clipboard?.writeText(REFERRAL_LINK)
+    navigator.clipboard?.writeText(referralLink)
     setLinkCopied(true)
     setTimeout(() => setLinkCopied(false), 2000)
   }
 
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'Join QwikHub',
+        text: `Buy cheap data bundles on QwikHub! Sign up with my link:`,
+        url: referralLink,
+      }).catch(() => {})
+    } else {
+      handleCopy()
+    }
+  }
+
   const handleTransfer = () => {
-    if (!USER_HAS_STORE) {
+    if (!hasStore) {
       setShowNoStorePrompt(true)
     }
-    // else: handle actual transfer
   }
 
   return (
@@ -75,7 +104,7 @@ export default function Refer() {
         <div className={styles.headerSpacer} />
       </div>
 
-      {/* Earnings summary — shown before the link */}
+      {/* Earnings summary */}
       <div className={styles.earningsCard}>
         <div className={styles.earningsInfo}>
           <span className={styles.earningsLabel}>Total earnings</span>
@@ -96,12 +125,11 @@ export default function Refer() {
         <div className={styles.noStorePrompt}>
           <div className={styles.noStoreText}>
             <span className={styles.noStoreTitle}>No store yet</span>
-            <span className={styles.noStoreBody}>Create your store to receive referral earnings and sell bundles at your own prices.</span>
+            <span className={styles.noStoreBody}>
+              Create your store to receive referral earnings and sell bundles at your own prices.
+            </span>
           </div>
-          <button
-            className={styles.createStoreBtn}
-            onClick={() => setCreateStoreOpen(true)}
-          >
+          <button className={styles.createStoreBtn} onClick={() => setCreateStoreOpen(true)}>
             <Shop size={16} color="currentColor" variant="Bold" />
             Create Store
           </button>
@@ -112,12 +140,12 @@ export default function Refer() {
       <div className={styles.codeCard}>
         <span className={styles.codeLabel}>Your referral link</span>
         <div className={styles.codeRow}>
-          <span className={styles.link}>{REFERRAL_LINK}</span>
+          <span className={styles.link}>{referralLink}</span>
           <button className={styles.copyBtn} onClick={handleCopy} aria-label="Copy link">
             <Copy size={18} color="currentColor" variant="Bold" />
           </button>
         </div>
-        <button className={styles.shareBtn}>
+        <button className={styles.shareBtn} onClick={handleShare}>
           <Share size={18} color="currentColor" variant="Bold" />
           Share with friends
         </button>
@@ -139,38 +167,49 @@ export default function Refer() {
         </div>
       </div>
 
-      {/* Earnings + referred users */}
+      {/* Referred users */}
       <div className={styles.section}>
         <span className={styles.sectionTitle}>Your Referrals</span>
 
-        {/* Referred users list */}
-        {REFERRED_USERS.length === 0 ? (
+        {loading ? (
+          <p style={{ textAlign: 'center', padding: '16px 0', opacity: 0.5, fontSize: 13 }}>
+            Loading…
+          </p>
+        ) : referrals.length === 0 ? (
           <div className={styles.emptyReferrals}>
-            <span className={styles.emptyText}>No referrals yet. Share your code to get started.</span>
+            <span className={styles.emptyText}>
+              No referrals yet. Share your link to get started.
+            </span>
           </div>
         ) : (
           <div className={styles.usersList}>
-            {REFERRED_USERS.map((user, i) => (
-              <div key={user.id}>
-                <div className={styles.userRow}>
-                  <div className={styles.userAvatar}>
-                    {user.phone.slice(0, 1)}
+            {referrals.map((ref, i) => {
+              const u = ref.referred_user
+              const commission = ref.commission_amount ?? 0
+              return (
+                <div key={ref.id}>
+                  <div className={styles.userRow}>
+                    <div className={styles.userAvatar}>
+                      {(u?.name ?? u?.phone ?? '?').slice(0, 1).toUpperCase()}
+                    </div>
+                    <div className={styles.userInfo}>
+                      <span className={styles.userPhone}>{maskPhone(u?.phone)}</span>
+                      <span className={styles.userJoined}>
+                        Joined {timeAgo(ref.created_at)}
+                      </span>
+                    </div>
+                    <div className={styles.userEarnings}>
+                      <span className={styles.userCommission}>+₵{commission.toFixed(2)}</span>
+                    </div>
                   </div>
-                  <div className={styles.userInfo}>
-                    <span className={styles.userPhone}>{anonymise(user.phone)}</span>
-                    <span className={styles.userJoined}>Joined {user.joinedDate}</span>
-                  </div>
-                  <div className={styles.userEarnings}>
-                    <span className={styles.userPurchases}>₵{user.totalPurchases.toFixed(2)} spent</span>
-                    <span className={styles.userCommission}>+₵{(user.totalPurchases * COMMISSION_RATE).toFixed(2)}</span>
-                  </div>
+                  {i < referrals.length - 1 && <div className={styles.divider} />}
                 </div>
-                {i < REFERRED_USERS.length - 1 && <div className={styles.divider} />}
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
+
       {linkCopied && <div className={styles.toast}>Link copied!</div>}
 
       <CreateStoreModal

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Eye, EyeSlash } from 'iconsax-react'
 import logoLight from '../assets/logo-light.svg'
@@ -8,7 +8,12 @@ import styles from './SignIn.module.css'
 
 export default function SignIn({ isDark }) {
   const navigate = useNavigate()
-  const { signIn } = useAuth()
+  const { signIn, user, loading: authLoading } = useAuth()
+
+  // If already signed in, go straight to home
+  useEffect(() => {
+    if (!authLoading && user) navigate('/', { replace: true })
+  }, [user, authLoading])
   const [email, setEmail]         = useState('')
   const [password, setPassword]   = useState('')
   const [showPass, setShowPass]   = useState(false)
