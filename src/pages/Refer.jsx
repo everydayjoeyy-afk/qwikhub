@@ -56,14 +56,18 @@ export default function Refer() {
 
   useEffect(() => {
     if (!user) return
+    // Safety: never stay in loading state forever
+    const timer = setTimeout(() => setLoading(false), 8000)
     Promise.all([
       getReferrals(user.id),
       getMyStore(user.id),
     ]).then(([{ data: refs }, { data: store }]) => {
+      clearTimeout(timer)
       setReferrals(refs ?? [])
       setHasStore(!!store)
       setLoading(false)
     })
+    return () => clearTimeout(timer)
   }, [user])
 
   // Commission earned = sum of commission_amount recorded on each referral row

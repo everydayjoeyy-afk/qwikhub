@@ -8,19 +8,31 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null)   // users table row
   const [loading, setLoading] = useState(true)
 
-  async function fetchProfile(userId) {
-    const { data } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', userId)
-      .single()
-    if (data) setProfile(data)
-    // If null (slow network / not yet inserted), retry once after 3 s
-    else setTimeout(async () => {
-      const { data: retry } = await supabase
-        .from('users').select('*').eq('id', userId).single()
-      if (retry) setProfile(retry)
-    }, 3000)
+  async function fetchProfile(userId, authUser = null) {
+    // Show name immediately from session metadata (no network call needed)
+    if (authUser?.user_metadata?.name) {
+      setProfile(prev => prev ?? {
+        name:           authUser.user_metadata.name,
+        phone:          authUser.user_metadata.phone ?? '',
+        wallet_balance: 0,
+        referral_code:  null,
+      })
+    }
+
+    // Then fetch the full profile from the DB and overwrite
+    const { data, error } = await supabase
+      .from('users').select('*').eq('id', userId).single()
+    if (data) {
+      setProfile(data)
+    } else {
+      if (error) console.error('[fetchProfile]', error.message)
+      // Retry once after 3 s (handles race where users row isn't inserted yet)
+      setTimeout(async () => {
+        const { data: retry } = await supabase
+          .from('users').select('*').eq('id', userId).single()
+        if (retry) setProfile(retry)
+      }, 3000)
+    }
   }
 
   useEffect(() => {
@@ -39,7 +51,7 @@ export function AuthProvider({ children }) {
       settled = true
       clearTimeout(fallback)
       setUser(session?.user ?? null)
-      if (session?.user) fetchProfile(session.user.id)
+      if (session?.user) fetchProfile(session.user.id, session.user)
       setLoading(false)
     })
 
@@ -47,7 +59,7 @@ export function AuthProvider({ children }) {
       async (_event, session) => {
         setUser(session?.user ?? null)
         if (session?.user) {
-          await fetchProfile(session.user.id)
+          await fetchProfile(session.user.id, session.user)
         } else {
           setProfile(null)
         }
@@ -62,7 +74,11 @@ export function AuthProvider({ children }) {
   }
 
   const signUp = async ({ email, password, name, phone, referralCode }) => {
-    const { data, error } = await supabase.auth.signUp({ email, password })
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { name: name.trim(), phone: phone.trim() } },
+    })
     if (error || !data.user) return { error }
 
     // Generate a unique referral code from name

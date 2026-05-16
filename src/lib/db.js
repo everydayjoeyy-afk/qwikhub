@@ -153,12 +153,18 @@ export async function requestWithdrawal(userId, amount, momoNumber) {
 
 // ── Referrals ────────────────────────────────────────────────
 export async function getReferrals(userId) {
+  // Uses a SECURITY DEFINER RPC because RLS blocks reading referred users' rows directly
   const { data, error } = await supabase
-    .from('referrals')
-    .select('*, referred_user:users!referred_user_id(name,phone,created_at)')
-    .eq('referrer_id', userId)
-    .order('created_at', { ascending: false })
-  return { data, error }
+    .rpc('get_my_referrals', { p_user_id: userId })
+  // Normalise shape to match what Refer.jsx expects
+  const normalised = (data ?? []).map(r => ({
+    id:               r.id,
+    referred_user_id: r.referred_user_id,
+    commission_amount: r.commission_amount,
+    created_at:       r.created_at,
+    referred_user: r.user_name ? { name: r.user_name, phone: r.user_phone } : null,
+  }))
+  return { data: normalised, error }
 }
 
 // ── Master bundles ───────────────────────────────────────────
