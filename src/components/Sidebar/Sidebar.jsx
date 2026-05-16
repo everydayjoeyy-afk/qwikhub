@@ -156,7 +156,7 @@ export default function Sidebar({ open, onClose, isDark }) {
             <button
               key={item.id}
               className={`${styles.navItem} ${item.danger ? styles.danger : ''}`}
-              onClick={() => { onClose(); signOut(); navigate('/signin') }}
+              onClick={() => { onClose(); signOut() }}
             >
               <item.icon size={20} color="currentColor" variant="Linear" />
               <span className={styles.navLabel}>{item.label}</span>
