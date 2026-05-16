@@ -211,49 +211,66 @@ export default function Storefront() {
     setPaying(true)
     setPayError('')
 
+    let reference = null
+
     try {
-      const { reference } = await openPaystackPopup({
-        email:       null, // will use phone fallback
+      const result = await openPaystackPopup({
+        email:       null,
         amount:      total,
         phone:       cart[0].phone,
         bundleLabel: cart.map(i => `${i.networkName} ${i.bundleLabel}`).join(', '),
       })
-
-      // Create order records for each cart item
-      for (const item of cart) {
-        const profit = Math.max(0, item.price - item.platformPrice)
-        if (store.id) {
-          await createOrder({
-            buyerPhone:  item.phone,
-            bundleId:    item.bundleId,
-            storeId:     store.id,
-            amountPaid:  item.price,
-            profit,
-            paystackRef: reference,
-          })
-        }
-      }
-
-      // Credit seller wallet with total profit
-      const totalProfit = cart.reduce((s, item) => s + Math.max(0, item.price - item.platformPrice), 0)
-      if (totalProfit > 0 && store.user_id) {
-        await creditWallet(
-          store.user_id,
-          totalProfit,
-          `Sale from store (${cart.length} item${cart.length > 1 ? 's' : ''})`,
-          reference,
-        )
-      }
-
-      setPaid(true)
-      setCart([])
+      reference = result.reference
     } catch (err) {
-      if (err.message !== 'Payment cancelled') {
+      // Payment cancelled or popup failed — nothing was charged
+      if (err?.message !== 'Payment cancelled') {
         setPayError('Payment failed. Please try again.')
       }
-    } finally {
       setPaying(false)
+      return
     }
+
+    // Payment confirmed — record orders
+    // Errors here are logged but don't block the success screen
+    // (customer has paid; store owner reconciles via Paystack dashboard)
+    if (store.id) {
+      for (const item of cart) {
+        const profit = Math.max(0, item.price - item.platformPrice)
+        const { error: orderErr } = await createOrder({
+          buyerPhone:  item.phone,
+          bundleId:    item.bundleId,
+          storeId:     store.id,
+          amountPaid:  item.price,
+          profit,
+          paystackRef: reference,
+        })
+        if (orderErr) {
+          console.error('[Storefront] createOrder failed:', orderErr, item)
+        }
+      }
+    }
+
+    // Credit seller wallet with total profit
+    const totalProfit = cart.reduce(
+      (s, item) => s + Math.max(0, item.price - item.platformPrice), 0
+    )
+    if (totalProfit > 0 && store.user_id) {
+      const { error: walletErr } = await creditWallet(
+        store.user_id,
+        totalProfit,
+        `Sale from store (${cart.length} item${cart.length > 1 ? 's' : ''})`,
+        reference,
+      )
+      if (walletErr) {
+        // Wallet credit failed — profit not added, but payment was real.
+        // Store owner will see the Paystack transaction and can reconcile.
+        console.error('[Storefront] creditWallet failed — profit not credited:', walletErr)
+      }
+    }
+
+    setPaid(true)
+    setCart([])
+    setPaying(false)
   }
 
   const accentText = theme.accent === '#FFCC08' ? '#000' : '#fff'
