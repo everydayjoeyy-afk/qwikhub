@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight2, ArrowDown2, Share, MoneyRecive } from 'iconsax-
 import { BUNDLE_OPTIONS } from '../components/BundleSelect/BundleSelect'
 import { THEMES } from '../components/CreateStoreModal/CreateStoreModal'
 import { useAuth } from '../context/AuthContext'
-import { getMyStore, createStore, updateStore, getStoreBundles, upsertStoreBundle, getStoreOrders, getBundles } from '../lib/db'
+import { getMyStore, updateStore, getStoreBundles, upsertStoreBundle, getStoreOrders, getBundles } from '../lib/db'
 import mtnLogo      from '../assets/mtn.jpg'
 import telecelLogo  from '../assets/telecel.jpg'
 import tigoLogo     from '../assets/tigo.jpg'
@@ -80,19 +80,9 @@ export default function MyStore() {
 
     ;(async () => {
       try {
-        // 1. Get or create store record
-        let { data: store } = await getMyStore(user.id)
-        if (!store) {
-          const saved = localStorage.getItem('qwikhub_store')
-          const local = saved ? JSON.parse(saved) : null
-          const { data: created } = await createStore(user.id, {
-            store_name: local?.name ?? 'My Store',
-            store_slug: local?.slug ?? user.id.slice(0, 8),
-            theme:      local?.theme ?? 'midnight',
-          })
-          store = created
-        }
-        if (!store) return
+        // 1. Fetch existing store — if none exists, send back to /store
+        const { data: store } = await getMyStore(user.id)
+        if (!store) { navigate('/store', { replace: true }); return }
 
         // 2. Build bundleMap from master bundles
         const { data: masterBundles } = await getBundles()
