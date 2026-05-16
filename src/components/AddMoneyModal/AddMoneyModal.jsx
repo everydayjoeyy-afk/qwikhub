@@ -8,7 +8,7 @@ import styles from './AddMoneyModal.module.css'
 const PAYSTACK_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY
 const FEE_RATE     = 0.02
 
-export default function AddMoneyModal({ open, onClose }) {
+export default function AddMoneyModal({ open, onClose, onPaymentSuccess }) {
   const { user, refetchProfile } = useAuth()
   const [amount, setAmount]       = useState('')
   const [status, setStatus]       = useState('idle') // idle | loading | success | error
@@ -94,6 +94,7 @@ export default function AddMoneyModal({ open, onClose }) {
 
       console.log('[AddMoney] ✅ Wallet credited, refetching profile...')
       await refetchProfile()
+      onPaymentSuccess?.()
       setStatus('success')
       setTimeout(() => onClose(), 1800)
     }

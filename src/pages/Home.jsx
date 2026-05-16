@@ -8,9 +8,14 @@ import { useAuth } from '../context/AuthContext'
 
 export default function Home({ greeting, firstName }) {
   const [addMoneyOpen, setAddMoneyOpen] = useState(false)
+  const [txKey, setTxKey] = useState(0)
   const { profile, refetchProfile } = useAuth()
 
   const balance = profile?.wallet_balance ?? 0
+
+  const handlePaymentSuccess = () => {
+    setTxKey(k => k + 1)  // force RecentTransactions to re-fetch
+  }
 
   return (
     <>
@@ -31,8 +36,12 @@ export default function Home({ greeting, firstName }) {
       />
       <QuickActions />
       <BundleList />
-      <RecentTransactions />
-      <AddMoneyModal open={addMoneyOpen} onClose={() => setAddMoneyOpen(false)} />
+      <RecentTransactions txKey={txKey} />
+      <AddMoneyModal
+        open={addMoneyOpen}
+        onClose={() => setAddMoneyOpen(false)}
+        onPaymentSuccess={handlePaymentSuccess}
+      />
     </>
   )
 }

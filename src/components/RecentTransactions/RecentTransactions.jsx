@@ -25,7 +25,7 @@ function formatTime(isoString) {
   return d.toLocaleDateString('en-GH', { day: 'numeric', month: 'short' })
 }
 
-export default function RecentTransactions() {
+export default function RecentTransactions({ txKey = 0 }) {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [transactions, setTransactions] = useState([])
@@ -34,21 +34,21 @@ export default function RecentTransactions() {
   useEffect(() => {
     if (!user) return
 
-    // Safety: never stay stuck on "Loading…" forever on slow networks
+    setLoading(true)
     const timer = setTimeout(() => setLoading(false), 8000)
 
     getTransactions(user.id)
       .then(({ data }) => {
         setTransactions((data ?? []).slice(0, 4))
       })
-      .catch(() => {})   // silent fail — empty list is fine
+      .catch(() => {})
       .finally(() => {
         clearTimeout(timer)
         setLoading(false)
       })
 
     return () => clearTimeout(timer)
-  }, [user])
+  }, [user, txKey])
 
   return (
     <div className={styles.card}>

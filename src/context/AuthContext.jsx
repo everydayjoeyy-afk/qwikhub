@@ -9,12 +9,13 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   async function fetchProfile(userId, authUser = null) {
-    // Show name immediately from session metadata (no network call needed)
+    // Show name/phone immediately from session metadata while DB fetch loads.
+    // wallet_balance intentionally omitted — we never want to flash ₵0.00 when
+    // the real balance hasn't arrived yet.
     if (authUser?.user_metadata?.name) {
       setProfile(prev => prev ?? {
         name:           authUser.user_metadata.name,
         phone:          authUser.user_metadata.phone ?? '',
-        wallet_balance: 0,
         referral_code:  null,
       })
     }
