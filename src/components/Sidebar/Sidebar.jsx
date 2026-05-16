@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 import {
   Home2, Box, Receipt1, Shop, ReceiptItem, Gift, LogoutCurve, ArrowDown2, CloseCircle,
 } from 'iconsax-react'
@@ -40,6 +41,7 @@ const BOTTOM_NAV = [
 export default function Sidebar({ open, onClose, isDark }) {
   const navigate = useNavigate()
   const location = useLocation()
+  const { signOut } = useAuth()
   const [openDropdowns, setOpenDropdowns] = useState({})
   const firstFocusableRef = useRef(null)
   const touchStartX = useRef(null)
@@ -156,7 +158,7 @@ export default function Sidebar({ open, onClose, isDark }) {
             <button
               key={item.id}
               className={`${styles.navItem} ${item.danger ? styles.danger : ''}`}
-              onClick={() => { onClose(); navigate('/signin') }}
+              onClick={() => { onClose(); signOut(); navigate('/signin') }}
             >
               <item.icon size={20} color="currentColor" variant="Linear" />
               <span className={styles.navLabel}>{item.label}</span>
