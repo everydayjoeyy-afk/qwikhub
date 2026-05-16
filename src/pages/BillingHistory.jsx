@@ -21,6 +21,14 @@ function formatTime(isoStr) {
   return new Date(isoStr).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
 }
 
+// "[Sub] Spotify Premium | 1 month → user@email.com" → { service, email }
+function parseSubDescription(desc) {
+  const body    = desc.startsWith('[Sub] ') ? desc.slice(6) : desc
+  const arrowIdx = body.indexOf(' → ')
+  if (arrowIdx === -1) return { service: body, email: '' }
+  return { service: body.slice(0, arrowIdx), email: body.slice(arrowIdx + 3) }
+}
+
 function groupByDate(items) {
   const map = {}
   items.forEach(tx => {
@@ -44,9 +52,9 @@ export default function BillingHistory() {
 
     getTransactions(user.id)
       .then(({ data }) => {
-        // Billing history = credit transactions (wallet top-ups via Paystack)
-        const credits = (data ?? []).filter(tx => tx.type === 'credit')
-        setBills(credits)
+        // Billing history = subscription service purchases prefixed with [Sub]
+        const subs = (data ?? []).filter(tx => tx.description?.startsWith('[Sub]'))
+        setBills(subs)
       })
       .catch(() => {})
       .finally(() => { clearTimeout(timer); setLoading(false) })
@@ -76,7 +84,7 @@ export default function BillingHistory() {
         <input
           type="search"
           className={styles.searchInput}
-          placeholder="Search billing history"
+          placeholder="Search by service or email"
           value={query}
           onChange={e => setQuery(e.target.value)}
         />
@@ -92,21 +100,25 @@ export default function BillingHistory() {
             <div key={group.date} className={styles.group}>
               <span className={styles.dateLabel}>{group.date}</span>
               <div className={styles.groupItems}>
-                {group.items.map((tx, i) => (
-                  <div key={tx.id}>
-                    <div className={styles.row}>
-                      <div className={styles.info}>
-                        <span className={styles.name}>{tx.description ?? 'Wallet top-up'}</span>
-                        <span className={styles.time}>{formatTime(tx.created_at)}</span>
+                {group.items.map((tx, i) => {
+                  const { service, email } = parseSubDescription(tx.description ?? '')
+                  return (
+                    <div key={tx.id}>
+                      <div className={styles.row}>
+                        <div className={styles.info}>
+                          <span className={styles.name}>{service}</span>
+                          {email && <span className={styles.email}>{email}</span>}
+                          <span className={styles.time}>{formatTime(tx.created_at)}</span>
+                        </div>
+                        <div className={styles.right}>
+                          <span className={styles.price}>₵{Number(tx.amount).toFixed(2)}</span>
+                          <span className={styles.status} data-status="delivered">Completed</span>
+                        </div>
                       </div>
-                      <div className={styles.right}>
-                        <span className={styles.price}>+₵{Number(tx.amount).toFixed(2)}</span>
-                        <span className={styles.status} data-status="delivered">Completed</span>
-                      </div>
+                      {i < group.items.length - 1 && <div className={styles.divider} />}
                     </div>
-                    {i < group.items.length - 1 && <div className={styles.divider} />}
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           ))

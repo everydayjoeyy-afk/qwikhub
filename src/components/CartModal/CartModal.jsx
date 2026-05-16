@@ -56,7 +56,9 @@ export default function CartModal({ open, onClose, onPaymentSuccess }) {
           user_id:     user.id,
           type:        'debit',
           amount:      item.price,
-          description: `${item.bundleLabel} → ${item.phone} (${item.networkName})`,
+          description: item.type === 'subscription'
+            ? `[Sub] ${item.bundleLabel} → ${item.phone}`
+            : `${item.bundleLabel} → ${item.phone} (${item.networkName})`,
         }))
       )
       if (txErr) throw txErr

@@ -57,7 +57,7 @@ export default function Orders() {
       .then(({ data }) => {
         // Bundle orders are debit transactions whose description contains '→'
         const bundleOrders = (data ?? []).filter(
-          tx => tx.type === 'debit' && tx.description?.includes('→')
+          tx => tx.type === 'debit' && tx.description?.includes('→') && !tx.description?.startsWith('[Sub]')
         )
         setOrders(bundleOrders)
       })
