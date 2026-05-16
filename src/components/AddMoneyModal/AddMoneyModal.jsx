@@ -61,16 +61,14 @@ export default function AddMoneyModal({ open, onClose }) {
     setStatus('loading')
 
     initPaystack({
-      onSuccess: async (transaction) => {
-        try {
-          await creditWallet(user.id, parsed, 'Wallet top-up via Paystack', transaction.reference)
-          refetchProfile()          // fire-and-forget — don't await so we don't hang
-          setStatus('success')
-          setTimeout(() => onClose(), 1800)  // close after showing success
-        } catch (err) {
-          console.error('[AddMoney] creditWallet error:', err)
-          setStatus('error')
-        }
+      onSuccess: (transaction) => {
+        // Show success immediately — Paystack already confirmed the payment
+        setStatus('success')
+        setTimeout(() => onClose(), 1800)
+        // Credit wallet + refresh balance in the background
+        creditWallet(user.id, parsed, 'Wallet top-up via Paystack', transaction.reference)
+          .then(() => refetchProfile())
+          .catch((err) => console.error('[AddMoney] creditWallet error:', err))
       },
       onClose: () => {
         // User closed Paystack without paying
