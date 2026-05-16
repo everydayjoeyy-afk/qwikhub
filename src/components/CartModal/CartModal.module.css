@@ -280,3 +280,39 @@
   outline: 2px solid #FFCC08;
   outline-offset: 3px;
 }
+.payBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.errorNote {
+  font-size: 13px;
+  color: #f43f5e;
+  font-family: var(--font-sans);
+  text-align: center;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.successBody {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 24px 48px;
+  text-align: center;
+}
+.successTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  margin: 0;
+}
+.successSub {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+  margin: 0;
+}

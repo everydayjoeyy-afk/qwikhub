@@ -30,6 +30,14 @@ export default function RecentTransactions({ txKey = 0 }) {
   const { user } = useAuth()
   const [transactions, setTransactions] = useState([])
   const [loading, setLoading] = useState(true)
+  const [internalKey, setInternalKey] = useState(0)
+
+  // Re-fetch when cart payment completes (fired from CartModal)
+  useEffect(() => {
+    const handler = () => setInternalKey(k => k + 1)
+    window.addEventListener('qwikhub:payment', handler)
+    return () => window.removeEventListener('qwikhub:payment', handler)
+  }, [])
 
   useEffect(() => {
     if (!user) return
@@ -48,7 +56,7 @@ export default function RecentTransactions({ txKey = 0 }) {
       })
 
     return () => clearTimeout(timer)
-  }, [user, txKey])
+  }, [user, txKey, internalKey])
 
   return (
     <div className={styles.card}>
