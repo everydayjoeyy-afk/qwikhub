@@ -14,7 +14,13 @@ export function AuthProvider({ children }) {
       .select('*')
       .eq('id', userId)
       .single()
-    setProfile(data ?? null)
+    if (data) setProfile(data)
+    // If null (slow network / not yet inserted), retry once after 3 s
+    else setTimeout(async () => {
+      const { data: retry } = await supabase
+        .from('users').select('*').eq('id', userId).single()
+      if (retry) setProfile(retry)
+    }, 3000)
   }
 
   useEffect(() => {
@@ -94,8 +100,14 @@ export function AuthProvider({ children }) {
     return { error: profileError ?? null }
   }
 
-  const signOut = async () => {
-    await supabase.auth.signOut()
+  const signOut = () => {
+    // Clear state and localStorage immediately so navigation works right away,
+    // regardless of how long the network sign-out request takes.
+    setUser(null)
+    setProfile(null)
+    localStorage.removeItem('sb-qwikhub-session')
+    // Fire the server-side sign-out in the background (don't block on it)
+    supabase.auth.signOut().catch(() => {})
   }
 
   const resetPassword = async (email) => {
