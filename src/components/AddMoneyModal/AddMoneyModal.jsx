@@ -86,6 +86,10 @@ export default function AddMoneyModal({ open, onClose }) {
               </button>
             ))}
           </div>
+
+          <p className={styles.feeNote}>
+            A <strong>2% processing fee</strong> is charged on all top-ups (powered by Paystack).
+          </p>
         </div>
 
         <div className={styles.footer}>
