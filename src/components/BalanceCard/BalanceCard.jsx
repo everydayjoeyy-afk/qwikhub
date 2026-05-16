@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { WalletMoney, Refresh, TickCircle } from 'iconsax-react'
+import { WalletMoney, Refresh2, TickCircle } from 'iconsax-react'
 import styles from './BalanceCard.module.css'
 import effect from '../../assets/effect.png'
 
@@ -41,14 +41,13 @@ export default function BalanceCard({ balance = '0.00', onAddMoney, onRefresh })
           disabled={refreshState !== 'idle'}
         >
           {refreshState === 'done' ? (
-            <TickCircle size={20} color="currentColor" variant="Bold" />
+            <span className={styles.iconWrap}>
+              <TickCircle size={24} color="currentColor" variant="Bold" />
+            </span>
           ) : (
-            <Refresh
-              size={20}
-              color="currentColor"
-              variant="Bold"
-              className={refreshState === 'spinning' ? styles.spinning : ''}
-            />
+            <span className={`${styles.iconWrap} ${refreshState === 'spinning' ? styles.spinning : ''}`}>
+              <Refresh2 size={24} color="currentColor" />
+            </span>
           )}
         </button>
       </div>
