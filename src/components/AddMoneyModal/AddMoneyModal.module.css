@@ -277,3 +277,17 @@
   opacity: 0.35;
   cursor: not-allowed;
 }
+
+.fallbackBtn {
+  width: 100%;
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  color: var(--color-text-secondary);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 4px 0;
+  text-align: center;
+}

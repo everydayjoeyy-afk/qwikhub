@@ -10,8 +10,10 @@ const FEE_RATE     = 0.02
 
 export default function AddMoneyModal({ open, onClose }) {
   const { user, refetchProfile } = useAuth()
-  const [amount, setAmount]     = useState('')
-  const [status, setStatus]     = useState('idle') // idle | loading | success | error
+  const [amount, setAmount]       = useState('')
+  const [status, setStatus]       = useState('idle') // idle | loading | success | error
+  const [showFallback, setShowFallback] = useState(false)
+  const fallbackTimer = useRef(null)
   const inputRef   = useRef(null)
   const overlayRef = useRef(null)
 
@@ -51,6 +53,8 @@ export default function AddMoneyModal({ open, onClose }) {
       // Reset when modal closes
       setAmount('')
       setStatus('idle')
+      setShowFallback(false)
+      clearTimeout(fallbackTimer.current)
     }
   }, [open])
 
@@ -58,20 +62,28 @@ export default function AddMoneyModal({ open, onClose }) {
 
   const handleProceed = () => {
     if (!isValid || status === 'loading') return
+    const capturedAmount = parsed   // capture before any re-render
     setStatus('loading')
 
+    // Fallback: if Paystack callback doesn't fire within 8s (mobile browser issue),
+    // show a manual "I've paid" button so the user isn't stuck forever
+    fallbackTimer.current = setTimeout(() => setShowFallback(true), 8000)
+
+    const handleSuccess = (reference) => {
+      clearTimeout(fallbackTimer.current)
+      setShowFallback(false)
+      setStatus('success')
+      setTimeout(() => onClose(), 1800)
+      creditWallet(user.id, capturedAmount, 'Wallet top-up via Paystack', reference)
+        .then(() => refetchProfile())
+        .catch((err) => console.error('[AddMoney] creditWallet error:', err))
+    }
+
     initPaystack({
-      onSuccess: (transaction) => {
-        // Show success immediately — Paystack already confirmed the payment
-        setStatus('success')
-        setTimeout(() => onClose(), 1800)
-        // Credit wallet + refresh balance in the background
-        creditWallet(user.id, parsed, 'Wallet top-up via Paystack', transaction.reference)
-          .then(() => refetchProfile())
-          .catch((err) => console.error('[AddMoney] creditWallet error:', err))
-      },
+      onSuccess: (transaction) => handleSuccess(transaction.reference),
       onClose: () => {
-        // User closed Paystack without paying
+        clearTimeout(fallbackTimer.current)
+        setShowFallback(false)
         setStatus('idle')
       },
     })
@@ -169,6 +181,20 @@ export default function AddMoneyModal({ open, onClose }) {
           >
             {status === 'loading' ? 'Opening Paystack…' : 'Proceed'}
           </button>
+
+          {showFallback && (
+            <button
+              className={styles.fallbackBtn}
+              onClick={() => {
+                clearTimeout(fallbackTimer.current)
+                setStatus('success')
+                setTimeout(() => onClose(), 1800)
+                refetchProfile()
+              }}
+            >
+              Paid successfully? Tap to confirm
+            </button>
+          )}
         </div>
       </div>
     </div>
