@@ -11,7 +11,6 @@ import styles from './App.module.css'
 
 import CartModal from './components/CartModal/CartModal'
 import Home from './pages/Home'
-import Bundles from './pages/Bundles'
 import Subscription from './pages/Subscription'
 import BillingHistory from './pages/BillingHistory'
 import MyStore from './pages/MyStore'
@@ -168,8 +167,6 @@ export default function App() {
 
           {/* Protected routes */}
           <Route path="/" element={<ProtectedRoute><Home greeting={greeting} firstName={firstName} /></ProtectedRoute>} />
-          <Route path="/bundles"             element={<ProtectedRoute><Bundles /></ProtectedRoute>} />
-          <Route path="/bundles/:sub"        element={<ProtectedRoute><Bundles /></ProtectedRoute>} />
           <Route path="/subscription"        element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
           <Route path="/subscription/billing" element={<ProtectedRoute><BillingHistory /></ProtectedRoute>} />
           <Route path="/my-store"            element={<ProtectedRoute><MyStore /></ProtectedRoute>} />

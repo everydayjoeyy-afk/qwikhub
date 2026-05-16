@@ -13,8 +13,7 @@ const NAV = [
   {
     id: 'bundles', label: 'Bundles', icon: Box,
     children: [
-      { id: 'bundles-all',    label: 'All Bundles', path: '/bundles' },
-      { id: 'bundles-orders', label: 'Orders',      path: '/orders' },
+      { id: 'bundles-orders', label: 'Orders', path: '/orders' },
     ],
   },
   {

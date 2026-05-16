@@ -5,33 +5,48 @@
   width: 100%;
 }
 
-/* Each card — Figma: horizontal, 1px border, radius 16px, padding 10 12, space-between */
+/* Card wrapper */
 .card {
   width: 100%;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 12px;
   background: var(--color-surface);
   border: 1px solid #E6EAEB;
   border-radius: 16px;
-  cursor: pointer;
-  font-family: var(--font-sans);
-  transition: background 0.15s;
-  text-align: left;
-}
-.card:hover {
-  background: var(--color-surface-hover);
-}
-.card:focus-visible {
-  outline: 2px solid #FFCC08;
-  outline-offset: 2px;
+  overflow: hidden;
+  transition: border-color 0.2s;
 }
 
 [data-theme="dark"] .card {
   border-color: rgba(255, 255, 255, 0.08);
+}
+
+.cardOpen {
+  border-color: #FFCC08;
+}
+
+[data-theme="dark"] .cardOpen {
+  border-color: #FFCC08;
+}
+
+/* Header row — always visible */
+.cardHeader {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  text-align: left;
+  transition: background 0.15s;
+}
+.cardHeader:hover {
+  background: var(--color-surface-hover);
+}
+.cardHeader:focus-visible {
+  outline: 2px solid #FFCC08;
+  outline-offset: -2px;
 }
 
 /* Network logo */
@@ -52,12 +67,96 @@
   letter-spacing: -0.01em;
 }
 
-/* Chevron */
+/* Chevron — rotates when open */
 .chevron {
-  color: #4D4F50;
+  color: var(--color-text-tertiary);
   flex-shrink: 0;
+  transition: transform 0.22s ease;
+}
+.chevronOpen {
+  transform: rotate(180deg);
 }
 
-[data-theme="dark"] .chevron {
+/* Expandable body */
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 16px 16px;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Phone input field */
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+}
+
+.input {
+  width: 100%;
+  height: 44px;
+  background: var(--color-bg);
+  border: 1.5px solid var(--color-border);
+  border-radius: 10px;
+  padding: 0 12px;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.input::placeholder {
   color: var(--color-text-tertiary);
+  opacity: 0.6;
+}
+.input:focus {
+  border-color: #FFCC08;
+}
+
+/* Add to cart button */
+.addBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 46px;
+  background: #FFCC08;
+  color: #000000;
+  border: none;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.addBtn:hover:not(:disabled) {
+  opacity: 0.88;
+  transform: scale(1.01);
+}
+.addBtn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.addBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.addBtn:focus-visible {
+  outline: 2px solid #FFCC08;
+  outline-offset: 3px;
 }
