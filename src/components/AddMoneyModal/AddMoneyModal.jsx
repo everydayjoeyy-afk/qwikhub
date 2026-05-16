@@ -73,17 +73,26 @@ export default function AddMoneyModal({ open, onClose }) {
       clearTimeout(fallbackTimer.current)
       setShowFallback(false)
 
+      console.log('[AddMoney] ✅ onSuccess fired', { reference, userId: user?.id, capturedAmount })
+
+      if (!user?.id) {
+        console.error('[AddMoney] ❌ user.id is missing!')
+        setStatus('wallet_error')
+        return
+      }
+
+      console.log('[AddMoney] 📞 Calling creditWallet RPC...')
       const { error: walletErr } = await creditWallet(
         user.id, capturedAmount, 'Wallet top-up via Paystack', reference
       )
 
       if (walletErr) {
-        console.error('[AddMoney] creditWallet RPC error:', walletErr)
-        // Still show success for payment, but warn about balance
+        console.error('[AddMoney] ❌ creditWallet RPC error:', JSON.stringify(walletErr))
         setStatus('wallet_error')
         return
       }
 
+      console.log('[AddMoney] ✅ Wallet credited, refetching profile...')
       await refetchProfile()
       setStatus('success')
       setTimeout(() => onClose(), 1800)
