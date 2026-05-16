@@ -18,7 +18,20 @@ export function AuthProvider({ children }) {
   }
 
   useEffect(() => {
+    let settled = false
+
+    // Safety net: never stay in loading state forever.
+    // getSession() can stall on page-refresh when it tries to silently
+    // refresh an expired token over a slow network.  After 5 s we unblock
+    // the UI; onAuthStateChange will still update state once it resolves.
+    const fallback = setTimeout(() => {
+      if (!settled) { settled = true; setLoading(false) }
+    }, 5000)
+
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (settled) return          // fallback already fired
+      settled = true
+      clearTimeout(fallback)
       setUser(session?.user ?? null)
       if (session?.user) fetchProfile(session.user.id)
       setLoading(false)
@@ -34,7 +47,7 @@ export function AuthProvider({ children }) {
         }
       }
     )
-    return () => subscription.unsubscribe()
+    return () => { clearTimeout(fallback); subscription.unsubscribe() }
   }, [])
 
   const signIn = async (email, password) => {
