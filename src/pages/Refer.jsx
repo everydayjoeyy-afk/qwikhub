@@ -118,11 +118,16 @@ export default function Refer() {
           className={styles.transferBtn}
           onClick={handleTransfer}
           disabled={totalEarnings === 0}
+          title={totalEarnings === 0 ? 'You have no referral earnings yet' : undefined}
+          aria-label={totalEarnings === 0 ? 'Transfer to My Store – no earnings yet' : 'Transfer to My Store'}
         >
           <WalletMoney size={18} color="currentColor" variant="Bold" />
           Transfer to My Store
         </button>
       </div>
+      {totalEarnings === 0 && (
+        <p className={styles.transferHint}>Earn commissions by referring friends to unlock transfers.</p>
+      )}
 
       {/* No-store prompt */}
       {showNoStorePrompt && (

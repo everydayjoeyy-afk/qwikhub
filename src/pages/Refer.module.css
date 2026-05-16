@@ -311,6 +311,14 @@
   outline-offset: 3px;
 }
 
+.transferHint {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  font-family: var(--font-sans);
+  text-align: center;
+  margin-top: -12px;
+}
+
 /* No store prompt */
 .noStorePrompt {
   background: #FFF9E6;
