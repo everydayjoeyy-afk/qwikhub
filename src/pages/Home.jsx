@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext'
 
 export default function Home({ greeting, firstName }) {
   const [addMoneyOpen, setAddMoneyOpen] = useState(false)
-  const { profile } = useAuth()
+  const { profile, refetchProfile } = useAuth()
 
   const balance = profile?.wallet_balance ?? 0
 
@@ -24,7 +24,11 @@ export default function Home({ greeting, firstName }) {
       }}>
         {greeting}, {firstName}
       </p>
-      <BalanceCard balance={balance.toLocaleString('en-GH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} onAddMoney={() => setAddMoneyOpen(true)} />
+      <BalanceCard
+        balance={balance.toLocaleString('en-GH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        onAddMoney={() => setAddMoneyOpen(true)}
+        onRefresh={refetchProfile}
+      />
       <QuickActions />
       <BundleList />
       <RecentTransactions />

@@ -54,6 +54,15 @@
   font-family: var(--font-sans);
 }
 
+.actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
 .addMoneyBtn {
   display: inline-flex;
   align-items: center;
@@ -68,16 +77,32 @@
   font-family: var(--font-sans);
   cursor: pointer;
   transition: opacity 0.15s, transform 0.15s;
-  margin-top: 4px;
 }
-.addMoneyBtn:hover {
-  opacity: 0.88;
-  transform: scale(1.02);
+.addMoneyBtn:hover { opacity: 0.88; transform: scale(1.02); }
+.addMoneyBtn:active { transform: scale(0.98); }
+.addMoneyBtn:focus-visible { outline: 2px solid #FFCC08; outline-offset: 3px; }
+
+.refreshBtn {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--color-text-primary);
+  transition: background 0.15s, transform 0.15s;
+  flex-shrink: 0;
 }
-.addMoneyBtn:active {
-  transform: scale(0.98);
+.refreshBtn:hover { background: rgba(255, 255, 255, 0.25); }
+.refreshBtn:active { transform: scale(0.92); }
+.refreshBtn:focus-visible { outline: 2px solid #FFCC08; outline-offset: 2px; }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
-.addMoneyBtn:focus-visible {
-  outline: 2px solid #FFCC08;
-  outline-offset: 3px;
+.spinning {
+  animation: spin 0.7s linear infinite;
 }
