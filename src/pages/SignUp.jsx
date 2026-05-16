@@ -25,11 +25,20 @@ export default function SignUp({ isDark }) {
 
   const refLocked = refCode !== ''
 
+  const rules = [
+    { label: 'Uppercase letter',              met: /[A-Z]/.test(password) },
+    { label: 'Lowercase letter',              met: /[a-z]/.test(password) },
+    { label: 'Number',                        met: /[0-9]/.test(password) },
+    { label: 'Special character (e.g. !?<>@#$%)', met: /[^A-Za-z0-9]/.test(password) },
+    { label: '8 characters or more',          met: password.length >= 8  },
+  ]
+  const passwordStrong = rules.every(r => r.met)
+
   const canSubmit =
     name.trim() !== '' &&
     email.trim() !== '' &&
     phone.trim().length >= 10 &&
-    password.length >= 6 &&
+    passwordStrong &&
     confirm === password
 
   const handleSubmit = async (e) => {
@@ -117,7 +126,7 @@ export default function SignUp({ isDark }) {
                 id="sig-password"
                 type={showPass ? 'text' : 'password'}
                 className={`${styles.input} ${styles.inputWithIcon}`}
-                placeholder="Min. 6 characters"
+                placeholder="Min. 8 characters"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 autoComplete="new-password"
@@ -133,6 +142,18 @@ export default function SignUp({ isDark }) {
                   : <Eye      size={18} color="currentColor" variant="Bold" />}
               </button>
             </div>
+
+            {/* Password strength checklist — only show once user starts typing */}
+            {password.length > 0 && (
+              <ul className={styles.pwRules}>
+                {rules.map(rule => (
+                  <li key={rule.label} className={rule.met ? styles.pwRuleMet : styles.pwRuleUnmet}>
+                    <span className={styles.pwRuleIcon}>{rule.met ? '✓' : '○'}</span>
+                    {rule.label}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           {/* Confirm password */}

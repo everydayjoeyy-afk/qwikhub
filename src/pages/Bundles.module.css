@@ -59,10 +59,9 @@
 .tab {
   flex: 1;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 5px;
-  padding: 8px 4px;
+  justify-content: center;
+  padding: 10px 8px;
   background: transparent;
   border: none;
   border-radius: 10px;
@@ -78,29 +77,13 @@
   background: #FFCC08;
 }
 
-[data-theme="dark"] .tabActive {
-  background: #FFCC08;
-}
-
-.tabLogo {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  object-fit: cover;
-  opacity: 0.7;
-  transition: opacity 0.18s;
-}
-
-.tabLogoActive {
-  opacity: 1;
-}
-
 .tabName {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   font-family: var(--font-sans);
   color: var(--color-text-secondary);
   transition: color 0.18s;
+  white-space: nowrap;
 }
 
 .tabActive .tabName {

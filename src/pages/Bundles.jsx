@@ -92,11 +92,6 @@ export default function Bundles() {
               className={`${styles.tab} ${isActive ? styles.tabActive : ''}`}
               onClick={() => navigate(`/bundles/${network.id}`)}
             >
-              <img
-                src={network.logo}
-                alt={network.name}
-                className={`${styles.tabLogo} ${isActive ? styles.tabLogoActive : ''}`}
-              />
               <span className={styles.tabName}>{network.name}</span>
             </button>
           )

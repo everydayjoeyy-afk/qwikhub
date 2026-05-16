@@ -209,3 +209,46 @@
   transition: opacity 0.15s;
 }
 .switchLink:hover { opacity: 0.75; }
+
+/* Password strength rules */
+.pwRules {
+  list-style: none;
+  padding: 10px 12px;
+  margin: 8px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--color-surface);
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+}
+
+.pwRuleMet,
+.pwRuleUnmet {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-family: var(--font-sans);
+  transition: color 0.15s;
+}
+
+.pwRuleMet {
+  color: var(--color-text-secondary);
+}
+
+.pwRuleUnmet {
+  color: var(--color-text-tertiary);
+}
+
+.pwRuleIcon {
+  font-size: 13px;
+  font-weight: 700;
+  width: 16px;
+  text-align: center;
+  color: inherit;
+}
+
+.pwRuleMet .pwRuleIcon {
+  color: #22c55e;
+}
