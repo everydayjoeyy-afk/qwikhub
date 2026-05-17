@@ -214,36 +214,47 @@ export async function recordReferralCommission(buyerUserId, amountPaid) {
   return { data, error }
 }
 
-// transferReferralEarnings: moves all untransferred referral commissions → earnings_balance
-// amount = the pre-calculated sum of untransferred commissions (used for transaction record)
-export async function transferReferralEarnings(userId, amount) {
-  const { data, error } = await restFetch('rpc/transfer_referral_earnings', {
+// transferReferralEarnings: moves available commissions → earnings_balance
+// availableReferrals : referral rows where commission_amount > transferred_amount
+// amount             : pre-calculated sum of available commissions
+// currentBalance     : current profile.earnings_balance (for atomic-safe PATCH)
+export async function transferReferralEarnings(userId, availableReferrals, amount, currentBalance) {
+  if (amount <= 0) return { data: null, error: null }
+
+  // 1. Update earnings_balance directly — bypasses the old RPC which used
+  //    WHERE transferred = false (misses rows that were already transferred
+  //    once but have new incremental commission since then).
+  const { error: balanceError } = await restFetch(
+    `profiles?id=eq.${userId}`,
+    { method: 'PATCH', body: { earnings_balance: (currentBalance ?? 0) + amount } }
+  )
+  if (balanceError) return { data: null, error: balanceError }
+
+  // 2. For each row with available commission, stamp transferred_amount = commission_amount
+  //    so future incremental commissions are correctly detected as available.
+  await Promise.all(
+    availableReferrals
+      .filter(r => (r.commission_amount ?? 0) > (r.transferredAmount ?? 0))
+      .map(r =>
+        restFetch(`referrals?id=eq.${r.id}`, {
+          method: 'PATCH',
+          body: { transferred_amount: r.commission_amount, transferred: true },
+        })
+      )
+  )
+
+  // 3. Record the transfer in the transactions table.
+  await restFetch('transactions', {
     method: 'POST',
-    body: { p_user_id: userId },
+    body: {
+      user_id:     userId,
+      type:        'credit',
+      amount,
+      description: 'Referral earnings transfer',
+    },
   })
-  if (!error) {
-    // Use neq.true (not eq.false) so NULL rows are also caught — the SQL function
-    // uses WHERE transferred = false which skips NULL, so those rows never get
-    // processed by the RPC. We mark them here to keep the UI accurate.
-    await restFetch(
-      `referrals?referrer_id=eq.${userId}&transferred=neq.true&commission_amount=gt.0`,
-      { method: 'PATCH', body: { transferred: true } }
-    )
-    // Insert a transaction record manually in case the RPC skipped NULL rows
-    // and therefore didn't record the transfer in the transactions table.
-    if (amount > 0) {
-      await restFetch('transactions', {
-        method: 'POST',
-        body: {
-          user_id:     userId,
-          type:        'credit',
-          amount,
-          description: 'Referral earnings transfer',
-        },
-      })
-    }
-  }
-  return { data, error }
+
+  return { data: null, error: null }
 }
 
 // ── Transactions ─────────────────────────────────────────────
@@ -298,21 +309,22 @@ export async function getReferrals(userId) {
   // (get_my_referrals may not expose the transferred column, so we read it separately)
   const [{ data: rpcData, error: rpcError }, { data: flagRows }] = await Promise.all([
     restFetch('rpc/get_my_referrals', { method: 'POST', body: { p_user_id: userId } }),
-    restFetch(`referrals?referrer_id=eq.${userId}&select=id,transferred&order=created_at.desc`),
+    restFetch(`referrals?referrer_id=eq.${userId}&select=id,transferred,transferred_amount&order=created_at.desc`),
   ])
 
   if (!rpcError && Array.isArray(rpcData)) {
-    // Build a fast lookup: referral id → transferred (from direct table read)
-    const transferredMap = {}
+    // Build a fast lookup: referral id → { transferred, transferred_amount }
+    const flagMap = {}
     if (Array.isArray(flagRows)) {
-      flagRows.forEach(r => { transferredMap[r.id] = r.transferred ?? false })
+      flagRows.forEach(r => { flagMap[r.id] = r })
     }
     return {
       data: rpcData.map(r => ({
         id:                r.id,
         referred_user_id:  r.referred_user_id,
         commission_amount: r.commission_amount,
-        transferred:       transferredMap[r.id] ?? r.transferred ?? false,
+        transferred:       flagMap[r.id]?.transferred ?? r.transferred ?? false,
+        transferredAmount: flagMap[r.id]?.transferred_amount ?? 0,
         created_at:        r.created_at,
         referred_user: r.user_name ? { name: r.user_name, phone: r.user_phone } : null,
       })),
@@ -326,7 +338,7 @@ export async function getReferrals(userId) {
   // User name/phone won't be available here (blocked by RLS on users table).
   console.warn('[getReferrals] RPC unavailable, falling back to table query', rpcError)
   const { data: rows, error: fallbackError } = await restFetch(
-    `referrals?referrer_id=eq.${userId}&select=id,referred_user_id,commission_amount,transferred,created_at&order=created_at.desc`
+    `referrals?referrer_id=eq.${userId}&select=id,referred_user_id,commission_amount,transferred,transferred_amount,created_at&order=created_at.desc`
   )
   if (fallbackError) {
     console.error('[getReferrals] fallback also failed', fallbackError)
@@ -338,8 +350,9 @@ export async function getReferrals(userId) {
       referred_user_id:  r.referred_user_id,
       commission_amount: r.commission_amount,
       transferred:       r.transferred ?? false,
+      transferredAmount: r.transferred_amount ?? 0,
       created_at:        r.created_at,
-      referred_user:     null,   // names unavailable without RPC
+      referred_user:     null,
     })),
     error: null,
   }

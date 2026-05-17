@@ -78,9 +78,10 @@ export default function Refer() {
     return () => clearTimeout(timer)
   }, [user])
 
-  // Only count commissions not yet transferred to earnings_balance
+  // Available = commission earned since last transfer (commission_amount - transferred_amount)
+  // This correctly handles incremental commissions after a previous transfer.
   const availableEarnings = referrals.reduce(
-    (sum, r) => sum + (!r.transferred ? (r.commission_amount ?? 0) : 0), 0
+    (sum, r) => sum + Math.max(0, (r.commission_amount ?? 0) - (r.transferredAmount ?? 0)), 0
   )
   const totalEarnings = referrals.reduce((sum, r) => sum + (r.commission_amount ?? 0), 0)
 
@@ -107,13 +108,18 @@ export default function Refer() {
     if (availableEarnings <= 0 || transferring) return
     setTransferring(true)
     setTransferError('')
-    const { error } = await transferReferralEarnings(user.id, availableEarnings)
+    const { error } = await transferReferralEarnings(
+      user.id,
+      referrals,
+      availableEarnings,
+      profile?.earnings_balance ?? 0
+    )
     setTransferring(false)
     if (error) {
       setTransferError('Transfer failed. Please try again.')
     } else {
-      // Mark all referrals as transferred in local state
-      setReferrals(prev => prev.map(r => ({ ...r, transferred: true })))
+      // Stamp transferredAmount = commissionAmount so available resets to 0
+      setReferrals(prev => prev.map(r => ({ ...r, transferredAmount: r.commission_amount, transferred: true })))
       setTransferDone(true)
       // Refresh profile so earnings_balance is up to date everywhere
       await refetchProfile()
@@ -237,7 +243,7 @@ export default function Refer() {
                     </div>
                     <div className={styles.userEarnings}>
                       <span className={styles.userCommission}>+₵{commission.toFixed(2)}</span>
-                      {ref.transferred && commission > 0 && (
+                      {(ref.transferredAmount ?? 0) > 0 && (
                         <span className={styles.transferredBadge}>Transferred</span>
                       )}
                     </div>
