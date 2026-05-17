@@ -80,21 +80,18 @@ export async function getMyStore(userId) {
 }
 
 export async function getStoreBySlug(slug) {
-  const { data, error } = await supabase
-    .from('stores')
-    .select('*')
-    .eq('store_slug', slug)
-    .single()
-  return { data, error }
+  const { data, error } = await restFetch(
+    `stores?store_slug=eq.${encodeURIComponent(slug)}&select=*`
+  )
+  return { data: Array.isArray(data) ? (data[0] ?? null) : null, error }
 }
 
 export async function createStore(userId, { store_name, store_slug, theme }) {
-  const { data, error } = await supabase
-    .from('stores')
-    .insert({ user_id: userId, store_name, store_slug, theme })
-    .select()
-    .single()
-  return { data, error }
+  const { data, error } = await restFetch('stores', {
+    method: 'POST',
+    body: { user_id: userId, store_name, store_slug, theme },
+  })
+  return { data: Array.isArray(data) ? (data[0] ?? null) : data, error }
 }
 
 export async function updateStore(storeId, { store_name, store_slug, theme }) {
