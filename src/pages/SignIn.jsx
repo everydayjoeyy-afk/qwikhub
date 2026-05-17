@@ -21,11 +21,12 @@ export default function SignIn({ isDark }) {
   const [slow, setSlow]           = useState(false)
   const [errorMsg, setErrorMsg]   = useState('')
 
-  const canSubmit = email.trim() !== '' && password.length >= 6
-
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!canSubmit) return
+    setErrorMsg('')
+    if (!email.trim()) { setErrorMsg('Please enter your email address.'); return }
+    if (!email.trim().includes('@')) { setErrorMsg('Please enter a valid email address.'); return }
+    if (password.length < 6) { setErrorMsg('Password must be at least 6 characters.'); return }
     setLoading(true)
     setSlow(false)
     setErrorMsg('')
@@ -115,7 +116,7 @@ export default function SignIn({ isDark }) {
           <button
             type="submit"
             className={styles.submitBtn}
-            disabled={!canSubmit || loading}
+            disabled={loading}
           >
             {loading ? 'Signing in…' : 'Sign In'}
           </button>

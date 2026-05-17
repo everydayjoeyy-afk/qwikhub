@@ -3,6 +3,10 @@
     {
       "source": "/sb-proxy/:path*",
       "destination": "https://uihiihiusqquzjprxuyw.supabase.co/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/"
     }
   ]
 }

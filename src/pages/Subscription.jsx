@@ -11,15 +11,18 @@ export default function Subscription() {
   const [selected, setSelected] = useState(null)
   const [email, setEmail] = useState('')
 
+  const emailValid = email.trim().includes('@') && email.trim().includes('.')
+  const canAdd = selected && emailValid
+
   const handleAdd = () => {
-    if (!selected) return
+    if (!canAdd) return
     addToCart({
       type:        'subscription',
       bundleLabel: selected.label,
       bundleValue: selected.value,
       price:       selected.price,
       networkLogo: selected.logo,
-      phone:       email,
+      phone:       email.trim(),
     })
   }
 
@@ -29,7 +32,7 @@ export default function Subscription() {
         <button className={styles.backBtn} onClick={() => navigate('/')} aria-label="Go back">
           <ArrowLeft size={20} color="currentColor" />
         </button>
-        <span className={styles.pageTitle}>Premium Orders</span>
+        <span className={styles.pageTitle}>Premium Offers</span>
       </div>
 
       <div className={styles.card}>
@@ -60,7 +63,10 @@ export default function Subscription() {
           </div>
         </div>
 
-        <button className={styles.addBtn} onClick={handleAdd} disabled={!selected}>
+        {email.length > 0 && !emailValid && (
+          <p className={styles.emailError}>Enter a valid email address</p>
+        )}
+        <button className={styles.addBtn} onClick={handleAdd} disabled={!canAdd}>
           <ShoppingCart size={20} color="currentColor" variant="Bold" />
           Add to Cart
         </button>

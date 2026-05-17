@@ -29,7 +29,29 @@ export function AuthProvider({ children }) {
       return
     }
 
-    // First attempt failed — log and retry once after 3 s.
+    // JWT expired — silently refresh the token then retry
+    const isJwtExpired =
+      error?.code === 'PGRST303' ||
+      error?.message?.toLowerCase().includes('jwt expired') ||
+      error?.message?.toLowerCase().includes('invalid jwt')
+
+    if (isJwtExpired) {
+      const { data: refreshData } = await supabase.auth.refreshSession()
+      if (refreshData?.session?.user) {
+        setUser(refreshData.session.user)
+        const { data: retry } = await supabase
+          .from('users').select('*').eq('id', refreshData.session.user.id).single()
+        if (retry) { setProfile(retry); return }
+      } else {
+        // Refresh failed — clear state and send user to sign-in
+        setUser(null)
+        setProfile(null)
+        localStorage.removeItem('sb-qwikhub-session')
+        return
+      }
+    }
+
+    // First attempt failed for a non-auth reason — retry once after 3 s.
     // This handles the race condition where the users row isn't inserted yet
     // immediately after sign-up.
     console.warn('[fetchProfile] first attempt failed, retrying in 3s:', error?.message)
@@ -41,10 +63,7 @@ export function AuthProvider({ children }) {
       if (retry) {
         setProfile(retry)
       } else {
-        // Both attempts failed. Log clearly so it shows up in Vercel logs.
-        console.error('[fetchProfile] both attempts failed — user will see partial data:', retryError?.message)
-        // Keep whatever partial profile was set from metadata (name/phone).
-        // wallet_balance will show as ₵0.00 until a manual refresh works.
+        console.error('[fetchProfile] both attempts failed:', retryError?.message)
       }
     }, 3000)
   }
@@ -178,7 +197,13 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider value={{
       user, profile, loading,
       signIn, signUp, signOut, resetPassword, updatePassword,
-      refetchProfile: () => user && fetchProfile(user.id),
+      refetchProfile: async () => {
+      if (!user) return
+      // Always ensure token is fresh before re-fetching
+      const { data: refreshData } = await supabase.auth.refreshSession()
+      const activeUser = refreshData?.session?.user ?? user
+      return fetchProfile(activeUser.id, activeUser)
+    },
     }}>
       {children}
     </AuthContext.Provider>

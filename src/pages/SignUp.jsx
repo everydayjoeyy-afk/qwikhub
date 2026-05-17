@@ -43,9 +43,13 @@ export default function SignUp({ isDark }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!canSubmit) return
-    setLoading(true)
     setErrorMsg('')
+    if (!name.trim())                     { setErrorMsg('Please enter your full name.'); return }
+    if (!email.trim().includes('@'))      { setErrorMsg('Please enter a valid email address.'); return }
+    if (phone.trim().length < 10)         { setErrorMsg('Please enter a valid phone number (at least 10 digits).'); return }
+    if (!passwordStrong)                  { setErrorMsg('Password does not meet all requirements.'); return }
+    if (confirm !== password)             { setErrorMsg("Passwords don't match."); return }
+    setLoading(true)
     const { error } = await signUp({
       email:        email.trim(),
       password,
@@ -215,7 +219,7 @@ export default function SignUp({ isDark }) {
           <button
             type="submit"
             className={styles.submitBtn}
-            disabled={!canSubmit || loading}
+            disabled={loading}
           >
             {loading ? 'Creating account…' : 'Create Account'}
           </button>

@@ -26,6 +26,16 @@ const CARRIER_MAP = { mtn: 'MTN', telecel: 'Telecel', airteltigo: 'AirtelTigo' }
 // BUNDLE_OPTIONS value ('1gb') → DB data_size ('1GB')
 const toDataSize = (v) => v.toUpperCase()
 
+function toSlug(name) {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .slice(0, 40)
+}
+
 const makeDefaultNetworkPrices = () =>
   Object.fromEntries(BUNDLE_OPTIONS.map(o => [o.value, (o.price * 1.15).toFixed(2)]))
 
@@ -114,9 +124,12 @@ export default function MyStore() {
         const { data: storeOrders } = await getStoreOrders(store.id)
 
         // 5. Hydrate state
+        // Auto-heal: if slug is blank, generate one from the store name
+        const resolvedSlug = store.store_slug || toSlug(store.store_name)
+
         setStoreId(store.id)
         setStoreName(store.store_name)
-        setStoreSlug(store.store_slug)
+        setStoreSlug(resolvedSlug)
         setStoreTheme(store.theme)
         setBundleMap(bMap)
         setPrices(p)
@@ -126,7 +139,7 @@ export default function MyStore() {
         // Mirror to localStorage for storefront reads
         localStorage.setItem('qwikhub_store', JSON.stringify({
           name: store.store_name,
-          slug: store.store_slug,
+          slug: resolvedSlug,
           theme: store.theme,
         }))
 
@@ -162,7 +175,9 @@ export default function MyStore() {
   const recentOrders = orders.slice(0, 6)
 
   const selectedTheme = THEMES.find(t => t.id === storeTheme) ?? THEMES[0]
-  const storeLink     = `qwikhub.com/store/${storeSlug}`
+  const storeLink     = storeSlug
+    ? `qwikhub.com/store/${storeSlug}`
+    : 'qwikhub.com/store/(no link set)'
 
   // ── Price helpers ────────────────────────────────────────────
   const handlePriceChange = (networkId, bundleValue, newPrice) => {
@@ -330,9 +345,31 @@ export default function MyStore() {
               type="text"
               className={styles.settingsInput}
               value={storeName}
-              onChange={e => setStoreName(e.target.value)}
+              onChange={e => {
+                setStoreName(e.target.value)
+                // Keep slug in sync if it's still matching the old name-derived slug
+                if (!storeSlug || storeSlug === toSlug(storeName)) {
+                  setStoreSlug(toSlug(e.target.value))
+                }
+              }}
               maxLength={60}
             />
+          </div>
+
+          <div className={styles.settingsCard}>
+            <span className={styles.settingsFieldLabel}>Store link</span>
+            <div className={styles.slugWrap}>
+              <span className={styles.slugPrefix}>qwikhub.com/store/</span>
+              <input
+                type="text"
+                className={styles.slugInput}
+                value={storeSlug}
+                onChange={e => setStoreSlug(toSlug(e.target.value) || storeSlug)}
+                placeholder="your-store"
+                maxLength={40}
+                spellCheck={false}
+              />
+            </div>
           </div>
 
           <div className={styles.settingsCard}>

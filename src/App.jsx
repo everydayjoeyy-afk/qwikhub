@@ -25,14 +25,8 @@ import SignUp from './pages/SignUp'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 
-const GREETINGS = ['Welcome', 'Akwaaba']
-
-function useAlternatingGreeting() {
-  const key = 'qwikhub_greeting_index'
-  const current = parseInt(localStorage.getItem(key) ?? '0', 10)
-  const next = (current + 1) % GREETINGS.length
-  localStorage.setItem(key, String(next))
-  return GREETINGS[current]
+function useGreeting() {
+  return 'Akwaaba'
 }
 
 function useSystemTheme() {
@@ -59,7 +53,7 @@ export default function App() {
   const [cartOpen, setCartOpen] = useState(false)
   const profileRef = useRef(null)
   const theme = useSystemTheme()
-  const greeting = useAlternatingGreeting()
+  const greeting = useGreeting()
 
   // Derive display values from live profile, fall back to placeholder while loading
   const displayName     = profile?.name    ?? '…'

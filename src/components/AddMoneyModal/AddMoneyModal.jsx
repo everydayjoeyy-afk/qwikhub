@@ -216,6 +216,9 @@ export default function AddMoneyModal({ open, onClose, onPaymentSuccess }) {
         </div>
 
         <div className={styles.footer}>
+          {!isValid && amount !== '' && (
+            <p className={styles.errorNote}>Minimum top-up is ₵1.00</p>
+          )}
           <button
             className={styles.proceedBtn}
             disabled={!isValid || status === 'loading'}

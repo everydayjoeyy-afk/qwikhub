@@ -14,14 +14,20 @@ export default function ForgotPassword({ isDark }) {
   const [sent, setSent]       = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
 
-  const canSubmit = email.trim().includes('@')
-
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!canSubmit) return
-    setLoading(true)
     setErrorMsg('')
-    const { error } = await resetPassword(email.trim())
+    const trimmed = email.trim()
+    if (!trimmed) {
+      setErrorMsg('Please enter your email address.')
+      return
+    }
+    if (!trimmed.includes('@') || !trimmed.includes('.')) {
+      setErrorMsg('Please enter a valid email address.')
+      return
+    }
+    setLoading(true)
+    const { error } = await resetPassword(trimmed)
     setLoading(false)
     if (error) {
       setErrorMsg(error.message ?? 'Could not send reset link. Please try again.')
@@ -65,7 +71,7 @@ export default function ForgotPassword({ isDark }) {
             <button
               type="submit"
               className={styles.submitBtn}
-              disabled={!canSubmit || loading}
+              disabled={loading}
             >
               {loading ? 'Sending…' : 'Send reset link'}
             </button>

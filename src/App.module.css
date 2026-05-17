@@ -187,4 +187,9 @@
   gap: 16px;
   background: var(--color-bg);
   transition: background 0.2s;
+  /* Constrain to mobile width so the app looks correct on desktop */
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto;
 }
+
