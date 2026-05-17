@@ -13,6 +13,7 @@ import CartModal from './components/CartModal/CartModal'
 import Home from './pages/Home'
 import Subscription from './pages/Subscription'
 import BillingHistory from './pages/BillingHistory'
+import Store from './pages/Store'
 import MyStore from './pages/MyStore'
 import Orders from './pages/Orders'
 import Transactions from './pages/Transactions'
@@ -171,6 +172,7 @@ export default function App() {
           <Route path="/" element={<ProtectedRoute><Home greeting={greeting} firstName={firstName} /></ProtectedRoute>} />
           <Route path="/subscription"        element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
           <Route path="/subscription/billing" element={<ProtectedRoute><BillingHistory /></ProtectedRoute>} />
+          <Route path="/store"               element={<ProtectedRoute><Store /></ProtectedRoute>} />
           <Route path="/my-store"            element={<ProtectedRoute><MyStore /></ProtectedRoute>} />
           <Route path="/my-store/orders"     element={<ProtectedRoute><StoreOrders /></ProtectedRoute>} />
           <Route path="/withdrawals"         element={<ProtectedRoute><Withdrawals /></ProtectedRoute>} />

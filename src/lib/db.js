@@ -76,12 +76,11 @@ export async function updateStore(storeId, { store_name, store_slug, theme }) {
 
 // ── Store bundles (reseller prices) ─────────────────────────
 export async function getStoreBundles(storeId) {
-  const { data, error } = await supabase
-    .from('store_bundles')
-    .select('*, bundle:bundles(*)')
-    .eq('store_id', storeId)
-    .eq('is_active', true)
-  return { data, error }
+  // Direct REST with PostgREST embed syntax for the bundle join
+  const { data, error } = await restFetch(
+    `store_bundles?store_id=eq.${storeId}&is_active=eq.true&select=*,bundle:bundles(*)`
+  )
+  return { data: data ?? [], error }
 }
 
 export async function upsertStoreBundle(storeId, bundleId, customPrice) {
@@ -96,12 +95,10 @@ export async function upsertStoreBundle(storeId, bundleId, customPrice) {
 
 // ── Orders ───────────────────────────────────────────────────
 export async function getStoreOrders(storeId) {
-  const { data, error } = await supabase
-    .from('orders')
-    .select('*, bundle:bundles(carrier,data_size)')
-    .eq('store_id', storeId)
-    .order('created_at', { ascending: false })
-  return { data, error }
+  const { data, error } = await restFetch(
+    `orders?store_id=eq.${storeId}&select=*,bundle:bundles(carrier,data_size)&order=created_at.desc`
+  )
+  return { data: data ?? [], error }
 }
 
 export async function createOrder({ buyerPhone, bundleId, storeId, amountPaid, profit, paystackRef }) {
@@ -229,8 +226,9 @@ export async function getReferrals(userId) {
 
 // ── Master bundles ───────────────────────────────────────────
 export async function getBundles(carrier = null) {
-  let q = supabase.from('bundles').select('*').eq('is_active', true).order('platform_price')
-  if (carrier) q = q.eq('carrier', carrier)
-  const { data, error } = await q
-  return { data, error }
+  const path = carrier
+    ? `bundles?is_active=eq.true&carrier=eq.${encodeURIComponent(carrier)}&select=*&order=platform_price.asc`
+    : `bundles?is_active=eq.true&select=*&order=platform_price.asc`
+  const { data, error } = await restFetch(path)
+  return { data: data ?? [], error }
 }
