@@ -111,10 +111,14 @@ export function AuthProvider({ children }) {
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      (_event, session) => {
+        // ⚠️ Must NOT be async — Supabase v2 awaits all onAuthStateChange callbacks
+        // before resolving token operations. An async callback that calls
+        // supabase.from() creates a deadlock: the DB query waits for the
+        // refresh lock to release, but the lock waits for this callback to finish.
         setUser(session?.user ?? null)
         if (session?.user) {
-          await fetchProfile(session.user.id, session.user)
+          fetchProfile(session.user.id, session.user) // fire-and-forget — intentional
         } else {
           setProfile(null)
         }
@@ -197,12 +201,12 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider value={{
       user, profile, loading,
       signIn, signUp, signOut, resetPassword, updatePassword,
-      refetchProfile: async () => {
-      if (!user) return
-      // Always ensure token is fresh before re-fetching
-      const { data: refreshData } = await supabase.auth.refreshSession()
-      const activeUser = refreshData?.session?.user ?? user
-      return fetchProfile(activeUser.id, activeUser)
+      refetchProfile: () => {
+      if (!user) return Promise.resolve()
+      // Call fetchProfile directly — autoRefreshToken handles expiry in the background.
+      // Do NOT call supabase.auth.refreshSession() here: it fires onAuthStateChange
+      // (TOKEN_REFRESHED) which would call fetchProfile a second time in parallel.
+      return fetchProfile(user.id, user)
     },
     }}>
       {children}
