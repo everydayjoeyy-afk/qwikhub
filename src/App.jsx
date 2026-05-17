@@ -10,6 +10,7 @@ import logoLight from './assets/logo-light.svg'
 import styles from './App.module.css'
 
 import CartModal from './components/CartModal/CartModal'
+import ChatBot  from './components/ChatBot/ChatBot'
 import Home from './pages/Home'
 import Subscription from './pages/Subscription'
 import BillingHistory from './pages/BillingHistory'
@@ -184,6 +185,7 @@ export default function App() {
 
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} isDark={isDark} />
       <CartModal open={cartOpen} onClose={() => setCartOpen(false)} />
+      <ChatBot />
     </div>
   )
 }
