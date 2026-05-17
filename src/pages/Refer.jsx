@@ -136,11 +136,6 @@ export default function Refer() {
         <div className={styles.earningsInfo}>
           <span className={styles.earningsLabel}>Available to transfer</span>
           <span className={styles.earningsAmount}>₵{availableEarnings.toFixed(2)}</span>
-          {totalEarnings > availableEarnings && (
-            <span className={styles.transferHint} style={{ margin: 0 }}>
-              ₵{(totalEarnings - availableEarnings).toFixed(2)} already transferred
-            </span>
-          )}
         </div>
         <button
           className={styles.transferBtn}
