@@ -359,7 +359,7 @@ export default function MyStore() {
           <div className={styles.settingsCard}>
             <span className={styles.settingsFieldLabel}>Store link</span>
             <div className={styles.slugWrap}>
-              <span className={styles.slugPrefix}>qwikhub.com/store/</span>
+              <span className={styles.slugPrefix}>{window.location.origin}/store/</span>
               <input
                 type="text"
                 className={styles.slugInput}
