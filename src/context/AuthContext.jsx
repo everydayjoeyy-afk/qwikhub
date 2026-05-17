@@ -127,10 +127,6 @@ export function AuthProvider({ children }) {
         localStorage.removeItem('sb-qwikhub-session')
       }
       clearLoadingOnce()
-      // Signal that the Supabase client's init lock is now released.
-      // Components should gate supabase.rpc() / supabase.from() calls on this
-      // flag to avoid deadlocking before initialization completes.
-      setReady(true)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -145,6 +141,13 @@ export function AuthProvider({ children }) {
         } else {
           setProfile(null)
         }
+        // Set ready=true here rather than in getSession().then() — getSession()
+        // itself is deadlocked by the same init lock that blocks supabase.rpc().
+        // onAuthStateChange fires synchronously during init (INITIAL_SESSION),
+        // and since this callback is non-async it returns immediately, allowing
+        // Supabase to release the init lock before the next React render runs
+        // the supabase.rpc() calls that depend on ready=true.
+        setReady(true)
       }
     )
     return () => { clearTimeout(fallback); subscription.unsubscribe() }
