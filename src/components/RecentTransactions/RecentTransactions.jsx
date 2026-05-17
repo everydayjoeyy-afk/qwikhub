@@ -27,7 +27,7 @@ function formatTime(isoString) {
 
 export default function RecentTransactions({ txKey = 0 }) {
   const navigate = useNavigate()
-  const { user, ready } = useAuth()
+  const { user } = useAuth()
   const [transactions, setTransactions] = useState([])
   const [loading, setLoading] = useState(true)
   const [internalKey, setInternalKey] = useState(0)
@@ -40,7 +40,7 @@ export default function RecentTransactions({ txKey = 0 }) {
   }, [])
 
   useEffect(() => {
-    if (!user || !ready) return
+    if (!user) return
 
     setLoading(true)
     const timer = setTimeout(() => setLoading(false), 8000)
@@ -56,7 +56,7 @@ export default function RecentTransactions({ txKey = 0 }) {
       })
 
     return () => clearTimeout(timer)
-  }, [user, ready, txKey, internalKey])
+  }, [user, txKey, internalKey])
 
   return (
     <div className={styles.card}>

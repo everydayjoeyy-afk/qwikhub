@@ -41,13 +41,13 @@ function groupByDate(items) {
 
 export default function BillingHistory() {
   const navigate   = useNavigate()
-  const { user, ready } = useAuth()
+  const { user } = useAuth()
   const [bills, setBills]     = useState([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery]     = useState('')
 
   useEffect(() => {
-    if (!user || !ready) return
+    if (!user) return
     const timer = setTimeout(() => setLoading(false), 8000)
 
     getTransactions(user.id)
@@ -60,7 +60,7 @@ export default function BillingHistory() {
       .finally(() => { clearTimeout(timer); setLoading(false) })
 
     return () => clearTimeout(timer)
-  }, [user, ready])
+  }, [user])
 
   const filtered = bills.filter(tx => {
     if (!query.trim()) return true

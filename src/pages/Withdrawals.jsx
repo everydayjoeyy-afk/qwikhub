@@ -56,7 +56,7 @@ function groupByDate(withdrawals) {
 
 export default function Withdrawals() {
   const navigate           = useNavigate()
-  const { user, profile, refetchProfile, ready } = useAuth()
+  const { user, profile, refetchProfile } = useAuth()
 
   const [withdrawals, setWithdrawals]   = useState([])
   const [loading, setLoading]           = useState(true)
@@ -73,14 +73,14 @@ export default function Withdrawals() {
 
   // ── Load withdrawals ────────────────────────────────────────
   useEffect(() => {
-    if (!user || !ready) return
+    if (!user) return
     const timer = setTimeout(() => setLoading(false), 8000)
     getWithdrawals(user.id)
       .then(({ data }) => { setWithdrawals(data ?? []) })
       .catch(() => {})
       .finally(() => { clearTimeout(timer); setLoading(false) })
     return () => clearTimeout(timer)
-  }, [user, ready])
+  }, [user])
 
   // Pre-fill MoMo number from profile
   useEffect(() => {

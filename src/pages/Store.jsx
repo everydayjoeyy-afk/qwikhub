@@ -10,12 +10,12 @@ import styles from './Store.module.css'
 
 export default function Store() {
   const navigate = useNavigate()
-  const { user, ready } = useAuth()
+  const { user } = useAuth()
   const [modalOpen, setModalOpen] = useState(false)
   const [checking, setChecking]   = useState(true)
 
   useEffect(() => {
-    if (!user || !ready) return
+    if (!user) return
 
     // Safety: never stay blank forever on slow networks
     const timer = setTimeout(() => setChecking(false), 6000)
@@ -30,7 +30,7 @@ export default function Store() {
     })
 
     return () => clearTimeout(timer)
-  }, [user, ready])
+  }, [user])
 
   if (checking) return <LoadingScreen />
 

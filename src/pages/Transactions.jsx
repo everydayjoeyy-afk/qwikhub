@@ -51,7 +51,7 @@ function groupByDate(txs) {
 
 export default function Transactions() {
   const navigate        = useNavigate()
-  const { user, ready } = useAuth()
+  const { user } = useAuth()
   const [txs, setTxs]   = useState([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery]     = useState('')
@@ -59,14 +59,14 @@ export default function Transactions() {
   const [filters, setFilters]       = useState(DEFAULT_FILTERS)
 
   useEffect(() => {
-    if (!user || !ready) return
+    if (!user) return
     const timer = setTimeout(() => setLoading(false), 8000)
     getTransactions(user.id)
       .then(({ data }) => { setTxs(data ?? []) })
       .catch(() => {})
       .finally(() => { clearTimeout(timer); setLoading(false) })
     return () => clearTimeout(timer)
-  }, [user, ready])
+  }, [user])
 
   const hasActiveFilter = filters.type !== 'All' || filters.period !== 'All'
 

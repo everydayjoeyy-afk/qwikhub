@@ -57,7 +57,7 @@ function groupByDate(orders) {
 
 export default function StoreOrders() {
   const navigate     = useNavigate()
-  const { user, ready } = useAuth()
+  const { user } = useAuth()
   const [orders, setOrders]         = useState([])
   const [loading, setLoading]       = useState(true)
   const [query, setQuery]           = useState('')
@@ -65,7 +65,7 @@ export default function StoreOrders() {
   const [filters, setFilters]       = useState(DEFAULT_FILTERS)
 
   useEffect(() => {
-    if (!user || !ready) return
+    if (!user) return
     const timer = setTimeout(() => setLoading(false), 8000)
 
     ;(async () => {
@@ -83,7 +83,7 @@ export default function StoreOrders() {
     })()
 
     return () => clearTimeout(timer)
-  }, [user, ready])
+  }, [user])
 
   const hasActiveFilter = filters.network !== 'All' || filters.status !== 'All' || filters.period !== 'All'
 

@@ -135,22 +135,20 @@ export async function creditWallet(userId, amount, description, reference = null
 
 // ── Transactions ─────────────────────────────────────────────
 export async function getTransactions(userId) {
-  const { data, error } = await supabase
-    .from('transactions')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-  return { data, error }
+  // Direct REST — bypasses Supabase client init lock
+  const { data, error } = await restFetch(
+    `transactions?user_id=eq.${userId}&select=*&order=created_at.desc`
+  )
+  return { data: data ?? [], error }
 }
 
 // ── Withdrawals ──────────────────────────────────────────────
 export async function getWithdrawals(userId) {
-  const { data, error } = await supabase
-    .from('withdrawals')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-  return { data, error }
+  // Direct REST — bypasses Supabase client init lock
+  const { data, error } = await restFetch(
+    `withdrawals?user_id=eq.${userId}&select=*&order=created_at.desc`
+  )
+  return { data: data ?? [], error }
 }
 
 export async function requestWithdrawal(userId, amount, momoNumber) {
