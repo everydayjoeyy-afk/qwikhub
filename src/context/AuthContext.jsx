@@ -211,6 +211,11 @@ export function AuthProvider({ children }) {
     })
     const profileError = profileRes.ok ? null : { message: `Profile insert failed (${profileRes.status})` }
 
+    // Profile now exists in DB — refetch so the UI gets the real row
+    // (onAuthStateChange may have already called fetchProfile before the RPC
+    // finished inserting, leaving the optimistic placeholder without referral_code)
+    if (!profileError) fetchProfile(data.user.id, data.user)
+
     return { error: profileError ?? null }
   }
 
