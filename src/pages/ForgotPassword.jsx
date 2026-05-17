@@ -4,6 +4,7 @@ import { Sms } from 'iconsax-react'
 import logoLight from '../assets/logo-light.svg'
 import logoDark  from '../assets/logo-dark.svg'
 import { useAuth } from '../context/AuthContext'
+import { checkEmailExists } from '../lib/db'
 import styles from './SignIn.module.css'
 
 export default function ForgotPassword({ isDark }) {
@@ -27,6 +28,12 @@ export default function ForgotPassword({ isDark }) {
       return
     }
     setLoading(true)
+    const { exists } = await checkEmailExists(trimmed)
+    if (!exists) {
+      setLoading(false)
+      setErrorMsg('No account found with that email address.')
+      return
+    }
     const { error } = await resetPassword(trimmed)
     setLoading(false)
     if (error) {
