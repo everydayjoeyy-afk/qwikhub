@@ -176,8 +176,8 @@ export default function MyStore() {
 
   const selectedTheme = THEMES.find(t => t.id === storeTheme) ?? THEMES[0]
   const storeLink     = storeSlug
-    ? `qwikhub.com/store/${storeSlug}`
-    : 'qwikhub.com/store/(no link set)'
+    ? `${window.location.origin}/store/${storeSlug}`
+    : `${window.location.origin}/store/(no link set)`
 
   // ── Price helpers ────────────────────────────────────────────
   const handlePriceChange = (networkId, bundleValue, newPrice) => {
@@ -212,7 +212,7 @@ export default function MyStore() {
   const toggleNetwork = (id) => setOpenNetwork(prev => prev === id ? null : id)
 
   const handleCopyLink = () => {
-    navigator.clipboard?.writeText(`https://${storeLink}`)
+    navigator.clipboard?.writeText(storeLink)
     setLinkCopied(true)
     setTimeout(() => setLinkCopied(false), 2000)
   }
