@@ -168,31 +168,47 @@ export function AuthProvider({ children }) {
     const genCode = name.toUpperCase().replace(/\s+/g, '').slice(0, 5) +
       Math.random().toString(36).slice(2, 5).toUpperCase()
 
-    // Resolve referred_by user id from referral code.
-    // Uses an RPC (SECURITY DEFINER) because RLS prevents reading other users' rows directly.
+    // ── All DB calls below use direct REST to avoid the Supabase init-lock deadlock ──
+    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
+    const ANON_KEY     = import.meta.env.VITE_SUPABASE_ANON_KEY
+    // At sign-up the user has no access token yet — use the anon key as bearer
+    const restHeaders  = {
+      apikey:         ANON_KEY,
+      Authorization:  `Bearer ${ANON_KEY}`,
+      'Content-Type': 'application/json',
+      Prefer:         'return=representation',
+    }
+
+    // Resolve referred_by user id from referral code via direct REST RPC
     let referredBy = null
     if (referralCode) {
-      const { data: refId } = await supabase
-        .rpc('get_referrer_id', { p_code: referralCode.trim().toUpperCase() })
-      referredBy = refId ?? null
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_referrer_id`, {
+          method:  'POST',
+          headers: restHeaders,
+          body:    JSON.stringify({ p_code: referralCode.trim().toUpperCase() }),
+        })
+        if (res.ok) {
+          const refId = await res.json()
+          referredBy = refId ?? null
+        }
+      } catch (_) { /* non-fatal — sign up without referral link */ }
     }
 
     // Insert into users table
-    const { error: profileError } = await supabase.from('users').insert({
-      id:            data.user.id,
-      name,
-      phone,
-      email,
-      referral_code: genCode,
-      referred_by:   referredBy,
+    const usersRes = await fetch(`${SUPABASE_URL}/rest/v1/users`, {
+      method:  'POST',
+      headers: restHeaders,
+      body:    JSON.stringify({ id: data.user.id, name, phone, email, referral_code: genCode, referred_by: referredBy }),
     })
+    const profileError = usersRes.ok ? null : { message: `Profile insert failed (${usersRes.status})` }
 
     // If they were referred, create referral record
     if (referredBy) {
-      await supabase.from('referrals').insert({
-        referrer_id:      referredBy,
-        referred_user_id: data.user.id,
-        commission_amount: 0,
+      await fetch(`${SUPABASE_URL}/rest/v1/referrals`, {
+        method:  'POST',
+        headers: restHeaders,
+        body:    JSON.stringify({ referrer_id: referredBy, referred_user_id: data.user.id, commission_amount: 0 }),
       })
     }
 

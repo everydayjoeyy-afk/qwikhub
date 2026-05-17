@@ -32,11 +32,13 @@ function maskPhone(phone) {
 }
 
 function timeAgo(isoString) {
-  const d = new Date(isoString)
+  const d   = new Date(isoString)
   const now = new Date()
+  const yesterday = new Date(now)
+  yesterday.setDate(now.getDate() - 1)
+  if (d.toDateString() === now.toDateString())       return 'Today'
+  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday'
   const diffDays = Math.floor((now - d) / 86400000)
-  if (diffDays === 0) return 'Today'
-  if (diffDays === 1) return 'Yesterday'
   return `${diffDays} days ago`
 }
 
