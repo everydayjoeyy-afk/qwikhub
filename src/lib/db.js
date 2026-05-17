@@ -215,44 +215,52 @@ export async function recordReferralCommission(buyerUserId, amountPaid) {
 }
 
 // transferReferralEarnings: moves available commissions → earnings_balance
-// availableReferrals : referral rows where commission_amount > transferred_amount
+// availableReferrals : all referral rows (used to find rows with new commission)
 // amount             : pre-calculated sum of available commissions
-// currentBalance     : current profile.earnings_balance (for atomic-safe PATCH)
-export async function transferReferralEarnings(userId, availableReferrals, amount, currentBalance) {
+export async function transferReferralEarnings(userId, availableReferrals, amount) {
   if (amount <= 0) return { data: null, error: null }
 
-  // 1. Update earnings_balance directly — bypasses the old RPC which used
-  //    WHERE transferred = false (misses rows that were already transferred
-  //    once but have new incremental commission since then).
-  const { error: balanceError } = await restFetch(
-    `profiles?id=eq.${userId}`,
-    { method: 'PATCH', body: { earnings_balance: (currentBalance ?? 0) + amount } }
+  // Rows that have new commission since last transfer
+  const rowsToProcess = availableReferrals.filter(
+    r => (r.commission_amount ?? 0) > (r.transferredAmount ?? 0)
   )
-  if (balanceError) return { data: null, error: balanceError }
 
-  // 2. For each row with available commission, stamp transferred_amount = commission_amount
-  //    so future incremental commissions are correctly detected as available.
-  await Promise.all(
-    availableReferrals
-      .filter(r => (r.commission_amount ?? 0) > (r.transferredAmount ?? 0))
-      .map(r =>
+  // 1. Reset transferred = false so the SECURITY DEFINER RPC can find and
+  //    process these rows (the RPC uses WHERE transferred = false).
+  //    Rows with transferred = true (prior transfer) but new commission need
+  //    this reset or the RPC will skip them.
+  if (rowsToProcess.length > 0) {
+    await Promise.all(
+      rowsToProcess.map(r =>
+        restFetch(`referrals?id=eq.${r.id}`, {
+          method: 'PATCH',
+          body: { transferred: false },
+        })
+      )
+    )
+  }
+
+  // 2. Call the SECURITY DEFINER RPC — atomically updates earnings_balance
+  //    and records a transaction. Cannot do this from REST directly (RLS blocks
+  //    direct writes to earnings_balance on profiles).
+  const { data, error } = await restFetch('rpc/transfer_referral_earnings', {
+    method: 'POST',
+    body: { p_user_id: userId },
+  })
+  if (error) return { data, error }
+
+  // 3. Stamp transferred_amount = commission_amount so the next incremental
+  //    commission from the same user is correctly detected as available.
+  if (rowsToProcess.length > 0) {
+    await Promise.all(
+      rowsToProcess.map(r =>
         restFetch(`referrals?id=eq.${r.id}`, {
           method: 'PATCH',
           body: { transferred_amount: r.commission_amount, transferred: true },
         })
       )
-  )
-
-  // 3. Record the transfer in the transactions table.
-  await restFetch('transactions', {
-    method: 'POST',
-    body: {
-      user_id:     userId,
-      type:        'credit',
-      amount,
-      description: 'Referral earnings transfer',
-    },
-  })
+    )
+  }
 
   return { data: null, error: null }
 }

@@ -108,12 +108,7 @@ export default function Refer() {
     if (availableEarnings <= 0 || transferring) return
     setTransferring(true)
     setTransferError('')
-    const { error } = await transferReferralEarnings(
-      user.id,
-      referrals,
-      availableEarnings,
-      profile?.earnings_balance ?? 0
-    )
+    const { error } = await transferReferralEarnings(user.id, referrals, availableEarnings)
     setTransferring(false)
     if (error) {
       setTransferError('Transfer failed. Please try again.')
