@@ -73,13 +73,9 @@ export default function RecentTransactions({ txKey = 0 }) {
 
       <div className={styles.list}>
         {loading ? (
-          <p style={{ textAlign: 'center', padding: '12px 0', opacity: 0.5, fontSize: 13 }}>
-            Loading…
-          </p>
+          <p className={styles.hint}>Loading…</p>
         ) : transactions.length === 0 ? (
-          <p style={{ textAlign: 'center', padding: '12px 0', opacity: 0.5, fontSize: 13 }}>
-            No transactions yet
-          </p>
+          <p className={styles.hint}>No transactions yet</p>
         ) : (
           transactions.map((tx, i) => (
             <div key={tx.id}>

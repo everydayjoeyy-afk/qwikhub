@@ -186,9 +186,7 @@ export default function Refer() {
         <span className={styles.sectionTitle}>Your Referrals</span>
 
         {loading ? (
-          <p style={{ textAlign: 'center', padding: '16px 0', opacity: 0.5, fontSize: 13 }}>
-            Loading…
-          </p>
+          <p className={styles.hint}>Loading…</p>
         ) : referrals.length === 0 ? (
           <div className={styles.emptyReferrals}>
             <span className={styles.emptyText}>

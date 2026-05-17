@@ -511,6 +511,16 @@
   line-height: 1.5;
 }
 
+.hint {
+  text-align: center;
+  padding: 16px 0;
+  font-size: 13px;
+  font-family: var(--font-sans);
+  color: var(--color-text-secondary);
+  opacity: 0.7;
+  margin: 0;
+}
+
 .toast {
   position: fixed;
   bottom: 28px;

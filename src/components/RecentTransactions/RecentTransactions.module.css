@@ -116,3 +116,13 @@
 [data-theme="dark"] .amount[data-positive] {
   color: #4ade80;
 }
+
+.hint {
+  text-align: center;
+  padding: 12px 0;
+  font-size: 13px;
+  font-family: var(--font-sans);
+  color: var(--color-text-secondary);
+  opacity: 0.7;
+  margin: 0;
+}
