@@ -25,8 +25,13 @@ import SignUp from './pages/SignUp'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 
+const GREETINGS = ['Welcome', 'Akwaaba']
 function useGreeting() {
-  return 'Akwaaba'
+  const key = 'qwikhub_greeting_index'
+  const current = parseInt(localStorage.getItem(key) ?? '0', 10)
+  const next = (current + 1) % GREETINGS.length
+  localStorage.setItem(key, String(next))
+  return GREETINGS[current]
 }
 
 function useSystemTheme() {

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { usePaystackPayment } from 'react-paystack'
 import { CloseCircle, TickCircle } from 'iconsax-react'
 import { useAuth } from '../../context/AuthContext'
+import { supabase } from '../../lib/supabase'
 import { creditWallet } from '../../lib/db'
 import styles from './AddMoneyModal.module.css'
 
@@ -81,10 +82,19 @@ export default function AddMoneyModal({ open, onClose, onPaymentSuccess }) {
         return
       }
 
+      // Ensure the JWT is fresh before calling the RPC (expired tokens cause silent hangs)
+      try { await supabase.auth.refreshSession() } catch (_) { /* non-fatal */ }
+
       console.log('[AddMoney] 📞 Calling creditWallet RPC...')
-      const { error: walletErr } = await creditWallet(
-        user.id, capturedAmount, 'Wallet top-up via Paystack', reference
+
+      // Race the RPC against a 12-second timeout so the UI can never freeze permanently
+      const timeoutResult = new Promise(resolve =>
+        setTimeout(() => resolve({ error: new Error('timeout') }), 12000)
       )
+      const { error: walletErr } = await Promise.race([
+        creditWallet(user.id, capturedAmount, 'Wallet top-up via Paystack', reference),
+        timeoutResult,
+      ])
 
       if (walletErr) {
         console.error('[AddMoney] ❌ creditWallet RPC error:', JSON.stringify(walletErr))
