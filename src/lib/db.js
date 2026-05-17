@@ -10,15 +10,42 @@ import { supabase } from './supabase'
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const ANON_KEY     = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-function getAccessToken() {
+async function getAccessToken() {
   try {
     const raw = localStorage.getItem('sb-qwikhub-session')
-    return raw ? (JSON.parse(raw)?.access_token ?? null) : null
+    if (!raw) return null
+    const session = JSON.parse(raw)
+    const token = session?.access_token
+    if (!token) return null
+
+    // Check expiry — refresh proactively if within 60 s of expiry
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    const isExpired = Date.now() > payload.exp * 1000 - 60_000
+
+    if (!isExpired) return token
+
+    // Token expired: exchange refresh_token for a new session via direct REST
+    const refreshToken = session?.refresh_token
+    if (!refreshToken) return null
+
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method:  'POST',
+      headers: { apikey: ANON_KEY, 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ refresh_token: refreshToken }),
+    })
+    if (!res.ok) return null
+
+    const newSession = await res.json()
+    if (!newSession?.access_token) return null
+
+    // Persist the refreshed session so subsequent calls use it too
+    localStorage.setItem('sb-qwikhub-session', JSON.stringify(newSession))
+    return newSession.access_token
   } catch { return null }
 }
 
 async function restFetch(path, { method = 'GET', body } = {}) {
-  const token = getAccessToken()
+  const token = await getAccessToken()
   if (!token) return { data: null, error: { message: 'No access token' } }
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     method,
@@ -83,7 +110,7 @@ export async function getStoreBundles(storeId) {
 
 export async function upsertStoreBundle(storeId, bundleId, customPrice) {
   // Prefer: resolution=merge-duplicates triggers ON CONFLICT DO UPDATE
-  const token = getAccessToken()
+  const token = await getAccessToken()
   if (!token) return { error: { message: 'No access token' } }
   const res = await fetch(
     `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/store_bundles`,
