@@ -67,6 +67,10 @@ export default function Refer() {
       setReferrals(refs ?? [])
       setHasStore(!!store)
       setLoading(false)
+    }).catch((err) => {
+      console.error('[Refer] fetch error', err)
+      clearTimeout(timer)
+      setLoading(false)
     })
     return () => clearTimeout(timer)
   }, [user, ready])

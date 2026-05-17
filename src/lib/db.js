@@ -4,14 +4,46 @@
  */
 import { supabase } from './supabase'
 
+// ── Direct REST helper ────────────────────────────────────────
+// Bypasses the Supabase JS client's initialization lock so these calls
+// can fire safely during app startup (same technique as fetchProfile).
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
+const ANON_KEY     = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+function getAccessToken() {
+  try {
+    const raw = localStorage.getItem('sb-qwikhub-session')
+    return raw ? (JSON.parse(raw)?.access_token ?? null) : null
+  } catch { return null }
+}
+
+async function restFetch(path, { method = 'GET', body } = {}) {
+  const token = getAccessToken()
+  if (!token) return { data: null, error: { message: 'No access token' } }
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    method,
+    headers: {
+      apikey:         ANON_KEY,
+      Authorization:  `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      Prefer:         'return=representation',
+    },
+    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+  })
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    return { data: null, error: { message: text || `HTTP ${res.status}` } }
+  }
+  const data = await res.json()
+  return { data, error: null }
+}
+
 // ── Store ────────────────────────────────────────────────────
 export async function getMyStore(userId) {
-  const { data, error } = await supabase
-    .from('stores')
-    .select('*')
-    .eq('user_id', userId)
-    .single()
-  return { data, error }
+  // Direct REST — bypasses init lock so Store/Refer pages load on first render
+  const { data, error } = await restFetch(`stores?user_id=eq.${userId}&select=*`)
+  // REST returns an array; return first row (or null if none)
+  return { data: Array.isArray(data) ? (data[0] ?? null) : null, error }
 }
 
 export async function getStoreBySlug(slug) {
@@ -153,9 +185,16 @@ export async function requestWithdrawal(userId, amount, momoNumber) {
 
 // ── Referrals ────────────────────────────────────────────────
 export async function getReferrals(userId) {
-  // Uses a SECURITY DEFINER RPC because RLS blocks reading referred users' rows directly
-  const { data, error } = await supabase
-    .rpc('get_my_referrals', { p_user_id: userId })
+  // Direct REST POST to RPC — bypasses init lock (same reason as getMyStore).
+  // SECURITY DEFINER function is still used so RLS doesn't block cross-user reads.
+  const { data, error } = await restFetch('rpc/get_my_referrals', {
+    method: 'POST',
+    body:   { p_user_id: userId },
+  })
+  if (error) {
+    console.error('[getReferrals] rpc error', error)
+    return { data: [], error }
+  }
   // Normalise shape to match what Refer.jsx expects
   const normalised = (data ?? []).map(r => ({
     id:               r.id,
@@ -164,7 +203,7 @@ export async function getReferrals(userId) {
     created_at:       r.created_at,
     referred_user: r.user_name ? { name: r.user_name, phone: r.user_phone } : null,
   }))
-  return { data: normalised, error }
+  return { data: normalised, error: null }
 }
 
 // ── Master bundles ───────────────────────────────────────────
