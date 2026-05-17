@@ -3,11 +3,11 @@
   position: fixed;
   bottom: 28px;
   right: 20px;
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   border-radius: 999px;
   background: #000000;
-  border: none;
+  border: 1.5px solid transparent;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -27,6 +27,10 @@
 .fab:focus-visible {
   outline: 2px solid #FFCC08;
   outline-offset: 3px;
+}
+
+[data-theme="dark"] .fab {
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .fabIcon {
