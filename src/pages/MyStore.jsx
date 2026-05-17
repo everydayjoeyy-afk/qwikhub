@@ -164,7 +164,7 @@ export default function MyStore() {
       if (!storeId) return
       await updateStore(storeId, { store_name: storeName, store_slug: storeSlug, theme: storeTheme })
     }, 1500)
-  }, [storeName, storeSlug, storeTheme, user])
+  }, [storeName, storeSlug, storeTheme])
 
   // ── Derived stats ────────────────────────────────────────────
   const today        = new Date().toDateString()

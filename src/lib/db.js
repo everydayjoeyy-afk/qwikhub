@@ -65,13 +65,11 @@ export async function createStore(userId, { store_name, store_slug, theme }) {
 }
 
 export async function updateStore(storeId, { store_name, store_slug, theme }) {
-  const { data, error } = await supabase
-    .from('stores')
-    .update({ store_name, store_slug, theme })
-    .eq('id', storeId)
-    .select()
-    .single()
-  return { data, error }
+  const { data, error } = await restFetch(
+    `stores?id=eq.${storeId}`,
+    { method: 'PATCH', body: { store_name, store_slug, theme } }
+  )
+  return { data: Array.isArray(data) ? (data[0] ?? null) : null, error }
 }
 
 // ── Store bundles (reseller prices) ─────────────────────────
@@ -84,13 +82,23 @@ export async function getStoreBundles(storeId) {
 }
 
 export async function upsertStoreBundle(storeId, bundleId, customPrice) {
-  const { error } = await supabase
-    .from('store_bundles')
-    .upsert(
-      { store_id: storeId, bundle_id: bundleId, custom_price: customPrice, is_active: true },
-      { onConflict: 'store_id,bundle_id' }
-    )
-  return { error }
+  // Prefer: resolution=merge-duplicates triggers ON CONFLICT DO UPDATE
+  const token = getAccessToken()
+  if (!token) return { error: { message: 'No access token' } }
+  const res = await fetch(
+    `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/store_bundles`,
+    {
+      method: 'POST',
+      headers: {
+        apikey:         import.meta.env.VITE_SUPABASE_ANON_KEY,
+        Authorization:  `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        Prefer:         'resolution=merge-duplicates',
+      },
+      body: JSON.stringify({ store_id: storeId, bundle_id: bundleId, custom_price: customPrice, is_active: true }),
+    }
+  )
+  return { error: res.ok ? null : { message: `HTTP ${res.status}` } }
 }
 
 // ── Orders ───────────────────────────────────────────────────
