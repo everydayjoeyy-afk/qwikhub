@@ -497,6 +497,17 @@
   color: #4ade80;
 }
 
+.transferredBadge {
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  color: var(--color-text-tertiary);
+  background: var(--color-surface-hover);
+  border-radius: 999px;
+  padding: 2px 7px;
+  letter-spacing: 0.01em;
+}
+
 .divider {
   height: 1px;
   background: var(--color-border);

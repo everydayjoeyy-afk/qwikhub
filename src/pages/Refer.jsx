@@ -44,7 +44,7 @@ function timeAgo(isoString) {
 
 export default function Refer() {
   const navigate = useNavigate()
-  const { user, profile } = useAuth()
+  const { user, profile, refetchProfile } = useAuth()
 
   const [referrals, setReferrals]                 = useState([])
   const [loading, setLoading]                     = useState(true)
@@ -115,6 +115,8 @@ export default function Refer() {
       // Mark all referrals as transferred in local state
       setReferrals(prev => prev.map(r => ({ ...r, transferred: true })))
       setTransferDone(true)
+      // Refresh profile so earnings_balance is up to date everywhere
+      await refetchProfile()
     }
   }
 
@@ -240,6 +242,9 @@ export default function Refer() {
                     </div>
                     <div className={styles.userEarnings}>
                       <span className={styles.userCommission}>+₵{commission.toFixed(2)}</span>
+                      {ref.transferred && (
+                        <span className={styles.transferredBadge}>Transferred</span>
+                      )}
                     </div>
                   </div>
                   {i < referrals.length - 1 && <div className={styles.divider} />}
