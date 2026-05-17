@@ -126,6 +126,10 @@ export function AuthProvider({ children }) {
         setProfile(null)
         localStorage.removeItem('sb-qwikhub-session')
       }
+      // Belt-and-suspenders: set ready here too.
+      // getSession() now resolves (no longer deadlocked) because fetchProfile
+      // uses direct REST instead of supabase.from(), so the init lock is released.
+      setReady(true)
       clearLoadingOnce()
     })
 
@@ -141,12 +145,6 @@ export function AuthProvider({ children }) {
         } else {
           setProfile(null)
         }
-        // Set ready=true here rather than in getSession().then() — getSession()
-        // itself is deadlocked by the same init lock that blocks supabase.rpc().
-        // onAuthStateChange fires synchronously during init (INITIAL_SESSION),
-        // and since this callback is non-async it returns immediately, allowing
-        // Supabase to release the init lock before the next React render runs
-        // the supabase.rpc() calls that depend on ready=true.
         setReady(true)
       }
     )
