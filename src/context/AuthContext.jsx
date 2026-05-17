@@ -9,6 +9,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   async function fetchProfile(userId, authUser = null) {
+    console.log('[fetchProfile] start', { userId })
     // Show name/phone immediately from session metadata while DB fetch loads.
     // wallet_balance intentionally omitted — we never want to flash ₵0.00 when
     // the real balance hasn't arrived yet.
@@ -21,8 +22,10 @@ export function AuthProvider({ children }) {
     }
 
     // Then fetch the full profile from the DB and overwrite
+    console.log('[fetchProfile] calling supabase.from(users)...')
     const { data, error } = await supabase
       .from('users').select('*').eq('id', userId).single()
+    console.log('[fetchProfile] supabase.from(users) resolved', { data: !!data, error: error?.message ?? null })
 
     if (data) {
       setProfile(data)
@@ -97,12 +100,14 @@ export function AuthProvider({ children }) {
     // Proper token validation / refresh.  Corrects state if the cached
     // session turned out to be invalid or was revoked.
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('[AuthContext] getSession resolved', { hasSession: !!session, userId: session?.user?.id })
       clearTimeout(fallback)
       if (session?.user) {
         setUser(session.user)
         fetchProfile(session.user.id, session.user)
       } else {
         // Refresh failed or no session — force sign-out
+        console.warn('[AuthContext] getSession returned null — clearing state')
         setUser(null)
         setProfile(null)
         localStorage.removeItem('sb-qwikhub-session')
