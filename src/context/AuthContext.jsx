@@ -8,45 +8,54 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null)   // users table row
   const [loading, setLoading] = useState(true)
 
-  async function fetchProfile(userId, authUser = null) {
-    console.log('[fetchProfile] start', { userId })
-    // Show name/phone immediately from session metadata while DB fetch loads.
-    // wallet_balance intentionally omitted — we never want to flash ₵0.00 when
-    // the real balance hasn't arrived yet.
-    if (authUser?.user_metadata?.name) {
+  async function fetchProfile(userId, _authUser = null) {
+    // ── Optimistic fast path: show name/phone from session metadata immediately ──
+    // wallet_balance is intentionally NOT set here — we never want to flash ₵0.00
+    // while the real balance hasn't arrived yet.
+    if (_authUser?.user_metadata?.name) {
       setProfile(prev => prev ?? {
-        name:           authUser.user_metadata.name,
-        phone:          authUser.user_metadata.phone ?? '',
+        name:           _authUser.user_metadata.name,
+        phone:          _authUser.user_metadata.phone ?? '',
         referral_code:  null,
       })
     }
 
-    // Then fetch the full profile from the DB and overwrite
-    console.log('[fetchProfile] calling supabase.from(users)...')
-    const { data, error } = await supabase
-      .from('users').select('*').eq('id', userId).single()
-    console.log('[fetchProfile] supabase.from(users) resolved', { data: !!data, error: error?.message ?? null })
+    // ── Direct REST query — bypasses supabase.from() ──────────────────────────
+    // supabase.from() internally calls auth.getSession(), which awaits the
+    // Supabase client's initialization lock. That lock is held during the
+    // INITIAL_SESSION notification that calls fetchProfile — creating a deadlock
+    // where the DB query can never fire. Using a plain fetch avoids the lock
+    // entirely while still using the same credentials.
+    const sessionRaw = localStorage.getItem('sb-qwikhub-session')
+    let accessToken = sessionRaw ? (JSON.parse(sessionRaw)?.access_token ?? null) : null
 
-    if (data) {
-      setProfile(data)
+    if (!accessToken) {
+      console.warn('[fetchProfile] no access token available')
       return
     }
 
-    // JWT expired — silently refresh the token then retry
-    const isJwtExpired =
-      error?.code === 'PGRST303' ||
-      error?.message?.toLowerCase().includes('jwt expired') ||
-      error?.message?.toLowerCase().includes('invalid jwt')
+    const SUPABASE_URL  = import.meta.env.VITE_SUPABASE_URL
+    const ANON_KEY      = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-    if (isJwtExpired) {
+    const query = async (token) =>
+      fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=*`, {
+        headers: {
+          apikey:          ANON_KEY,
+          Authorization:   `Bearer ${token}`,
+          'Content-Type':  'application/json',
+        },
+      })
+
+    let res = await query(accessToken)
+
+    // If 401, the access token expired — refresh and retry once
+    if (res.status === 401) {
       const { data: refreshData } = await supabase.auth.refreshSession()
-      if (refreshData?.session?.user) {
+      if (refreshData?.session) {
         setUser(refreshData.session.user)
-        const { data: retry } = await supabase
-          .from('users').select('*').eq('id', refreshData.session.user.id).single()
-        if (retry) { setProfile(retry); return }
+        accessToken = refreshData.session.access_token
+        res = await query(accessToken)
       } else {
-        // Refresh failed — clear state and send user to sign-in
         setUser(null)
         setProfile(null)
         localStorage.removeItem('sb-qwikhub-session')
@@ -54,21 +63,24 @@ export function AuthProvider({ children }) {
       }
     }
 
-    // First attempt failed for a non-auth reason — retry once after 3 s.
-    // This handles the race condition where the users row isn't inserted yet
-    // immediately after sign-up.
-    console.warn('[fetchProfile] first attempt failed, retrying in 3s:', error?.message)
+    if (!res.ok) {
+      console.error('[fetchProfile] query failed', res.status)
+      // Retry once after 3 s (handles sign-up race where row isn't inserted yet)
+      setTimeout(async () => {
+        const r = await query(accessToken).catch(() => null)
+        if (!r?.ok) return
+        const rows = await r.json()
+        if (rows?.[0]) setProfile(rows[0])
+      }, 3000)
+      return
+    }
 
-    setTimeout(async () => {
-      const { data: retry, error: retryError } = await supabase
-        .from('users').select('*').eq('id', userId).single()
-
-      if (retry) {
-        setProfile(retry)
-      } else {
-        console.error('[fetchProfile] both attempts failed:', retryError?.message)
-      }
-    }, 3000)
+    const rows = await res.json()
+    if (rows?.[0]) {
+      setProfile(rows[0])
+    } else {
+      console.warn('[fetchProfile] no row found for user', userId)
+    }
   }
 
   useEffect(() => {
@@ -100,14 +112,12 @@ export function AuthProvider({ children }) {
     // Proper token validation / refresh.  Corrects state if the cached
     // session turned out to be invalid or was revoked.
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('[AuthContext] getSession resolved', { hasSession: !!session, userId: session?.user?.id })
       clearTimeout(fallback)
       if (session?.user) {
         setUser(session.user)
         fetchProfile(session.user.id, session.user)
       } else {
         // Refresh failed or no session — force sign-out
-        console.warn('[AuthContext] getSession returned null — clearing state')
         setUser(null)
         setProfile(null)
         localStorage.removeItem('sb-qwikhub-session')
