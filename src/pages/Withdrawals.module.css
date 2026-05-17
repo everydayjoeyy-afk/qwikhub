@@ -387,7 +387,7 @@
   border: 1.5px solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-text-primary);
-  font-size: 15px;
+  font-size: 16px; /* ≥16px prevents iOS Safari auto-zoom on focus */
   font-family: var(--font-sans);
   padding: 0 14px;
   width: 100%;

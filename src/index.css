@@ -69,4 +69,11 @@ html, body, #root {
   background: var(--color-bg);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  /* Prevent iOS rubber-band scroll that makes the page feel unstable */
+  overscroll-behavior: none;
+}
+
+/* Prevent double-tap zoom on buttons/links; doesn't block pinch-zoom */
+body {
+  touch-action: manipulation;
 }

@@ -353,7 +353,7 @@
   border: 1.5px solid var(--color-border);
   border-radius: 12px;
   padding: 0 14px;
-  font-size: 14px;
+  font-size: 16px; /* ≥16px prevents iOS Safari auto-zoom on focus */
   font-weight: 500;
   color: var(--color-text-primary);
   font-family: var(--font-sans);
@@ -455,7 +455,7 @@
   border: none;
   outline: none;
   padding: 0 14px 0 4px;
-  font-size: 13px;
+  font-size: 16px; /* ≥16px prevents iOS Safari auto-zoom on focus */
   font-weight: 600;
   color: var(--color-text-primary);
   font-family: var(--font-sans);
@@ -691,7 +691,7 @@
   background: transparent;
   border: none;
   outline: none;
-  font-size: 13px;
+  font-size: 16px; /* ≥16px prevents iOS Safari auto-zoom on focus */
   font-weight: 600;
   color: var(--color-text-primary);
   font-family: var(--font-sans);

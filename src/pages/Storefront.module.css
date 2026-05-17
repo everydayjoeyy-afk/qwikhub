@@ -144,7 +144,7 @@
   border: 1px solid var(--color-border);
   border-radius: 10px;
   padding: 0 14px;
-  font-size: 14px;
+  font-size: 16px; /* ≥16px prevents iOS Safari auto-zoom on focus */
   color: var(--color-text-primary);
   font-family: var(--font-sans);
   outline: none;
@@ -166,7 +166,7 @@
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 16px; /* ≥16px prevents iOS Safari auto-zoom on focus */
   color: var(--color-text-primary);
   font-family: var(--font-sans);
   cursor: pointer;
