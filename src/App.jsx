@@ -27,11 +27,14 @@ import ResetPassword from './pages/ResetPassword'
 
 const GREETINGS = ['Welcome', 'Akwaaba']
 function useGreeting() {
-  const key = 'qwikhub_greeting_index'
-  const current = parseInt(localStorage.getItem(key) ?? '0', 10)
-  const next = (current + 1) % GREETINGS.length
-  localStorage.setItem(key, String(next))
-  return GREETINGS[current]
+  // useState lazy initializer runs exactly once on mount — not on every re-render
+  const [greeting] = useState(() => {
+    const key = 'qwikhub_greeting_index'
+    const current = parseInt(localStorage.getItem(key) ?? '0', 10)
+    localStorage.setItem(key, String((current + 1) % GREETINGS.length))
+    return GREETINGS[current]
+  })
+  return greeting
 }
 
 function useSystemTheme() {
