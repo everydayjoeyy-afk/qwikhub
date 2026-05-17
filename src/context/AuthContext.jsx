@@ -195,22 +195,21 @@ export function AuthProvider({ children }) {
       } catch (_) { /* non-fatal — sign up without referral link */ }
     }
 
-    // Insert into users table
-    const usersRes = await fetch(`${SUPABASE_URL}/rest/v1/users`, {
+    // Insert profile + referral row via SECURITY DEFINER RPC (works with anon key,
+    // bypasses RLS — needed because email confirmation means no session token yet)
+    const profileRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/register_user_profile`, {
       method:  'POST',
       headers: restHeaders,
-      body:    JSON.stringify({ id: data.user.id, name, phone, email, referral_code: genCode, referred_by: referredBy }),
+      body:    JSON.stringify({
+        p_user_id:       data.user.id,
+        p_name:          name,
+        p_phone:         phone,
+        p_email:         email,
+        p_referral_code: genCode,
+        p_referred_by:   referredBy ?? null,
+      }),
     })
-    const profileError = usersRes.ok ? null : { message: `Profile insert failed (${usersRes.status})` }
-
-    // If they were referred, create referral record
-    if (referredBy) {
-      await fetch(`${SUPABASE_URL}/rest/v1/referrals`, {
-        method:  'POST',
-        headers: restHeaders,
-        body:    JSON.stringify({ referrer_id: referredBy, referred_user_id: data.user.id, commission_amount: 0 }),
-      })
-    }
+    const profileError = profileRes.ok ? null : { message: `Profile insert failed (${profileRes.status})` }
 
     return { error: profileError ?? null }
   }
