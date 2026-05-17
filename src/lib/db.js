@@ -160,7 +160,7 @@ export async function createOrder({ buyerPhone, bundleId, storeId, amountPaid, p
 }
 
 // ── Wallet ───────────────────────────────────────────────────
-// Uses a SECURITY DEFINER RPC so it works from unauthenticated storefront context
+// creditWallet: credits the deposit wallet_balance (top-ups only)
 export async function creditWallet(userId, amount, description, reference = null) {
   const { data, error } = await restFetch('rpc/credit_wallet', {
     method: 'POST',
@@ -170,6 +170,29 @@ export async function creditWallet(userId, amount, description, reference = null
       p_description: description,
       p_reference:   reference,
     },
+  })
+  return { data, error }
+}
+
+// creditEarnings: credits the withdrawable earnings_balance (store profits, referral transfers)
+export async function creditEarnings(userId, amount, description, reference = null) {
+  const { data, error } = await restFetch('rpc/credit_earnings', {
+    method: 'POST',
+    body: {
+      p_user_id:     userId,
+      p_amount:      amount,
+      p_description: description,
+      p_reference:   reference,
+    },
+  })
+  return { data, error }
+}
+
+// transferReferralEarnings: moves all untransferred referral commissions → earnings_balance
+export async function transferReferralEarnings(userId) {
+  const { data, error } = await restFetch('rpc/transfer_referral_earnings', {
+    method: 'POST',
+    body: { p_user_id: userId },
   })
   return { data, error }
 }
@@ -195,31 +218,28 @@ export async function getWithdrawals(userId) {
 export async function requestWithdrawal(userId, amount, momoNumber) {
   if (amount < 50) return { error: { message: 'Minimum withdrawal is ₵50' } }
 
-  // Deduct from wallet optimistically
-  const { error: balErr } = await supabase.rpc('decrement_wallet', {
-    p_user_id: userId,
-    p_amount:  amount,
+  // Deduct from earnings_balance (not wallet_balance — deposits are not withdrawable)
+  const { error: balErr } = await restFetch('rpc/decrement_earnings', {
+    method: 'POST',
+    body: { p_user_id: userId, p_amount: amount },
   })
   if (balErr) return { error: balErr }
 
   // Create withdrawal record
-  const { data, error } = await supabase
-    .from('withdrawals')
-    .insert({ user_id: userId, amount, momo_number: momoNumber, status: 'pending' })
-    .select()
-    .single()
+  const { data, error } = await restFetch('withdrawals', {
+    method: 'POST',
+    body: { user_id: userId, amount, momo_number: momoNumber, status: 'pending' },
+  })
 
   // Record debit transaction
   if (!error) {
-    await supabase.from('transactions').insert({
-      user_id:     userId,
-      type:        'debit',
-      amount,
-      description: 'Withdrawal request',
+    await restFetch('transactions', {
+      method: 'POST',
+      body: { user_id: userId, type: 'debit', amount, description: 'Withdrawal request' },
     })
   }
 
-  return { data, error }
+  return { data: Array.isArray(data) ? (data[0] ?? null) : data, error }
 }
 
 // ── Referrals ────────────────────────────────────────────────
@@ -237,6 +257,7 @@ export async function getReferrals(userId) {
         id:                r.id,
         referred_user_id:  r.referred_user_id,
         commission_amount: r.commission_amount,
+        transferred:       r.transferred ?? false,
         created_at:        r.created_at,
         referred_user: r.user_name ? { name: r.user_name, phone: r.user_phone } : null,
       })),
@@ -250,7 +271,7 @@ export async function getReferrals(userId) {
   // User name/phone won't be available here (blocked by RLS on users table).
   console.warn('[getReferrals] RPC unavailable, falling back to table query', rpcError)
   const { data: rows, error: fallbackError } = await restFetch(
-    `referrals?referrer_id=eq.${userId}&select=id,referred_user_id,commission_amount,created_at&order=created_at.desc`
+    `referrals?referrer_id=eq.${userId}&select=id,referred_user_id,commission_amount,transferred,created_at&order=created_at.desc`
   )
   if (fallbackError) {
     console.error('[getReferrals] fallback also failed', fallbackError)
@@ -261,6 +282,7 @@ export async function getReferrals(userId) {
       id:                r.id,
       referred_user_id:  r.referred_user_id,
       commission_amount: r.commission_amount,
+      transferred:       r.transferred ?? false,
       created_at:        r.created_at,
       referred_user:     null,   // names unavailable without RPC
     })),

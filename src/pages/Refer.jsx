@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Copy, Share, Shop, WalletMoney } from 'iconsax-react'
 import CreateStoreModal from '../components/CreateStoreModal/CreateStoreModal'
 import { useAuth } from '../context/AuthContext'
-import { getReferrals, getMyStore } from '../lib/db'
+import { getReferrals, getMyStore, transferReferralEarnings } from '../lib/db'
 import styles from './Refer.module.css'
 
 const COMMISSION_RATE = 0.05
@@ -44,12 +44,15 @@ export default function Refer() {
   const navigate = useNavigate()
   const { user, profile } = useAuth()
 
-  const [referrals, setReferrals]           = useState([])
-  const [loading, setLoading]               = useState(true)
-  const [hasStore, setHasStore]             = useState(false)
+  const [referrals, setReferrals]                 = useState([])
+  const [loading, setLoading]                     = useState(true)
+  const [hasStore, setHasStore]                   = useState(false)
   const [showNoStorePrompt, setShowNoStorePrompt] = useState(false)
   const [createStoreOpen, setCreateStoreOpen]     = useState(false)
-  const [linkCopied, setLinkCopied]         = useState(false)
+  const [linkCopied, setLinkCopied]               = useState(false)
+  const [transferring, setTransferring]           = useState(false)
+  const [transferDone, setTransferDone]           = useState(false)
+  const [transferError, setTransferError]         = useState('')
 
   const referralCode = profile?.referral_code ?? '—'
   const referralLink = `${window.location.origin}/signup?ref=${referralCode}`
@@ -73,7 +76,10 @@ export default function Refer() {
     return () => clearTimeout(timer)
   }, [user])
 
-  // Commission earned = sum of commission_amount recorded on each referral row
+  // Only count commissions not yet transferred to earnings_balance
+  const availableEarnings = referrals.reduce(
+    (sum, r) => sum + (!r.transferred ? (r.commission_amount ?? 0) : 0), 0
+  )
   const totalEarnings = referrals.reduce((sum, r) => sum + (r.commission_amount ?? 0), 0)
 
   const handleCopy = () => {
@@ -94,9 +100,19 @@ export default function Refer() {
     }
   }
 
-  const handleTransfer = () => {
-    if (!hasStore) {
-      setShowNoStorePrompt(true)
+  const handleTransfer = async () => {
+    if (!hasStore) { setShowNoStorePrompt(true); return }
+    if (availableEarnings <= 0 || transferring) return
+    setTransferring(true)
+    setTransferError('')
+    const { error } = await transferReferralEarnings(user.id)
+    setTransferring(false)
+    if (error) {
+      setTransferError('Transfer failed. Please try again.')
+    } else {
+      // Mark all referrals as transferred in local state
+      setReferrals(prev => prev.map(r => ({ ...r, transferred: true })))
+      setTransferDone(true)
     }
   }
 
@@ -114,22 +130,34 @@ export default function Refer() {
       {/* Earnings summary */}
       <div className={styles.earningsCard}>
         <div className={styles.earningsInfo}>
-          <span className={styles.earningsLabel}>Total earnings</span>
-          <span className={styles.earningsAmount}>₵{totalEarnings.toFixed(2)}</span>
+          <span className={styles.earningsLabel}>Available to transfer</span>
+          <span className={styles.earningsAmount}>₵{availableEarnings.toFixed(2)}</span>
+          {totalEarnings > availableEarnings && (
+            <span className={styles.transferHint} style={{ margin: 0 }}>
+              ₵{(totalEarnings - availableEarnings).toFixed(2)} already transferred
+            </span>
+          )}
         </div>
         <button
           className={styles.transferBtn}
           onClick={handleTransfer}
-          disabled={totalEarnings === 0}
-          title={totalEarnings === 0 ? 'You have no referral earnings yet' : undefined}
-          aria-label={totalEarnings === 0 ? 'Transfer to My Store – no earnings yet' : 'Transfer to My Store'}
+          disabled={availableEarnings === 0 || transferring || transferDone}
+          aria-label="Transfer to earnings balance"
         >
           <WalletMoney size={18} color="currentColor" variant="Bold" />
-          Transfer to My Store
+          {transferring ? 'Transferring…' : transferDone ? 'Transferred!' : 'Transfer'}
         </button>
       </div>
-      {totalEarnings === 0 && (
+      {availableEarnings === 0 && !transferDone && (
         <p className={styles.transferHint}>Earn commissions by referring friends to unlock transfers.</p>
+      )}
+      {transferDone && (
+        <p className={styles.transferHint}>
+          ₵{totalEarnings.toFixed(2)} added to your earnings balance — withdrawable anytime.
+        </p>
+      )}
+      {transferError && (
+        <p className={styles.transferHint} style={{ color: 'var(--color-danger, #ef4444)' }}>{transferError}</p>
       )}
 
       {/* No-store prompt */}

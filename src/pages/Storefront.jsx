@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import { ShoppingCart, Trash, ArrowDown2, TickCircle } from 'iconsax-react'
 import { THEMES } from '../components/CreateStoreModal/CreateStoreModal'
 import { BUNDLE_OPTIONS } from '../components/BundleSelect/BundleSelect'
-import { getStoreBySlug, getStoreBundles, getBundles, createOrder, creditWallet } from '../lib/db'
+import { getStoreBySlug, getStoreBundles, getBundles, createOrder, creditEarnings } from '../lib/db'
 import { openPaystackPopup } from '../lib/paystack'
 import mtnLogo     from '../assets/mtn.jpg'
 import telecelLogo from '../assets/telecel.jpg'
@@ -250,21 +250,19 @@ export default function Storefront() {
       }
     }
 
-    // Credit seller wallet with total profit
+    // Credit seller earnings balance with total profit (withdrawable, separate from deposits)
     const totalProfit = cart.reduce(
       (s, item) => s + Math.max(0, item.price - item.platformPrice), 0
     )
     if (totalProfit > 0 && store.user_id) {
-      const { error: walletErr } = await creditWallet(
+      const { error: earningsErr } = await creditEarnings(
         store.user_id,
         totalProfit,
         `Sale from store (${cart.length} item${cart.length > 1 ? 's' : ''})`,
         reference,
       )
-      if (walletErr) {
-        // Wallet credit failed — profit not added, but payment was real.
-        // Store owner will see the Paystack transaction and can reconcile.
-        console.error('[Storefront] creditWallet failed — profit not credited:', walletErr)
+      if (earningsErr) {
+        console.error('[Storefront] creditEarnings failed — profit not credited:', earningsErr)
       }
     }
 

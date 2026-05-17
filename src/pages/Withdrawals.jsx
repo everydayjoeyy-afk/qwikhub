@@ -95,8 +95,8 @@ export default function Withdrawals() {
     if (!amount || amount < 50) { setFormError('Minimum withdrawal is ₵50'); return }
     if (!momoNumber.trim())     { setFormError('Enter your MoMo number');     return }
 
-    const walletBalance = profile?.wallet_balance ?? 0
-    if (amount > walletBalance) { setFormError(`Insufficient balance (₵${walletBalance.toFixed(2)})`); return }
+    const earningsBalance = profile?.earnings_balance ?? 0
+    if (amount > earningsBalance) { setFormError(`Insufficient earnings balance (₵${earningsBalance.toFixed(2)})`); return }
 
     setSubmitting(true)
     const { data, error } = await requestWithdrawal(user.id, amount, momoNumber.trim())
@@ -124,9 +124,9 @@ export default function Withdrawals() {
     return true
   })
 
-  const totalWithdrawn = withdrawals.reduce((s, w) => s + Number(w.amount), 0)
-  const groups         = groupByDate(filtered)
-  const walletBalance  = profile?.wallet_balance ?? 0
+  const totalWithdrawn   = withdrawals.reduce((s, w) => s + Number(w.amount), 0)
+  const groups           = groupByDate(filtered)
+  const earningsBalance  = profile?.earnings_balance ?? 0
 
   return (
     <div className={styles.page}>
@@ -149,7 +149,7 @@ export default function Withdrawals() {
       <div className={styles.balanceCard}>
         <div className={styles.balanceInfo}>
           <span className={styles.balanceLabel}>Available balance</span>
-          <span className={styles.balanceValue}>₵{walletBalance.toFixed(2)}</span>
+          <span className={styles.balanceValue}>₵{earningsBalance.toFixed(2)}</span>
         </div>
         <button
           className={styles.withdrawRequestBtn}
@@ -239,7 +239,7 @@ export default function Withdrawals() {
               <form onSubmit={handleWithdrawSubmit} noValidate style={{ display: 'contents' }}>
                 <div className={styles.sheetBody}>
                   <div className={styles.sheetBalanceHint}>
-                    Balance: <strong>₵{walletBalance.toFixed(2)}</strong> · Min. ₵50
+                    Balance: <strong>₵{earningsBalance.toFixed(2)}</strong> · Min. ₵50
                   </div>
 
                   <div className={styles.sheetForm}>
@@ -250,7 +250,7 @@ export default function Withdrawals() {
                         className={styles.sheetInput}
                         placeholder="e.g. 100"
                         min="50"
-                        max={walletBalance}
+                        max={earningsBalance}
                         step="0.01"
                         value={withdrawAmount}
                         onChange={e => setWithdrawAmount(e.target.value)}
