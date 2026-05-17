@@ -42,7 +42,7 @@ function timeAgo(isoString) {
 
 export default function Refer() {
   const navigate = useNavigate()
-  const { user, profile } = useAuth()
+  const { user, profile, ready } = useAuth()
 
   const [referrals, setReferrals]           = useState([])
   const [loading, setLoading]               = useState(true)
@@ -55,8 +55,9 @@ export default function Refer() {
   const referralLink = `${window.location.origin}/signup?ref=${referralCode}`
 
   useEffect(() => {
-    if (!user) return
-    // Safety: never stay in loading state forever
+    // Wait for ready: supabase.auth.getSession() must have resolved so the
+    // Supabase client's init lock is released before rpc() calls can proceed.
+    if (!user || !ready) return
     const timer = setTimeout(() => setLoading(false), 8000)
     Promise.all([
       getReferrals(user.id),
@@ -68,7 +69,7 @@ export default function Refer() {
       setLoading(false)
     })
     return () => clearTimeout(timer)
-  }, [user])
+  }, [user, ready])
 
   // Commission earned = sum of commission_amount recorded on each referral row
   const totalEarnings = referrals.reduce((sum, r) => sum + (r.commission_amount ?? 0), 0)

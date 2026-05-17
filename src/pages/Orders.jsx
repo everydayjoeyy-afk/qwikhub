@@ -44,13 +44,13 @@ function parseDescription(desc) {
 
 export default function Orders() {
   const navigate   = useNavigate()
-  const { user }   = useAuth()
+  const { user, ready }   = useAuth()
   const [orders, setOrders]   = useState([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery]     = useState('')
 
   useEffect(() => {
-    if (!user) return
+    if (!user || !ready) return
     const timer = setTimeout(() => setLoading(false), 8000)
 
     getTransactions(user.id)
@@ -65,7 +65,7 @@ export default function Orders() {
       .finally(() => { clearTimeout(timer); setLoading(false) })
 
     return () => clearTimeout(timer)
-  }, [user])
+  }, [user, ready])
 
   const filtered = orders.filter(o => {
     if (!query.trim()) return true

@@ -7,6 +7,10 @@ export function AuthProvider({ children }) {
   const [user, setUser]       = useState(null)   // supabase auth user
   const [profile, setProfile] = useState(null)   // users table row
   const [loading, setLoading] = useState(true)
+  // ready = true once supabase.auth.getSession() has resolved, meaning the
+  // Supabase client's internal initialization lock is released and supabase.rpc()
+  // / supabase.from() calls can proceed without deadlocking.
+  const [ready, setReady]     = useState(false)
 
   async function fetchProfile(userId, _authUser = null) {
     // ── Optimistic fast path: show name/phone from session metadata immediately ──
@@ -123,6 +127,10 @@ export function AuthProvider({ children }) {
         localStorage.removeItem('sb-qwikhub-session')
       }
       clearLoadingOnce()
+      // Signal that the Supabase client's init lock is now released.
+      // Components should gate supabase.rpc() / supabase.from() calls on this
+      // flag to avoid deadlocking before initialization completes.
+      setReady(true)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -214,7 +222,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={{
-      user, profile, loading,
+      user, profile, loading, ready,
       signIn, signUp, signOut, resetPassword, updatePassword,
       refetchProfile: () => {
       if (!user) return Promise.resolve()

@@ -67,7 +67,7 @@ function timeAgo(dateStr) {
 
 export default function MyStore() {
   const navigate     = useNavigate()
-  const { user }     = useAuth()
+  const { user, ready } = useAuth()
   const saveTimer    = useRef(null)
   const initialised  = useRef(false)
 
@@ -90,7 +90,7 @@ export default function MyStore() {
 
   // ── Load everything from Supabase on mount ──────────────────
   useEffect(() => {
-    if (!user) return
+    if (!user || !ready) return
 
     // Safety: never stay on "Loading store…" forever on slow networks
     const timer = setTimeout(() => setLoadingStore(false), 10000)
@@ -153,7 +153,7 @@ export default function MyStore() {
     })()
 
     return () => clearTimeout(timer)
-  }, [user, fetchKey])
+  }, [user, ready, fetchKey])
 
   // ── Auto-save settings (localStorage immediately, Supabase debounced) ──
   useEffect(() => {
