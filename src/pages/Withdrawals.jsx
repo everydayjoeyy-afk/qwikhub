@@ -1,4 +1,9 @@
 import { useState, useEffect } from 'react'
+
+function isValidGhanaPhone(raw) {
+  const digits = raw.replace(/[\s\-]/g, '')
+  return /^0(2[0-9]|5[0-9])\d{7}$/.test(digits)
+}
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Filter, CloseCircle, MoneyRecive } from 'iconsax-react'
 import FilterSheet from '../components/FilterSheet/FilterSheet'
@@ -92,8 +97,8 @@ export default function Withdrawals() {
     e.preventDefault()
     setFormError('')
     const amount = parseFloat(withdrawAmount)
-    if (!amount || amount < 50) { setFormError('Minimum withdrawal is ₵50'); return }
-    if (!momoNumber.trim())     { setFormError('Enter your MoMo number');     return }
+    if (!amount || amount < 50)           { setFormError('Minimum withdrawal is ₵50'); return }
+    if (!isValidGhanaPhone(momoNumber))  { setFormError('Enter a valid Ghana MoMo number (e.g. 0241234567)'); return }
 
     const earningsBalance = profile?.earnings_balance ?? 0
     if (amount > earningsBalance) { setFormError(`Insufficient earnings balance (₵${earningsBalance.toFixed(2)})`); return }

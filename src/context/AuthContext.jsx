@@ -83,7 +83,7 @@ export function AuthProvider({ children }) {
     if (rows?.[0]) {
       setProfile(rows[0])
     } else {
-      console.warn('[fetchProfile] no row found for user', userId)
+      console.warn('[fetchProfile] no row found for user')
     }
   }
 

@@ -6,6 +6,17 @@ import logoDark  from '../assets/logo-dark.svg'
 import { useAuth } from '../context/AuthContext'
 import styles from './SignIn.module.css'
 
+// Ghana mobile: 10 digits starting with 02X or 05X (strips spaces/dashes first)
+function isValidGhanaPhone(raw) {
+  const digits = raw.replace(/[\s\-]/g, '')
+  return /^0(2[0-9]|5[0-9])\d{7}$/.test(digits)
+}
+
+// Stricter email: local@domain.tld (tld ≥ 2 chars)
+function isValidEmail(raw) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(raw.trim())
+}
+
 export default function SignUp({ isDark }) {
   const navigate = useNavigate()
   const { signUp } = useAuth()
@@ -36,17 +47,17 @@ export default function SignUp({ isDark }) {
 
   const canSubmit =
     name.trim() !== '' &&
-    email.trim() !== '' &&
-    phone.trim().length >= 10 &&
+    isValidEmail(email) &&
+    isValidGhanaPhone(phone) &&
     passwordStrong &&
     confirm === password
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setErrorMsg('')
-    if (!name.trim())                     { setErrorMsg('Please enter your full name.'); return }
-    if (!email.trim().includes('@'))      { setErrorMsg('Please enter a valid email address.'); return }
-    if (phone.trim().length < 10)         { setErrorMsg('Please enter a valid phone number (at least 10 digits).'); return }
+    if (!name.trim())                { setErrorMsg('Please enter your full name.'); return }
+    if (!isValidEmail(email))        { setErrorMsg('Please enter a valid email address (e.g. you@example.com).'); return }
+    if (!isValidGhanaPhone(phone))   { setErrorMsg('Please enter a valid Ghana mobile number (e.g. 0241234567).'); return }
     if (!passwordStrong)                  { setErrorMsg('Password does not meet all requirements.'); return }
     if (confirm !== password)             { setErrorMsg("Passwords don't match."); return }
     setLoading(true)
@@ -105,6 +116,9 @@ export default function SignUp({ isDark }) {
               onChange={e => setEmail(e.target.value)}
               autoComplete="email"
             />
+            {email.length > 0 && !isValidEmail(email) && (
+              <span className={styles.errorText}>Enter a valid email address</span>
+            )}
           </div>
 
           {/* Phone */}
@@ -114,12 +128,16 @@ export default function SignUp({ isDark }) {
               id="phone"
               type="tel"
               className={styles.input}
-              placeholder="0244 123 456"
+              placeholder="e.g. 0241234567"
               value={phone}
               onChange={e => setPhone(e.target.value)}
               autoComplete="tel"
               maxLength={15}
+              inputMode="tel"
             />
+            {phone.length > 0 && !isValidGhanaPhone(phone) && (
+              <span className={styles.errorText}>Enter a valid Ghana number (e.g. 0241234567)</span>
+            )}
           </div>
 
           {/* Password */}

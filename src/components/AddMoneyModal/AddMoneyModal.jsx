@@ -73,15 +73,10 @@ export default function AddMoneyModal({ open, onClose, onPaymentSuccess }) {
       clearTimeout(fallbackTimer.current)
       setShowFallback(false)
 
-      console.log('[AddMoney] ✅ onSuccess fired', { reference, userId: user?.id, capturedAmount })
-
       if (!user?.id) {
-        console.error('[AddMoney] ❌ user.id is missing!')
         setStatus('wallet_error')
         return
       }
-
-      console.log('[AddMoney] 📞 Calling creditWallet RPC...')
 
       // Race the RPC against a 12-second timeout so the UI can never freeze permanently
       const timeoutResult = new Promise(resolve =>
@@ -98,7 +93,6 @@ export default function AddMoneyModal({ open, onClose, onPaymentSuccess }) {
         return
       }
 
-      console.log('[AddMoney] ✅ Wallet credited, refetching profile...')
       await refetchProfile()
       onPaymentSuccess?.()
       setStatus('success')
@@ -234,17 +228,9 @@ export default function AddMoneyModal({ open, onClose, onPaymentSuccess }) {
           </button>
 
           {showFallback && (
-            <button
-              className={styles.fallbackBtn}
-              onClick={() => {
-                clearTimeout(fallbackTimer.current)
-                setStatus('success')
-                setTimeout(() => onClose(), 1800)
-                refetchProfile()
-              }}
-            >
-              Paid successfully? Tap to confirm
-            </button>
+            <p className={styles.fallbackMsg}>
+              Taking too long? If Paystack already charged you, please contact support — your payment is safe. Otherwise, close and try again.
+            </p>
           )}
         </div>
       </div>

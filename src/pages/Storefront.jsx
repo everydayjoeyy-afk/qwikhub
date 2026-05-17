@@ -1,4 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
+
+function isValidGhanaPhone(raw) {
+  const digits = raw.replace(/[\s\-]/g, '')
+  return /^0(2[0-9]|5[0-9])\d{7}$/.test(digits)
+}
 import { useParams } from 'react-router-dom'
 import { ShoppingCart, Trash, ArrowDown2, TickCircle } from 'iconsax-react'
 import { THEMES } from '../components/CreateStoreModal/CreateStoreModal'
@@ -179,7 +184,7 @@ export default function Storefront() {
     price: networkPrices[o.value] ?? (o.price * 1.15).toFixed(2),
   }))
 
-  const canAdd = phone.trim().length >= 10 && bundle !== ''
+  const canAdd = isValidGhanaPhone(phone) && bundle !== ''
 
   const handleAdd = () => {
     if (!canAdd) return
@@ -245,7 +250,7 @@ export default function Storefront() {
           paystackRef: reference,
         })
         if (orderErr) {
-          console.error('[Storefront] createOrder failed:', orderErr, item)
+          console.error('[Storefront] createOrder failed:', orderErr.message)
         }
       }
     }
@@ -280,7 +285,7 @@ export default function Storefront() {
         <span className={styles.poweredText}>Powered by QwikHub</span>
         <h1 className={styles.storeName}>{store.name}</h1>
         <span className={styles.storeLink} style={{ color: theme.accent }}>
-          qwikhub.com/store/{store.slug}
+          {window.location.host}/store/{store.slug}
         </span>
       </div>
 
