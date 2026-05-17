@@ -215,18 +215,33 @@ export async function recordReferralCommission(buyerUserId, amountPaid) {
 }
 
 // transferReferralEarnings: moves all untransferred referral commissions → earnings_balance
-export async function transferReferralEarnings(userId) {
+// amount = the pre-calculated sum of untransferred commissions (used for transaction record)
+export async function transferReferralEarnings(userId, amount) {
   const { data, error } = await restFetch('rpc/transfer_referral_earnings', {
     method: 'POST',
     body: { p_user_id: userId },
   })
   if (!error) {
-    // Mark all untransferred referral rows as transferred so the page
-    // shows the correct ₵0.00 available on reload.
+    // Use neq.true (not eq.false) so NULL rows are also caught — the SQL function
+    // uses WHERE transferred = false which skips NULL, so those rows never get
+    // processed by the RPC. We mark them here to keep the UI accurate.
     await restFetch(
-      `referrals?referrer_id=eq.${userId}&transferred=eq.false&commission_amount=gt.0`,
+      `referrals?referrer_id=eq.${userId}&transferred=neq.true&commission_amount=gt.0`,
       { method: 'PATCH', body: { transferred: true } }
     )
+    // Insert a transaction record manually in case the RPC skipped NULL rows
+    // and therefore didn't record the transfer in the transactions table.
+    if (amount > 0) {
+      await restFetch('transactions', {
+        method: 'POST',
+        body: {
+          user_id:     userId,
+          type:        'credit',
+          amount,
+          description: 'Referral earnings transfer',
+        },
+      })
+    }
   }
   return { data, error }
 }
