@@ -67,14 +67,14 @@ function timeAgo(dateStr) {
 
 export default function MyStore() {
   const navigate     = useNavigate()
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const saveTimer    = useRef(null)
   const initialised  = useRef(false)
 
   const [fetchKey, setFetchKey]      = useState(0)   // increment to re-run the load effect
   const [hasNoStore, setHasNoStore]  = useState(false)
   const [createStoreOpen, setCreateStoreOpen] = useState(false)
-  const [tab, setTab]               = useState('orders')
+  const [tab, setTab]               = useState('prices')
   const [storeId, setStoreId]       = useState(null)
   const [storeName, setStoreName]   = useState('')
   const [storeSlug, setStoreSlug]   = useState('')
@@ -276,7 +276,7 @@ export default function MyStore() {
             <span className={styles.statLabel}>Profit today</span>
           </div>
           <div className={styles.statBox}>
-            <span className={styles.statValue}>₵{totalProfit.toFixed(2)}</span>
+            <span className={styles.statValue}>₵{(profile?.earnings_balance ?? 0).toFixed(2)}</span>
             <span className={styles.statLabel}>Total profit</span>
           </div>
         </div>
