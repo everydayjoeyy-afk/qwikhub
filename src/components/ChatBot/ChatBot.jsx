@@ -58,11 +58,27 @@ const TREE = {
 
 const SUPPORT_WHATSAPP = 'https://wa.me/233549187917'
 
+// Pre-filled WhatsApp message based on which topic led to support
+const TOPIC_MESSAGES = {
+  missing:  'Hi, I\'m a QwikHub user and I need help with a bundle that hasn\'t reflected on my phone.',
+  bundles:  'Hi, I\'m a QwikHub user and I need help with a bundle delivery issue.',
+  fees:     'Hi, I\'m a QwikHub user and I need help with a payment or fee issue.',
+  referrals:'Hi, I\'m a QwikHub user and I need help with my referral earnings.',
+  withdraw: 'Hi, I\'m a QwikHub user and I need help with a withdrawal.',
+  default:  'Hi, I\'m a QwikHub user and I need some help.',
+}
+
+function buildWhatsAppUrl(topic) {
+  const msg = TOPIC_MESSAGES[topic] ?? TOPIC_MESSAGES.default
+  return `${SUPPORT_WHATSAPP}?text=${encodeURIComponent(msg)}`
+}
+
 // ── Component ─────────────────────────────────────────────────
 export default function ChatBot() {
   const [open, setOpen]         = useState(false)
   const [messages, setMessages] = useState([])
   const [showMenu, setShowMenu] = useState(true)
+  const [lastTopic, setLastTopic] = useState(null)
   const bottomRef               = useRef(null)
   const sheetRef                = useRef(null)
 
@@ -113,13 +129,14 @@ export default function ChatBot() {
     }
 
     if (chip.id === '__whatsapp') {
-      window.open(SUPPORT_WHATSAPP, '_blank', 'noopener')
+      window.open(buildWhatsAppUrl(lastTopic), '_blank', 'noopener')
       return
     }
 
     const node = TREE[chip.id]
     if (!node) return
 
+    setLastTopic(chip.id)
     setShowMenu(false)
     setMessages(prev => [...prev, { id: Date.now(), from: 'user', text: chip.label }])
     setTimeout(() => {
@@ -134,7 +151,7 @@ export default function ChatBot() {
 
   const handleClose = () => {
     setOpen(false)
-    setTimeout(() => { setMessages([]); setShowMenu(false) }, 300)
+    setTimeout(() => { setMessages([]); setShowMenu(false); setLastTopic(null) }, 300)
   }
 
   return (
