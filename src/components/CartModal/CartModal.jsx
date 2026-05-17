@@ -2,8 +2,11 @@ import { useState, useEffect, useRef } from 'react'
 import { CloseCircle, Trash, TickCircle } from 'iconsax-react'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
-import { supabase } from '../../lib/supabase'
+import { recordReferralCommission } from '../../lib/db'
 import styles from './CartModal.module.css'
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
+const ANON_KEY     = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 export default function CartModal({ open, onClose, onPaymentSuccess }) {
   const { items, total, removeFromCart, clearCart } = useCart()
@@ -43,27 +46,47 @@ export default function CartModal({ open, onClose, onPaymentSuccess }) {
     setErrorMsg('')
 
     try {
-      // 1. Atomically deduct total from wallet
-      const { error: debitErr } = await supabase.rpc('decrement_wallet', {
-        p_user_id: user.id,
-        p_amount:  total,
+      const raw   = localStorage.getItem('sb-qwikhub-session')
+      const token = JSON.parse(raw)?.access_token
+      const headers = {
+        apikey:         ANON_KEY,
+        Authorization:  `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        Prefer:         'return=representation',
+      }
+
+      // 1. Atomically deduct total from wallet (direct REST — avoids init-lock deadlock)
+      const debitRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/decrement_wallet`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ p_user_id: user.id, p_amount: total }),
       })
-      if (debitErr) throw debitErr
+      if (!debitRes.ok) {
+        const msg = await debitRes.text().catch(() => '')
+        throw new Error(msg || `Debit failed (${debitRes.status})`)
+      }
 
       // 2. Record one transaction per cart item
-      const { error: txErr } = await supabase.from('transactions').insert(
-        items.map(item => ({
-          user_id:     user.id,
-          type:        'debit',
-          amount:      item.price,
-          description: item.type === 'subscription'
-            ? `[Sub] ${item.bundleLabel} → ${item.phone}`
-            : `${item.bundleLabel} → ${item.phone} (${item.networkName})`,
-        }))
-      )
-      if (txErr) throw txErr
+      const txRes = await fetch(`${SUPABASE_URL}/rest/v1/transactions`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(
+          items.map(item => ({
+            user_id:     user.id,
+            type:        'debit',
+            amount:      item.price,
+            description: item.type === 'subscription'
+              ? `[Sub] ${item.bundleLabel} → ${item.phone}`
+              : `${item.bundleLabel} → ${item.phone} (${item.networkName})`,
+          }))
+        ),
+      })
+      if (!txRes.ok) throw new Error(`Transaction record failed (${txRes.status})`)
 
-      // 3. Refresh balance display, clear cart, notify home
+      // 3. Credit 5% commission to whoever referred this buyer (fire-and-forget — non-fatal)
+      recordReferralCommission(user.id, total).catch(() => {})
+
+      // 4. Refresh balance display, clear cart, notify home
       await refetchProfile()
       clearCart()
       onPaymentSuccess?.()
