@@ -61,8 +61,14 @@ async function restFetch(path, { method = 'GET', body } = {}) {
     const text = await res.text().catch(() => '')
     return { data: null, error: { message: text || `HTTP ${res.status}` } }
   }
-  const data = await res.json()
-  return { data, error: null }
+  // Some endpoints (void RPCs, 204s) return an empty body — guard against that
+  const text = await res.text().catch(() => '')
+  if (!text) return { data: null, error: null }
+  try {
+    return { data: JSON.parse(text), error: null }
+  } catch {
+    return { data: null, error: { message: 'Invalid JSON response' } }
+  }
 }
 
 // ── Store ────────────────────────────────────────────────────
