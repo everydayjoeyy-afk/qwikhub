@@ -129,13 +129,16 @@ export async function createOrder({ buyerPhone, bundleId, storeId, amountPaid, p
 // ── Wallet ───────────────────────────────────────────────────
 // Uses a SECURITY DEFINER RPC so it works from unauthenticated storefront context
 export async function creditWallet(userId, amount, description, reference = null) {
-  const { error } = await supabase.rpc('credit_wallet', {
-    p_user_id:     userId,
-    p_amount:      amount,
-    p_description: description,
-    p_reference:   reference,
+  const { data, error } = await restFetch('rpc/credit_wallet', {
+    method: 'POST',
+    body: {
+      p_user_id:     userId,
+      p_amount:      amount,
+      p_description: description,
+      p_reference:   reference,
+    },
   })
-  return { error }
+  return { data, error }
 }
 
 // ── Transactions ─────────────────────────────────────────────

@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import { usePaystackPayment } from 'react-paystack'
 import { CloseCircle, TickCircle } from 'iconsax-react'
 import { useAuth } from '../../context/AuthContext'
-import { supabase } from '../../lib/supabase'
 import { creditWallet } from '../../lib/db'
 import styles from './AddMoneyModal.module.css'
 
@@ -81,9 +80,6 @@ export default function AddMoneyModal({ open, onClose, onPaymentSuccess }) {
         setStatus('wallet_error')
         return
       }
-
-      // Ensure the JWT is fresh before calling the RPC (expired tokens cause silent hangs)
-      try { await supabase.auth.refreshSession() } catch (_) { /* non-fatal */ }
 
       console.log('[AddMoney] 📞 Calling creditWallet RPC...')
 
