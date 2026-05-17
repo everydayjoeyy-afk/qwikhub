@@ -220,6 +220,14 @@ export async function transferReferralEarnings(userId) {
     method: 'POST',
     body: { p_user_id: userId },
   })
+  if (!error) {
+    // Mark all untransferred referral rows as transferred so the page
+    // shows the correct ₵0.00 available on reload.
+    await restFetch(
+      `referrals?referrer_id=eq.${userId}&transferred=eq.false`,
+      { method: 'PATCH', body: { transferred: true } }
+    )
+  }
   return { data, error }
 }
 
@@ -271,19 +279,25 @@ export async function requestWithdrawal(userId, amount, momoNumber) {
 // ── Referrals ────────────────────────────────────────────────
 export async function getReferrals(userId) {
   // ── Primary path: SECURITY DEFINER RPC (returns user name + phone) ──
-  // Uses direct REST POST to bypass the Supabase client init lock.
-  const { data: rpcData, error: rpcError } = await restFetch('rpc/get_my_referrals', {
-    method: 'POST',
-    body:   { p_user_id: userId },
-  })
+  // Run both in parallel: RPC for name/phone, direct table for transferred flag
+  // (get_my_referrals may not expose the transferred column, so we read it separately)
+  const [{ data: rpcData, error: rpcError }, { data: flagRows }] = await Promise.all([
+    restFetch('rpc/get_my_referrals', { method: 'POST', body: { p_user_id: userId } }),
+    restFetch(`referrals?referrer_id=eq.${userId}&select=id,transferred&order=created_at.desc`),
+  ])
 
   if (!rpcError && Array.isArray(rpcData)) {
+    // Build a fast lookup: referral id → transferred (from direct table read)
+    const transferredMap = {}
+    if (Array.isArray(flagRows)) {
+      flagRows.forEach(r => { transferredMap[r.id] = r.transferred ?? false })
+    }
     return {
       data: rpcData.map(r => ({
         id:                r.id,
         referred_user_id:  r.referred_user_id,
         commission_amount: r.commission_amount,
-        transferred:       r.transferred ?? false,
+        transferred:       transferredMap[r.id] ?? r.transferred ?? false,
         created_at:        r.created_at,
         referred_user: r.user_name ? { name: r.user_name, phone: r.user_phone } : null,
       })),
