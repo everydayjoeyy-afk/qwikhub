@@ -185,25 +185,48 @@ export async function requestWithdrawal(userId, amount, momoNumber) {
 
 // ── Referrals ────────────────────────────────────────────────
 export async function getReferrals(userId) {
-  // Direct REST POST to RPC — bypasses init lock (same reason as getMyStore).
-  // SECURITY DEFINER function is still used so RLS doesn't block cross-user reads.
-  const { data, error } = await restFetch('rpc/get_my_referrals', {
+  // ── Primary path: SECURITY DEFINER RPC (returns user name + phone) ──
+  // Uses direct REST POST to bypass the Supabase client init lock.
+  const { data: rpcData, error: rpcError } = await restFetch('rpc/get_my_referrals', {
     method: 'POST',
     body:   { p_user_id: userId },
   })
-  if (error) {
-    console.error('[getReferrals] rpc error', error)
-    return { data: [], error }
+
+  if (!rpcError && Array.isArray(rpcData)) {
+    return {
+      data: rpcData.map(r => ({
+        id:                r.id,
+        referred_user_id:  r.referred_user_id,
+        commission_amount: r.commission_amount,
+        created_at:        r.created_at,
+        referred_user: r.user_name ? { name: r.user_name, phone: r.user_phone } : null,
+      })),
+      error: null,
+    }
   }
-  // Normalise shape to match what Refer.jsx expects
-  const normalised = (data ?? []).map(r => ({
-    id:               r.id,
-    referred_user_id: r.referred_user_id,
-    commission_amount: r.commission_amount,
-    created_at:       r.created_at,
-    referred_user: r.user_name ? { name: r.user_name, phone: r.user_phone } : null,
-  }))
-  return { data: normalised, error: null }
+
+  // ── Fallback: direct table query ─────────────────────────────────────
+  // Used when get_my_referrals RPC hasn't been created in Supabase yet.
+  // RLS policy "referrals_own" (referrer_id = auth.uid()) allows this read.
+  // User name/phone won't be available here (blocked by RLS on users table).
+  console.warn('[getReferrals] RPC unavailable, falling back to table query', rpcError)
+  const { data: rows, error: fallbackError } = await restFetch(
+    `referrals?referrer_id=eq.${userId}&select=id,referred_user_id,commission_amount,created_at&order=created_at.desc`
+  )
+  if (fallbackError) {
+    console.error('[getReferrals] fallback also failed', fallbackError)
+    return { data: [], error: fallbackError }
+  }
+  return {
+    data: (rows ?? []).map(r => ({
+      id:                r.id,
+      referred_user_id:  r.referred_user_id,
+      commission_amount: r.commission_amount,
+      created_at:        r.created_at,
+      referred_user:     null,   // names unavailable without RPC
+    })),
+    error: null,
+  }
 }
 
 // ── Master bundles ───────────────────────────────────────────
