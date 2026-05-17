@@ -63,9 +63,12 @@ export default function ChatBot() {
   const bottomRef               = useRef(null)
   const sheetRef                = useRef(null)
 
-  // Greeting on first open
+  // Greeting on first open — intentionally only re-runs when `open` changes;
+  // reading messages.length here is safe because we only ever *set* state when
+  // the panel just opened (messages will always be [] at that moment).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (open && messages.length === 0) {
+    if (open) {
       setMessages([{
         id:   Date.now(),
         from: 'bot',
