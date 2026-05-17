@@ -56,7 +56,7 @@ const TREE = {
   },
 }
 
-const SUPPORT_WHATSAPP = 'https://wa.me/233XXXXXXXXX' // replace with real number
+const SUPPORT_WHATSAPP = 'https://wa.me/233549187917'
 
 // ── Component ─────────────────────────────────────────────────
 export default function ChatBot() {
