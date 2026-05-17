@@ -224,7 +224,7 @@ export async function transferReferralEarnings(userId) {
     // Mark all untransferred referral rows as transferred so the page
     // shows the correct ₵0.00 available on reload.
     await restFetch(
-      `referrals?referrer_id=eq.${userId}&transferred=eq.false`,
+      `referrals?referrer_id=eq.${userId}&transferred=eq.false&commission_amount=gt.0`,
       { method: 'PATCH', body: { transferred: true } }
     )
   }

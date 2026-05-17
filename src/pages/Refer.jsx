@@ -237,7 +237,7 @@ export default function Refer() {
                     </div>
                     <div className={styles.userEarnings}>
                       <span className={styles.userCommission}>+₵{commission.toFixed(2)}</span>
-                      {ref.transferred && (
+                      {ref.transferred && commission > 0 && (
                         <span className={styles.transferredBadge}>Transferred</span>
                       )}
                     </div>
