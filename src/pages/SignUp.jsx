@@ -97,7 +97,7 @@ export default function SignUp({ isDark }) {
               id="name"
               type="text"
               className={styles.input}
-              placeholder="Joel Fofoh"
+              placeholder="John Doe"
               value={name}
               onChange={e => setName(e.target.value)}
               autoComplete="name"
@@ -167,7 +167,7 @@ export default function SignUp({ isDark }) {
 
             {/* Password strength checklist — only show once user starts typing */}
             {password.length > 0 && (
-              <ul className={styles.pwRules}>
+              <ul className={styles.pwRules} aria-live="polite" aria-label="Password requirements">
                 {rules.map(rule => (
                   <li key={rule.label} className={rule.met ? styles.pwRuleMet : styles.pwRuleUnmet}>
                     <span className={styles.pwRuleIcon}>{rule.met ? '✓' : '○'}</span>
@@ -218,7 +218,7 @@ export default function SignUp({ isDark }) {
                 id="referral"
                 type="text"
                 className={`${styles.input} ${styles.inputWithIcon} ${refLocked ? styles.inputLocked : ''}`}
-                placeholder="Optional"
+                placeholder="e.g. ABC123"
                 value={referral}
                 onChange={e => !refLocked && setReferral(e.target.value.toUpperCase())}
                 readOnly={refLocked}

@@ -284,9 +284,6 @@ export default function Storefront() {
       <div className={styles.storeHeader} style={{ background: theme.primary }}>
         <span className={styles.poweredText}>Powered by QwikHub</span>
         <h1 className={styles.storeName}>{store.name}</h1>
-        <span className={styles.storeLink} style={{ color: theme.accent }}>
-          {window.location.host}/store/{store.slug}
-        </span>
       </div>
 
       <div className={styles.content}>

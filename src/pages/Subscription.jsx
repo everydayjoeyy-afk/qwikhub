@@ -50,7 +50,7 @@ export default function Subscription() {
             id="sub-email"
             type="email"
             className={styles.input}
-            placeholder="eg. johdoe@qwikhub.com"
+            placeholder="e.g. johndoe@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />

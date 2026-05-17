@@ -146,6 +146,7 @@ export default function StoreOrders() {
           type="search"
           className={styles.searchInput}
           placeholder="Search by network, bundle or phone"
+          aria-label="Search orders"
           value={query}
           onChange={e => setQuery(e.target.value)}
         />
@@ -174,7 +175,7 @@ export default function StoreOrders() {
                       </div>
                       <div className={styles.right}>
                         <span className={styles.amountPaid}>₵{Number(order.amount_paid).toFixed(2)}</span>
-                        <span className={styles.profit}>+₵{Number(order.profit ?? 0).toFixed(2)}</span>
+                        <span className={styles.profit} aria-label={`Profit: +₵${Number(order.profit ?? 0).toFixed(2)}`}>+₵{Number(order.profit ?? 0).toFixed(2)}</span>
                         <span
                           className={styles.status}
                           data-status={(order.status ?? 'pending').toLowerCase()}

@@ -34,11 +34,6 @@
   line-height: 1.1;
 }
 
-.storeLink {
-  font-size: 12px;
-  font-weight: 600;
-  font-family: var(--font-sans);
-}
 
 /* Scrollable content */
 .content {

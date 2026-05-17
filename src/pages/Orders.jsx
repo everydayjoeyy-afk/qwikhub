@@ -90,6 +90,7 @@ export default function Orders() {
           type="search"
           className={styles.searchInput}
           placeholder="Search by network, bundle or phone"
+          aria-label="Search orders"
           value={query}
           onChange={e => setQuery(e.target.value)}
         />

@@ -4,6 +4,7 @@ import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 import { recordReferralCommission } from '../../lib/db'
 import styles from './CartModal.module.css'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const ANON_KEY     = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -12,8 +13,11 @@ export default function CartModal({ open, onClose, onPaymentSuccess }) {
   const { items, total, removeFromCart, clearCart } = useCart()
   const { user, profile, refetchProfile } = useAuth()
   const overlayRef = useRef(null)
+  const sheetRef   = useRef(null)
   const [status, setStatus]   = useState('idle') // idle | loading | success
   const [errorMsg, setErrorMsg] = useState('')
+
+  useFocusTrap(sheetRef, open)
 
   useEffect(() => {
     if (!open) return
@@ -104,7 +108,7 @@ export default function CartModal({ open, onClose, onPaymentSuccess }) {
   if (status === 'success') {
     return (
       <div className={styles.overlay} aria-modal="true" role="dialog">
-        <div className={styles.sheet}>
+        <div ref={sheetRef} className={styles.sheet}>
           <div className={styles.handle} />
           <div className={styles.successBody}>
             <TickCircle size={56} color="#22c55e" variant="Bold" />
@@ -125,7 +129,7 @@ export default function CartModal({ open, onClose, onPaymentSuccess }) {
       role="dialog"
       aria-label="Order summary"
     >
-      <div className={styles.sheet}>
+      <div ref={sheetRef} className={styles.sheet}>
         <div className={styles.handle} />
 
         <div className={styles.header}>

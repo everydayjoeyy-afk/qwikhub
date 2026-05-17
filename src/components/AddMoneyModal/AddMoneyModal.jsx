@@ -4,6 +4,7 @@ import { CloseCircle, TickCircle } from 'iconsax-react'
 import { useAuth } from '../../context/AuthContext'
 import { creditWallet } from '../../lib/db'
 import styles from './AddMoneyModal.module.css'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
 
 const PAYSTACK_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY
 const FEE_RATE     = 0.02
@@ -16,6 +17,9 @@ export default function AddMoneyModal({ open, onClose, onPaymentSuccess }) {
   const fallbackTimer = useRef(null)
   const inputRef   = useRef(null)
   const overlayRef = useRef(null)
+  const sheetRef   = useRef(null)
+
+  useFocusTrap(sheetRef, open)
 
   const parsed      = parseFloat(amount) || 0
   const isValid     = parsed >= 1
@@ -113,7 +117,7 @@ export default function AddMoneyModal({ open, onClose, onPaymentSuccess }) {
   if (status === 'wallet_error') {
     return (
       <div className={styles.overlay} aria-modal="true" role="dialog">
-        <div className={styles.sheet}>
+        <div ref={sheetRef} className={styles.sheet}>
           <div className={styles.handle} />
           <div className={styles.successBody}>
             <TickCircle size={56} color="#f59e0b" variant="Bold" />
@@ -135,7 +139,7 @@ export default function AddMoneyModal({ open, onClose, onPaymentSuccess }) {
   if (status === 'success') {
     return (
       <div className={styles.overlay} aria-modal="true" role="dialog">
-        <div className={styles.sheet}>
+        <div ref={sheetRef} className={styles.sheet}>
           <div className={styles.handle} />
           <div className={styles.successBody}>
             <TickCircle size={56} color="#22c55e" variant="Bold" />
@@ -156,7 +160,7 @@ export default function AddMoneyModal({ open, onClose, onPaymentSuccess }) {
       role="dialog"
       aria-label="Add money"
     >
-      <div className={styles.sheet}>
+      <div ref={sheetRef} className={styles.sheet}>
         <div className={styles.handle} />
 
         <div className={styles.header}>
@@ -170,7 +174,7 @@ export default function AddMoneyModal({ open, onClose, onPaymentSuccess }) {
           <label className={styles.label} htmlFor="add-money-amount">Amount</label>
 
           <div className={styles.inputWrap}>
-            <span className={styles.prefix}>₵</span>
+            <span className={styles.prefix} aria-hidden="true">₵</span>
             <input
               ref={inputRef}
               id="add-money-amount"

@@ -249,8 +249,9 @@ export default function Withdrawals() {
 
                   <div className={styles.sheetForm}>
                     <div className={styles.sheetField}>
-                      <label className={styles.sheetLabel}>Amount (₵)</label>
+                      <label className={styles.sheetLabel} htmlFor="withdraw-amount">Amount (₵)</label>
                       <input
+                        id="withdraw-amount"
                         type="number"
                         className={styles.sheetInput}
                         placeholder="e.g. 100"
@@ -264,8 +265,9 @@ export default function Withdrawals() {
                     </div>
 
                     <div className={styles.sheetField}>
-                      <label className={styles.sheetLabel}>MoMo Number</label>
+                      <label className={styles.sheetLabel} htmlFor="momo-number">MoMo Number</label>
                       <input
+                        id="momo-number"
                         type="tel"
                         className={styles.sheetInput}
                         placeholder="0XX XXX XXXX"

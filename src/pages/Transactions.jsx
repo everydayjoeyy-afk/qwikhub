@@ -101,6 +101,7 @@ export default function Transactions() {
           type="search"
           className={styles.searchInput}
           placeholder="Search transactions"
+          aria-label="Search transactions"
           value={query}
           onChange={e => setQuery(e.target.value)}
         />

@@ -53,7 +53,7 @@ export default function ForgotPassword({ isDark }) {
 
           <form className={styles.form} onSubmit={handleSubmit} noValidate>
             <div className={styles.field}>
-              <label className={styles.fieldLabel} htmlFor="fp-email">Email address</label>
+              <label className={styles.fieldLabel} htmlFor="fp-email">Email</label>
               <input
                 id="fp-email"
                 type="email"

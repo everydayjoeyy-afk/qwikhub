@@ -7,6 +7,7 @@ import {
 import styles from './Sidebar.module.css'
 import logoDark from '../../assets/logo-dark.svg'
 import logoLight from '../../assets/logo-light.svg'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
 
 const NAV = [
   { id: 'home',         label: 'Home',         icon: Home2, path: '/' },
@@ -43,7 +44,10 @@ export default function Sidebar({ open, onClose, isDark }) {
   const { signOut } = useAuth()
   const [openDropdowns, setOpenDropdowns] = useState({})
   const firstFocusableRef = useRef(null)
+  const sidebarRef = useRef(null)
   const touchStartX = useRef(null)
+
+  useFocusTrap(sidebarRef, open)
 
   // Derive active id from current URL
   const activeId = (() => {
@@ -106,6 +110,7 @@ export default function Sidebar({ open, onClose, isDark }) {
       />
 
       <aside
+        ref={sidebarRef}
         className={`${styles.sidebar} ${open ? styles.sidebarOpen : ''}`}
         aria-label="Main navigation"
         aria-hidden={!open}
