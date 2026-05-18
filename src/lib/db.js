@@ -73,22 +73,24 @@ async function restFetch(path, { method = 'GET', body } = {}) {
 
 // ── Auth helpers ─────────────────────────────────────────────
 /**
- * Check if an email exists in the users table.
- * Uses the anon key only (no auth token) — safe to call from the
- * Forgot Password page where the user is not yet signed in.
+ * Check if an email exists via a SECURITY DEFINER RPC that queries auth.users.
+ * Using a direct REST query on the users table doesn't work because RLS blocks
+ * reads with the anon key (no session on the Forgot Password page).
+ * Falls back to exists:true on any error so the reset flow is never blocked.
  */
 export async function checkEmailExists(email) {
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/users?email=eq.${encodeURIComponent(email.trim())}&select=id&limit=1`,
-      { headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` } }
+      `${SUPABASE_URL}/rest/v1/rpc/check_email_exists`,
+      {
+        method:  'POST',
+        headers: { apikey: ANON_KEY, 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ p_email: email.trim() }),
+      }
     )
-    // If the column doesn't exist (400) or any server error, skip the pre-check
-    // and let Supabase's resetPasswordForEmail handle it (it always returns success
-    // for unknown emails which is secure, but better than blocking everyone).
     if (!res.ok) return { exists: true, error: null }
     const data = await res.json()
-    return { exists: Array.isArray(data) && data.length > 0, error: null }
+    return { exists: data === true, error: null }
   } catch {
     return { exists: true, error: null }
   }
