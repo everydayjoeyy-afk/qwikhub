@@ -86,6 +86,7 @@ export default function MyStore() {
   const [openNetwork, setOpenNetwork] = useState(null)
   const [loadingStore, setLoadingStore] = useState(true)
   const [savingPrices, setSavingPrices] = useState(null) // networkId currently saving
+  const [savePriceError, setSavePriceError] = useState('')
   const [linkCopied, setLinkCopied] = useState(false)
 
   // ── Load everything from Supabase on mount ──────────────────
@@ -187,18 +188,26 @@ export default function MyStore() {
   const handleSavePrices = async (networkId) => {
     if (!storeId || savingPrices) return
     setSavingPrices(networkId)
+    setSavePriceError('')
 
     const carrier = CARRIER_MAP[networkId]
     const cMap    = bundleMap[carrier] ?? {}
 
-    await Promise.all(
+    const results = await Promise.all(
       Object.entries(prices[networkId]).map(([bundleValue, customPrice]) => {
         const dataSize   = toDataSize(bundleValue)
         const bundleInfo = cMap[dataSize]
-        if (!bundleInfo) return Promise.resolve()
+        if (!bundleInfo) return Promise.resolve({ error: null })
         return upsertStoreBundle(storeId, bundleInfo.id, parseFloat(customPrice))
       })
     )
+
+    const failed = results.filter(r => r?.error)
+    if (failed.length > 0) {
+      setSavePriceError('Failed to save prices. Please try again.')
+      setSavingPrices(null)
+      return
+    }
 
     const updated = { ...savedPrices, [networkId]: { ...prices[networkId] } }
     setSavedPrices(updated)
@@ -475,6 +484,11 @@ export default function MyStore() {
                       >
                         {savingPrices === network.id ? 'Saving…' : 'Save changes'}
                       </button>
+                    )}
+                    {savePriceError && (
+                      <p style={{ color: 'var(--color-danger, #ef4444)', fontSize: 13, margin: '8px 0 0', textAlign: 'center' }}>
+                        {savePriceError}
+                      </p>
                     )}
                   </div>
                 )}

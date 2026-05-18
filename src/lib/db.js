@@ -137,23 +137,44 @@ export async function getStoreBundles(storeId) {
 }
 
 export async function upsertStoreBundle(storeId, bundleId, customPrice) {
-  // Prefer: resolution=merge-duplicates triggers ON CONFLICT DO UPDATE
+  // Strategy: PATCH (update) first; if no rows matched, POST (insert).
+  // This avoids the 409 that `resolution=merge-duplicates` produces when the
+  // RLS policy grants INSERT but not UPDATE via the conflict-resolution path.
   const token = await getAccessToken()
   if (!token) return { error: { message: 'No access token' } }
-  const res = await fetch(
-    `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/store_bundles`,
+
+  const baseHeaders = {
+    apikey:         ANON_KEY,
+    Authorization:  `Bearer ${token}`,
+    'Content-Type': 'application/json',
+    Prefer:         'return=representation',
+  }
+
+  // 1. Try to UPDATE the existing row via PATCH with a filter
+  const patchRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/store_bundles?store_id=eq.${storeId}&bundle_id=eq.${encodeURIComponent(bundleId)}`,
+    { method: 'PATCH', headers: baseHeaders, body: JSON.stringify({ custom_price: customPrice, is_active: true }) }
+  )
+  if (!patchRes.ok) {
+    const text = await patchRes.text().catch(() => '')
+    return { error: { message: text || `PATCH HTTP ${patchRes.status}` } }
+  }
+  const patchText = await patchRes.text().catch(() => '[]')
+  const patchData = JSON.parse(patchText || '[]')
+
+  // PATCH updated at least one row — done
+  if (Array.isArray(patchData) && patchData.length > 0) return { error: null }
+
+  // 2. No existing row — INSERT a new one
+  const postRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/store_bundles`,
     {
       method: 'POST',
-      headers: {
-        apikey:         import.meta.env.VITE_SUPABASE_ANON_KEY,
-        Authorization:  `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        Prefer:         'resolution=merge-duplicates',
-      },
+      headers: baseHeaders,
       body: JSON.stringify({ store_id: storeId, bundle_id: bundleId, custom_price: customPrice, is_active: true }),
     }
   )
-  return { error: res.ok ? null : { message: `HTTP ${res.status}` } }
+  return { error: postRes.ok ? null : { message: `POST HTTP ${postRes.status}` } }
 }
 
 // ── Orders ───────────────────────────────────────────────────
