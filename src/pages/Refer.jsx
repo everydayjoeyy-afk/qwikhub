@@ -55,6 +55,7 @@ export default function Refer() {
   const [transferring, setTransferring]           = useState(false)
   const [transferDone, setTransferDone]           = useState(false)
   const [transferError, setTransferError]         = useState('')
+  const [lastTransferAmount, setLastTransferAmount] = useState(0)
 
   const referralCode = profile?.referral_code ?? '—'
   const referralLink = `${window.location.origin}/signup?ref=${referralCode}`
@@ -108,13 +109,15 @@ export default function Refer() {
     if (availableEarnings <= 0 || transferring) return
     setTransferring(true)
     setTransferError('')
-    const { error } = await transferReferralEarnings(user.id, referrals, availableEarnings)
+    const amountToTransfer = availableEarnings
+    const { error } = await transferReferralEarnings(user.id, referrals, amountToTransfer)
     setTransferring(false)
     if (error) {
       setTransferError('Transfer failed. Please try again.')
     } else {
       // Stamp transferredAmount = commissionAmount so available resets to 0
       setReferrals(prev => prev.map(r => ({ ...r, transferredAmount: r.commission_amount, transferred: true })))
+      setLastTransferAmount(amountToTransfer)
       setTransferDone(true)
       // Refresh profile so earnings_balance is up to date everywhere
       await refetchProfile()
@@ -153,7 +156,7 @@ export default function Refer() {
       )}
       {transferDone && (
         <p className={styles.transferHint}>
-          ₵{totalEarnings.toFixed(2)} added to your earnings balance — withdrawable anytime.
+          ₵{lastTransferAmount.toFixed(2)} added to your earnings balance — withdrawable anytime.
         </p>
       )}
       {transferError && (
