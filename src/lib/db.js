@@ -83,11 +83,14 @@ export async function checkEmailExists(email) {
       `${SUPABASE_URL}/rest/v1/profiles?email=eq.${encodeURIComponent(email.trim())}&select=id&limit=1`,
       { headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` } }
     )
-    if (!res.ok) return { exists: false, error: null }
+    // If the column doesn't exist (400) or any server error, skip the pre-check
+    // and let Supabase's resetPasswordForEmail handle it (it always returns success
+    // for unknown emails which is secure, but better than blocking everyone).
+    if (!res.ok) return { exists: true, error: null }
     const data = await res.json()
     return { exists: Array.isArray(data) && data.length > 0, error: null }
   } catch {
-    return { exists: false, error: null }
+    return { exists: true, error: null }
   }
 }
 
