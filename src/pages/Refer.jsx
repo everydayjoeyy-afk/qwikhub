@@ -223,7 +223,7 @@ export default function Refer() {
           <div className={styles.usersList}>
             {referrals.map((ref, i) => {
               const u = ref.referred_user
-              const commission = ref.commission_amount ?? 0
+              const commission = Math.max(0, (ref.commission_amount ?? 0) - (ref.transferredAmount ?? 0))
               return (
                 <div key={ref.id}>
                   <div className={styles.userRow}>
@@ -238,9 +238,6 @@ export default function Refer() {
                     </div>
                     <div className={styles.userEarnings}>
                       <span className={styles.userCommission}>+₵{commission.toFixed(2)}</span>
-                      {(ref.transferredAmount ?? 0) > 0 && (
-                        <span className={styles.transferredBadge}>Transferred</span>
-                      )}
                     </div>
                   </div>
                   {i < referrals.length - 1 && <div className={styles.divider} />}
