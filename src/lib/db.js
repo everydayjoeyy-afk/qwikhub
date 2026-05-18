@@ -73,14 +73,14 @@ async function restFetch(path, { method = 'GET', body } = {}) {
 
 // ── Auth helpers ─────────────────────────────────────────────
 /**
- * Check if an email exists in the profiles table.
+ * Check if an email exists in the users table.
  * Uses the anon key only (no auth token) — safe to call from the
  * Forgot Password page where the user is not yet signed in.
  */
 export async function checkEmailExists(email) {
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/profiles?email=eq.${encodeURIComponent(email.trim())}&select=id&limit=1`,
+      `${SUPABASE_URL}/rest/v1/users?email=eq.${encodeURIComponent(email.trim())}&select=id&limit=1`,
       { headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` } }
     )
     // If the column doesn't exist (400) or any server error, skip the pre-check
