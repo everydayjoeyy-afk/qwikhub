@@ -211,7 +211,9 @@ export default function SignUp({ isDark }) {
           <div className={styles.field}>
             <label className={styles.fieldLabel} htmlFor="referral">
               Referral code
-              {refLocked && <span className={styles.refBadge}>Applied</span>}
+              {refLocked
+                ? <span className={styles.refBadge}>Applied</span>
+                : <span className={styles.optionalTag}>optional</span>}
             </label>
             <div className={styles.inputWrap}>
               <input
