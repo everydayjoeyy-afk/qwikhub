@@ -194,6 +194,7 @@ export async function createOrder({ buyerPhone, bundleId, storeId, amountPaid, p
     method: 'POST',
     headers: {
       apikey:         ANON_KEY,
+      Authorization:  `Bearer ${ANON_KEY}`,
       'Content-Type': 'application/json',
       Prefer:         'return=representation',
     },
