@@ -186,20 +186,39 @@ export async function getStoreOrders(storeId) {
 }
 
 export async function createOrder({ buyerPhone, bundleId, storeId, amountPaid, profit, paystackRef }) {
-  const { data, error } = await supabase
-    .from('orders')
-    .insert({
-      buyer_phone:    buyerPhone,
-      bundle_id:      bundleId,
-      store_id:       storeId,
-      amount_paid:    amountPaid,
+  // Storefront orders are placed by unauthenticated customers, so we bypass the
+  // Supabase JS client (which requires a session) and use a direct anon REST call.
+  // Requires this RLS policy on the orders table:
+  //   CREATE POLICY "anon_insert_orders" ON orders FOR INSERT TO anon WITH CHECK (true);
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
+    method: 'POST',
+    headers: {
+      apikey:         ANON_KEY,
+      'Content-Type': 'application/json',
+      Prefer:         'return=representation',
+    },
+    body: JSON.stringify({
+      buyer_phone:  buyerPhone,
+      bundle_id:    bundleId,
+      store_id:     storeId,
+      amount_paid:  amountPaid,
       profit,
-      paystack_ref:   paystackRef,
-      status:         'paid',
-    })
-    .select()
-    .single()
-  return { data, error }
+      paystack_ref: paystackRef,
+      status:       'paid',
+    }),
+  })
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    return { data: null, error: { message: text || `HTTP ${res.status}` } }
+  }
+  const text = await res.text().catch(() => '')
+  if (!text) return { data: null, error: null }
+  try {
+    const data = JSON.parse(text)
+    return { data: Array.isArray(data) ? (data[0] ?? null) : data, error: null }
+  } catch {
+    return { data: null, error: { message: 'Invalid JSON response' } }
+  }
 }
 
 // ── Wallet ───────────────────────────────────────────────────
