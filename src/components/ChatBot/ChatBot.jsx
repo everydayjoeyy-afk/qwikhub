@@ -24,7 +24,7 @@ const TREE = {
     chips: [{ id: 'missing', label: 'Still not reflected', Icon: MessageQuestion }, BACK],
   },
   fees: {
-    text: 'A flat 2% processing fee is added to every wallet top-up (powered by Paystack).\n\nExample: topping up ₵100 will charge you ₵102. The fee goes directly to Paystack — QwikHub does not keep it.',
+    text: 'Paystack charges a 2% processing fee on every payment — this applies in two places:\n\n① Wallet top-ups — the 2% is added on top of your amount. Example: topping up ₵100 charges you ₵102.\n\n② Storefront sales — the 2% is deducted from your profit on each sale. Example: you earn ₵1.00 markup on a bundle, so ₵0.10 goes to Paystack and ₵0.90 lands in your earnings.\n\nThe fee goes directly to Paystack — QwikHub does not keep it.',
     chips: [{ id: 'topup', label: 'How do I add money?', Icon: Add }, BACK],
   },
   topup: {
