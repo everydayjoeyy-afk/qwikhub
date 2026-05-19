@@ -186,40 +186,29 @@ export async function getStoreOrders(storeId) {
 }
 
 export async function createOrder({ buyerPhone, bundleId, storeId, amountPaid, profit, paystackRef }) {
-  // Storefront orders are placed by unauthenticated customers, so we bypass the
-  // Supabase JS client (which requires a session) and use a direct anon REST call.
-  // Requires this RLS policy on the orders table:
-  //   CREATE POLICY "anon_insert_orders" ON orders FOR INSERT TO anon WITH CHECK (true);
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
+  // Storefront orders are placed by unauthenticated customers. We call a
+  // SECURITY DEFINER RPC so it runs with elevated privileges and bypasses RLS —
+  // the same pattern used by checkEmailExists. No auth token needed, just apikey.
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/create_storefront_order`, {
     method: 'POST',
     headers: {
       apikey:         ANON_KEY,
-      Authorization:  `Bearer ${ANON_KEY}`,
       'Content-Type': 'application/json',
-      Prefer:         'return=representation',
     },
     body: JSON.stringify({
-      buyer_phone:  buyerPhone,
-      bundle_id:    bundleId,
-      store_id:     storeId,
-      amount_paid:  amountPaid,
-      profit,
-      paystack_ref: paystackRef,
-      status:       'paid',
+      p_buyer_phone:  buyerPhone,
+      p_bundle_id:    bundleId,
+      p_store_id:     storeId,
+      p_amount_paid:  amountPaid,
+      p_profit:       profit,
+      p_paystack_ref: paystackRef,
     }),
   })
   if (!res.ok) {
     const text = await res.text().catch(() => '')
     return { data: null, error: { message: text || `HTTP ${res.status}` } }
   }
-  const text = await res.text().catch(() => '')
-  if (!text) return { data: null, error: null }
-  try {
-    const data = JSON.parse(text)
-    return { data: Array.isArray(data) ? (data[0] ?? null) : data, error: null }
-  } catch {
-    return { data: null, error: { message: 'Invalid JSON response' } }
-  }
+  return { data: null, error: null }
 }
 
 // ── Wallet ───────────────────────────────────────────────────
