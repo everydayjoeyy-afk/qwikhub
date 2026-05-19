@@ -48,7 +48,7 @@ const TREE = {
     chips: [{ id: 'support', label: 'Contact support', Icon: Headphone }, BACK],
   },
   support: {
-    text: 'Our support team is available on WhatsApp. Tap the button below and we\'ll get back to you as soon as possible — usually within a few hours.\n\nPlease include your phone number and transaction reference for faster help.',
+    text: 'Our support team is available on WhatsApp. Tap the button below and we\'ll get back to you as soon as possible — usually within a few minutes.\n\nPlease include your phone number and transaction reference for faster help.',
     chips: [
       { id: '__whatsapp', label: 'Open WhatsApp', Icon: MessageText },
       BACK,
