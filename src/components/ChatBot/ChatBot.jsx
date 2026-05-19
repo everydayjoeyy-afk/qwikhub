@@ -32,7 +32,7 @@ const TREE = {
     chips: [BACK],
   },
   referrals: {
-    text: 'Share your unique referral code or link with friends. When they sign up using your code and make a purchase, you automatically earn 5% commission on their spend.\n\nCommissions land in your Earnings balance — separate from your wallet — and can be withdrawn to MoMo.',
+    text: 'We know Paystack takes 2% on every transaction — Refer & Earn is our way of giving some of that back.\n\nShare your unique referral code or link. When a friend signs up using your code and makes a purchase, you automatically earn 1% of their spend.\n\nCommissions land in your Earnings balance — separate from your wallet — and can be withdrawn to MoMo.',
     chips: [{ id: 'withdraw', label: 'How do I withdraw?', Icon: Money2 }, BACK],
   },
   withdraw: {

@@ -262,7 +262,7 @@ export async function creditEarnings(userId, amount, description, reference = nu
   return { data, error }
 }
 
-// recordReferralCommission: credits 5% of purchase to the buyer's referrer (if any)
+// recordReferralCommission: credits 1% of purchase to the buyer's referrer (if any)
 export async function recordReferralCommission(buyerUserId, amountPaid) {
   const { data, error } = await restFetch('rpc/record_referral_commission', {
     method: 'POST',
