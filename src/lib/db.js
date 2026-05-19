@@ -71,6 +71,29 @@ async function restFetch(path, { method = 'GET', body } = {}) {
   }
 }
 
+// Anon fetch — public read operations that don't need a user session.
+// Sends apikey + anon JWT so PostgREST runs as the anon role (RLS applies).
+async function anonFetch(path) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    headers: {
+      apikey:        ANON_KEY,
+      Authorization: `Bearer ${ANON_KEY}`,
+      Accept:        'application/json',
+    },
+  })
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    return { data: null, error: { message: text || `HTTP ${res.status}` } }
+  }
+  const text = await res.text().catch(() => '')
+  if (!text) return { data: null, error: null }
+  try {
+    return { data: JSON.parse(text), error: null }
+  } catch {
+    return { data: null, error: { message: 'Invalid JSON response' } }
+  }
+}
+
 // ── Auth helpers ─────────────────────────────────────────────
 /**
  * Check if an email exists via a SECURITY DEFINER RPC that queries auth.users.
@@ -105,7 +128,7 @@ export async function getMyStore(userId) {
 }
 
 export async function getStoreBySlug(slug) {
-  const { data, error } = await restFetch(
+  const { data, error } = await anonFetch(
     `stores?store_slug=eq.${encodeURIComponent(slug)}&select=*`
   )
   return { data: Array.isArray(data) ? (data[0] ?? null) : null, error }
@@ -129,8 +152,7 @@ export async function updateStore(storeId, { store_name, store_slug, theme }) {
 
 // ── Store bundles (reseller prices) ─────────────────────────
 export async function getStoreBundles(storeId) {
-  // Direct REST with PostgREST embed syntax for the bundle join
-  const { data, error } = await restFetch(
+  const { data, error } = await anonFetch(
     `store_bundles?store_id=eq.${storeId}&is_active=eq.true&select=*,bundle:bundles(*)`
   )
   return { data: data ?? [], error }
@@ -406,6 +428,6 @@ export async function getBundles(carrier = null) {
   const path = carrier
     ? `bundles?is_active=eq.true&carrier=eq.${encodeURIComponent(carrier)}&select=*&order=platform_price.asc`
     : `bundles?is_active=eq.true&select=*&order=platform_price.asc`
-  const { data, error } = await restFetch(path)
+  const { data, error } = await anonFetch(path)
   return { data: data ?? [], error }
 }
