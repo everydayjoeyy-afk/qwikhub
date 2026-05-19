@@ -240,7 +240,10 @@ export default function Storefront() {
     // (customer has paid; store owner reconciles via Paystack dashboard)
     if (store.id) {
       for (const item of cart) {
-        const profit = Math.max(0, item.price - item.platformPrice)
+        // Deduct 2% Paystack processing fee from the store owner's profit so
+        // QwikHub isn't left absorbing it. The fee is proportional to the sale price.
+        const paystackFee = item.price * 0.02
+        const profit = Math.max(0, item.price - item.platformPrice - paystackFee)
         const { error: orderErr } = await createOrder({
           buyerPhone:  item.phone,
           bundleId:    item.bundleId,
@@ -256,8 +259,9 @@ export default function Storefront() {
     }
 
     // Credit seller earnings balance with total profit (withdrawable, separate from deposits)
+    // Profit is after deducting the 2% Paystack fee proportional to each item's sale price.
     const totalProfit = cart.reduce(
-      (s, item) => s + Math.max(0, item.price - item.platformPrice), 0
+      (s, item) => s + Math.max(0, item.price - item.platformPrice - item.price * 0.02), 0
     )
     if (totalProfit > 0 && store.user_id) {
       const { error: earningsErr } = await creditEarnings(
