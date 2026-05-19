@@ -31,8 +31,9 @@ export default function SignUp({ isDark }) {
   const [referral, setReferral]   = useState(refCode)
   const [showPass, setShowPass]   = useState(false)
   const [showConf, setShowConf]   = useState(false)
-  const [loading, setLoading]     = useState(false)
-  const [errorMsg, setErrorMsg]   = useState('')
+  const [loading, setLoading]       = useState(false)
+  const [errorMsg, setErrorMsg]     = useState('')
+  const [passwordFocused, setPasswordFocused] = useState(false)
 
   const refLocked = refCode !== ''
 
@@ -151,6 +152,8 @@ export default function SignUp({ isDark }) {
                 placeholder="Min. 8 characters"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
+                onFocus={() => setPasswordFocused(true)}
+                onBlur={() => setPasswordFocused(false)}
                 autoComplete="new-password"
               />
               <button
@@ -165,8 +168,8 @@ export default function SignUp({ isDark }) {
               </button>
             </div>
 
-            {/* Password strength checklist — only show once user starts typing */}
-            {password.length > 0 && (
+            {/* Show checklist while typing; collapse once all rules pass and user moves away */}
+            {password.length > 0 && (!passwordStrong || passwordFocused) && (
               <ul className={styles.pwRules} aria-live="polite" aria-label="Password requirements">
                 {rules.map(rule => (
                   <li key={rule.label} className={rule.met ? styles.pwRuleMet : styles.pwRuleUnmet}>
