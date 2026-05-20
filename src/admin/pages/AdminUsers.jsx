@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { SearchNormal1, CloseCircle, Shop, ArrowUp2, ArrowDown2 } from 'iconsax-react'
+import { SearchNormal1, CloseCircle, Shop } from 'iconsax-react'
 import { adminSearchUsers, adminGetUserTransactions } from '../lib/adminDb'
 import styles from './AdminUsers.module.css'
 
@@ -29,8 +29,38 @@ function initials(name = '') {
     : (parts[0]?.[0] ?? '?').toUpperCase()
 }
 
-function txIcon(type) {
-  return type === 'credit' ? '↑' : '↓'
+// ── Pagination ────────────────────────────────────────────────────
+function Pagination({ page, totalPages, total, pageSize, start, onPage, onPageSize }) {
+  const end = Math.min(start + pageSize, total)
+  const lo  = Math.max(1, Math.min(page - 2, totalPages - 4))
+  const hi  = Math.min(totalPages, lo + 4)
+  const pages = Array.from({ length: hi - lo + 1 }, (_, i) => lo + i)
+
+  return (
+    <div className={styles.pagination}>
+      <span className={styles.paginationInfo}>
+        Showing {total === 0 ? 0 : start + 1} to {end} of {total} users
+      </span>
+      <div className={styles.paginationControls}>
+        <select
+          value={pageSize}
+          onChange={e => { onPageSize(Number(e.target.value)) }}
+          className={styles.pageSizeSelect}
+        >
+          {[10, 20, 50].map(n => <option key={n} value={n}>{n} per page</option>)}
+        </select>
+        <button className={styles.pageBtn} onClick={() => onPage(page - 1)} disabled={page === 1}>‹</button>
+        {pages.map(p => (
+          <button
+            key={p}
+            className={`${styles.pageBtn} ${page === p ? styles.pageBtnActive : ''}`}
+            onClick={() => onPage(p)}
+          >{p}</button>
+        ))}
+        <button className={styles.pageBtn} onClick={() => onPage(page + 1)} disabled={page >= totalPages}>›</button>
+      </div>
+    </div>
+  )
 }
 
 // ── User detail panel ─────────────────────────────────────────────
@@ -47,18 +77,8 @@ function UserDetail({ user, onClose }) {
     })
   }, [user?.id])
 
-  if (!user) {
-    return (
-      <div className={styles.detailEmpty}>
-        <SearchNormal1 size={36} color="var(--color-text-tertiary)" />
-        <p>Select a user to view their profile</p>
-      </div>
-    )
-  }
-
   return (
     <div className={styles.detail}>
-      {/* Close on mobile */}
       <button className={styles.detailClose} onClick={onClose} aria-label="Close">
         <CloseCircle size={22} color="currentColor" variant="Bold" />
       </button>
@@ -69,10 +89,10 @@ function UserDetail({ user, onClose }) {
         <div className={styles.detailMeta}>
           <div className={styles.detailNameRow}>
             <span className={styles.detailName}>{user.name ?? '—'}</span>
-            {user.is_admin && <span className={styles.adminBadge}>Admin</span>}
+            {user.is_admin && <span className={styles.badgeAdmin}>Admin</span>}
           </div>
           <span className={styles.detailPhone}>{user.phone ?? '—'}</span>
-          <span className={styles.detailEmail}>{user.email ?? '—'}</span>
+          {user.email && <span className={styles.detailEmail}>{user.email}</span>}
           <span className={styles.detailJoined}>Joined {joinedDate(user.created_at)}</span>
         </div>
       </div>
@@ -121,10 +141,9 @@ function UserDetail({ user, onClose }) {
         <span className={styles.refCode}>{user.referral_code ?? '—'}</span>
       </div>
 
-      {/* Recent transactions */}
+      {/* Transactions */}
       <div className={styles.txSection}>
         <span className={styles.txTitle}>Recent transactions</span>
-
         {txLoading ? (
           <div className={styles.txLoading}><span className={styles.spin} /></div>
         ) : transactions.length === 0 ? (
@@ -134,7 +153,7 @@ function UserDetail({ user, onClose }) {
             {transactions.map(tx => (
               <div key={tx.id} className={styles.txRow}>
                 <span className={`${styles.txIcon} ${tx.type === 'credit' ? styles.txCredit : styles.txDebit}`}>
-                  {txIcon(tx.type)}
+                  {tx.type === 'credit' ? '↑' : '↓'}
                 </span>
                 <div className={styles.txInfo}>
                   <span className={styles.txDesc}>{tx.description}</span>
@@ -152,16 +171,17 @@ function UserDetail({ user, onClose }) {
   )
 }
 
-// ── Main page ─────────────────────────────────────────────────────
+// ── Main component ────────────────────────────────────────────────
 export default function AdminUsers() {
-  const [query,       setQuery]       = useState('')
-  const [users,       setUsers]       = useState([])
-  const [loading,     setLoading]     = useState(false)
-  const [selected,    setSelected]    = useState(null)
-  const [sheetOpen,   setSheetOpen]   = useState(false)
+  const [query,    setQuery]    = useState('')
+  const [users,    setUsers]    = useState([])
+  const [loading,  setLoading]  = useState(false)
+  const [selected, setSelected] = useState(null)
+  const [openMenu, setOpenMenu] = useState(null)
+  const [page,     setPage]     = useState(1)
+  const [pageSize, setPageSize] = useState(10)
   const debounceRef = useRef(null)
 
-  // Load recent users on mount
   useEffect(() => { search('') }, [])
 
   function search(q) {
@@ -171,6 +191,7 @@ export default function AdminUsers() {
       const { data } = await adminSearchUsers(q)
       setUsers(Array.isArray(data) ? data : [])
       setLoading(false)
+      setPage(1)
     }, q ? 400 : 0)
   }
 
@@ -180,88 +201,170 @@ export default function AdminUsers() {
     search(q)
   }
 
-  function selectUser(u) {
-    setSelected(u)
-    setSheetOpen(true)   // for mobile
-  }
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    if (!openMenu) return
+    const close = () => setOpenMenu(null)
+    document.addEventListener('click', close)
+    return () => document.removeEventListener('click', close)
+  }, [openMenu])
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(users.length / pageSize))
+  const start = (page - 1) * pageSize
+  const paged = users.slice(start, start + pageSize)
 
   return (
-    <div className={styles.layout}>
+    <div className={styles.page}>
 
-      {/* ── Left pane: search + list ── */}
-      <div className={styles.listPane}>
-        <div className={styles.listHeader}>
-          <h1 className={styles.pageTitle}>Users</h1>
-          <p className={styles.pageSubtitle}>Search by name, phone or email</p>
+      {/* Page header */}
+      <div className={styles.pageHeader}>
+        <div>
+          <h1 className={styles.pageTitle}>User Management</h1>
+          <p className={styles.pageSubtitle}>All registered platform users</p>
         </div>
+      </div>
 
+      {/* Search toolbar */}
+      <div className={styles.toolbar}>
         <div className={styles.searchWrap}>
           <SearchNormal1 size={15} color="var(--color-text-tertiary)" className={styles.searchIcon} />
           <input
             type="search"
             className={styles.searchInput}
-            placeholder="0244… or John or john@…"
+            placeholder="Search by name, phone or email…"
             value={query}
             onChange={handleQueryChange}
             autoFocus
           />
           {loading && <span className={styles.searchSpin} />}
         </div>
-
-        <div className={styles.listMeta}>
-          {loading ? 'Searching…' : `${users.length} user${users.length !== 1 ? 's' : ''}`}
-        </div>
-
-        <div className={styles.list}>
-          {users.length === 0 && !loading ? (
-            <p className={styles.listEmpty}>No users found</p>
-          ) : (
-            users.map(u => (
-              <button
-                key={u.id}
-                className={`${styles.userCard} ${selected?.id === u.id ? styles.userCardActive : ''}`}
-                onClick={() => selectUser(u)}
-              >
-                <div className={styles.cardAvatar}>{initials(u.name ?? u.phone ?? '?')}</div>
-                <div className={styles.cardBody}>
-                  <div className={styles.cardNameRow}>
-                    <span className={styles.cardName}>{u.name ?? '—'}</span>
-                    {u.store_name && (
-                      <span className={styles.cardStoreBadge}>
-                        <Shop size={10} color="currentColor" variant="Bold" /> Store
-                      </span>
-                    )}
-                    {u.is_admin && <span className={styles.cardAdminBadge}>Admin</span>}
-                  </div>
-                  <span className={styles.cardPhone}>{u.phone ?? '—'}</span>
-                </div>
-                <div className={styles.cardRight}>
-                  <span className={styles.cardWallet}>₵{Number(u.wallet_balance ?? 0).toFixed(2)}</span>
-                  <span className={styles.cardLabel}>wallet</span>
-                </div>
-              </button>
-            ))
-          )}
-        </div>
       </div>
 
-      {/* ── Right pane: detail (desktop always visible) ── */}
-      <div className={styles.detailPane}>
-        <UserDetail user={selected} onClose={() => setSelected(null)} />
-      </div>
+      {/* Table card */}
+      <div className={styles.tableCard}>
 
-      {/* ── Mobile: bottom sheet ── */}
-      {sheetOpen && selected && (
-        <>
-          <div className={styles.backdrop} onClick={() => setSheetOpen(false)} />
-          <div className={styles.sheet}>
-            <div className={styles.sheetHandle} />
-            <div className={styles.sheetContent}>
-              <UserDetail
-                user={selected}
-                onClose={() => setSheetOpen(false)}
-              />
+        {/* Table header bar */}
+        <div className={styles.tableHeaderBar}>
+          <span className={styles.tableCount}>
+            Users ({loading ? '…' : users.length})
+          </span>
+        </div>
+
+        {loading ? (
+          <div className={styles.centred}><span className={styles.spin} /></div>
+        ) : users.length === 0 ? (
+          <div className={styles.centred}>
+            <p className={styles.emptyText}>
+              {query ? 'No users match your search' : 'No users yet'}
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Desktop table */}
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th style={{ width: 48 }}></th>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Wallet</th>
+                    <th>Earnings</th>
+                    <th>Joined</th>
+                    <th style={{ width: 72 }}>Status</th>
+                    <th style={{ width: 56 }}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paged.map(u => (
+                    <tr
+                      key={u.id}
+                      className={selected?.id === u.id ? styles.rowSelected : ''}
+                      onClick={() => setSelected(u)}
+                    >
+                      <td>
+                        <div className={styles.avatar}>{initials(u.name ?? u.phone ?? '?')}</div>
+                      </td>
+                      <td>
+                        <div className={styles.nameCell}>
+                          <span className={styles.userName}>{u.name ?? '—'}</span>
+                          <div className={styles.badgeRow}>
+                            {u.is_admin   && <span className={styles.badgeAdmin}>Admin</span>}
+                            {u.store_name && <span className={styles.badgeStore}><Shop size={9} color="currentColor" variant="Bold" /> Store</span>}
+                          </div>
+                        </div>
+                      </td>
+                      <td className={styles.monoCell}>{u.phone ?? '—'}</td>
+                      <td className={styles.amountCell}>₵{Number(u.wallet_balance   ?? 0).toFixed(2)}</td>
+                      <td className={styles.amountCell}>₵{Number(u.earnings_balance ?? 0).toFixed(2)}</td>
+                      <td className={styles.dimCell}>{joinedDate(u.created_at)}</td>
+                      <td>
+                        <span className={styles.statusBadge} data-active="true">Active</span>
+                      </td>
+                      <td onClick={e => e.stopPropagation()}>
+                        <div className={styles.actionsCell}>
+                          <button
+                            className={styles.menuTrigger}
+                            onClick={e => { e.stopPropagation(); setOpenMenu(openMenu === u.id ? null : u.id) }}
+                            aria-label="Actions"
+                          >⋯</button>
+                          {openMenu === u.id && (
+                            <div className={styles.menuDropdown}>
+                              <button onClick={() => { setSelected(u); setOpenMenu(null) }}>View</button>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
+
+            {/* Mobile cards */}
+            <div className={styles.cards}>
+              {paged.map(u => (
+                <div key={u.id} className={styles.mobileCard} onClick={() => setSelected(u)}>
+                  <div className={styles.avatar}>{initials(u.name ?? u.phone ?? '?')}</div>
+                  <div className={styles.mobileCardBody}>
+                    <div className={styles.mobileCardTop}>
+                      <span className={styles.userName}>{u.name ?? '—'}</span>
+                      <div className={styles.badgeRow}>
+                        {u.is_admin   && <span className={styles.badgeAdmin}>Admin</span>}
+                        {u.store_name && <span className={styles.badgeStore}><Shop size={9} color="currentColor" variant="Bold" /> Store</span>}
+                      </div>
+                    </div>
+                    <span className={styles.dimCell}>{u.phone ?? '—'}</span>
+                  </div>
+                  <div className={styles.mobileCardRight}>
+                    <span className={styles.amountCell}>₵{Number(u.wallet_balance ?? 0).toFixed(2)}</span>
+                    <span className={styles.dimCell} style={{ fontSize: 10 }}>wallet</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Pagination */}
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              total={users.length}
+              pageSize={pageSize}
+              start={start}
+              onPage={setPage}
+              onPageSize={n => { setPageSize(n); setPage(1) }}
+            />
+          </>
+        )}
+      </div>
+
+      {/* Detail panel overlay */}
+      {selected && (
+        <>
+          <div className={styles.detailOverlay} onClick={() => setSelected(null)} />
+          <div className={styles.detailPanel}>
+            <UserDetail user={selected} onClose={() => setSelected(null)} />
           </div>
         </>
       )}

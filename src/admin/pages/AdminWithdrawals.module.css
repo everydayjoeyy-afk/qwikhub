@@ -390,6 +390,52 @@
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
+/* ── Pagination ──────────────────────────────────────────────── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-top: 1px solid var(--color-border);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+[data-theme="dark"] .pagination { border-color: rgba(255,255,255,0.06); }
+
+.paginationInfo {
+  font-size: 12px;
+  font-family: var(--font-sans);
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+.paginationControls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pageBtn {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pageBtn:hover:not(:disabled) { border-color: var(--color-accent); color: var(--color-text-primary); }
+.pageBtn:disabled { opacity: 0.35; cursor: not-allowed; }
+.pageBtnActive { background: var(--color-accent); border-color: var(--color-accent); color: #000 !important; font-weight: 700; }
+
 /* ── Mobile cards (hidden on desktop) ────────────────────────── */
 .cards { display: none; }
 

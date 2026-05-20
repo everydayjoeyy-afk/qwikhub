@@ -46,6 +46,8 @@ export default function AdminWithdrawals() {
   const [processing,  setProcessing]  = useState(new Set())
   const [copiedId,    setCopiedId]    = useState(null)
   const [toast,       setToast]       = useState('')
+  const [page,        setPage]        = useState(1)
+  const PAGE_SIZE = 10
 
   useEffect(() => { load() }, [])
 
@@ -97,6 +99,13 @@ export default function AdminWithdrawals() {
   const filtered = withdrawals.filter(w =>
     activeTab === 'all' ? true : w.status === activeTab
   )
+
+  // Reset page when tab changes
+  useEffect(() => { setPage(1) }, [activeTab])
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const pageStart  = (page - 1) * PAGE_SIZE
+  const paged      = filtered.slice(pageStart, pageStart + PAGE_SIZE)
 
   const pendingItems  = withdrawals.filter(w => w.status === 'pending')
   const pendingCount  = pendingItems.length
@@ -242,7 +251,7 @@ export default function AdminWithdrawals() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(w => (
+                {paged.map(w => (
                   <tr key={w.id}>
                     <td>
                       <div className={styles.userCell}>
@@ -283,9 +292,32 @@ export default function AdminWithdrawals() {
             </table>
           </div>
 
+          {/* ── Pagination ── */}
+          <div className={styles.pagination}>
+            <span className={styles.paginationInfo}>
+              Showing {filtered.length === 0 ? 0 : pageStart + 1} to {Math.min(pageStart + PAGE_SIZE, filtered.length)} of {filtered.length} withdrawals
+            </span>
+            <div className={styles.paginationControls}>
+              <button className={styles.pageBtn} onClick={() => setPage(p => p - 1)} disabled={page === 1}>‹</button>
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                const lo = Math.max(1, Math.min(page - 2, totalPages - 4))
+                const p  = lo + i
+                if (p > totalPages) return null
+                return (
+                  <button
+                    key={p}
+                    className={`${styles.pageBtn} ${page === p ? styles.pageBtnActive : ''}`}
+                    onClick={() => setPage(p)}
+                  >{p}</button>
+                )
+              })}
+              <button className={styles.pageBtn} onClick={() => setPage(p => p + 1)} disabled={page >= totalPages}>›</button>
+            </div>
+          </div>
+
           {/* ── Mobile cards ── */}
           <div className={styles.cards}>
-            {filtered.map(w => (
+            {paged.map(w => (
               <div key={w.id} className={`${styles.card} ${w.status === 'pending' ? styles.cardPending : ''}`}>
                 <div className={styles.cardTop}>
                   <div className={styles.userCell}>

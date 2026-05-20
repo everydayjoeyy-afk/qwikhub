@@ -85,6 +85,8 @@ export default function AdminOrders() {
   const [tab,      setTab]      = useState('all')
   const [network,  setNetwork]  = useState('all')
   const [period,   setPeriod]   = useState('all')
+  const [page,     setPage]     = useState(1)
+  const PAGE_SIZE = 15
 
   useEffect(() => { load() }, [])
 
@@ -119,6 +121,9 @@ export default function AdminOrders() {
     }
   }), [orders])
 
+  // Reset to page 1 when filters change
+  useEffect(() => { setPage(1) }, [tab, network, period, query])
+
   const filtered = useMemo(() => normalised.filter(o => {
     if (tab !== 'all' && o.order_type !== tab) return false
     if (network !== 'all' && !o.displayNetwork?.toLowerCase().includes(network.toLowerCase())) return false
@@ -141,6 +146,11 @@ export default function AdminOrders() {
   const todayOrders  = orders.filter(o => new Date(o.created_at).toDateString() === todayStr)
   const todayRevenue = todayOrders.reduce((s, o) => s + Number(o.amount), 0)
   const totalRevenue = orders.reduce((s, o) => s + Number(o.amount), 0)
+
+  // ── Pagination ───────────────────────────────────────────────────
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const pageStart  = (page - 1) * PAGE_SIZE
+  const paged      = filtered.slice(pageStart, pageStart + PAGE_SIZE)
 
   return (
     <div className={styles.page}>
@@ -273,7 +283,7 @@ export default function AdminOrders() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(o => (
+                {paged.map(o => (
                   <tr key={o.order_id}>
                     <td><TypeBadge type={o.order_type} /></td>
                     <td>
@@ -296,9 +306,32 @@ export default function AdminOrders() {
             </table>
           </div>
 
+          {/* ── Pagination ── */}
+          <div className={styles.pagination}>
+            <span className={styles.paginationInfo}>
+              Showing {filtered.length === 0 ? 0 : pageStart + 1} to {Math.min(pageStart + PAGE_SIZE, filtered.length)} of {filtered.length} orders
+            </span>
+            <div className={styles.paginationControls}>
+              <button className={styles.pageBtn} onClick={() => setPage(p => p - 1)} disabled={page === 1}>‹</button>
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                const lo = Math.max(1, Math.min(page - 2, totalPages - 4))
+                const p  = lo + i
+                if (p > totalPages) return null
+                return (
+                  <button
+                    key={p}
+                    className={`${styles.pageBtn} ${page === p ? styles.pageBtnActive : ''}`}
+                    onClick={() => setPage(p)}
+                  >{p}</button>
+                )
+              })}
+              <button className={styles.pageBtn} onClick={() => setPage(p => p + 1)} disabled={page >= totalPages}>›</button>
+            </div>
+          </div>
+
           {/* ── Mobile cards ── */}
           <div className={styles.cards}>
-            {filtered.map(o => (
+            {paged.map(o => (
               <div key={o.order_id} className={styles.card}>
                 <div className={styles.cardTop}>
                   <div className={styles.cardTopLeft}>
