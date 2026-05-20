@@ -108,3 +108,24 @@ export async function adminGetTopups(limit = 300) {
     body: { p_limit: limit },
   })
 }
+
+/** Returns all bundles (active + inactive) with per-bundle store_bundle count. */
+export async function adminGetBundles() {
+  return adminFetch('rpc/admin_get_bundles', { method: 'POST', body: {} })
+}
+
+/** Returns platform-wide store stats (total_stores, orders_today, revenue_today, total_revenue). */
+export async function adminGetStoreOverview() {
+  return adminFetch('rpc/admin_get_store_overview', { method: 'POST', body: {} })
+}
+
+/**
+ * Update a bundle's platform price and/or active status.
+ * Pass only the fields you want to change.
+ */
+export async function adminUpdateBundle(bundleId, { platform_price, is_active } = {}) {
+  const body = { p_bundle_id: bundleId }
+  if (platform_price !== undefined) body.p_platform_price = platform_price
+  if (is_active      !== undefined) body.p_is_active      = is_active
+  return adminFetch('rpc/admin_update_bundle', { method: 'POST', body })
+}

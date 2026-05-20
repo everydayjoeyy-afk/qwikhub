@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
   HambergerMenu, CloseCircle, MoneyRecive, LogoutCurve,
   ShoppingBag, People, Category, Receipt2, ArrowLeft2, ArrowRight2,
-  Wallet2,
+  Wallet2, Shop,
 } from 'iconsax-react'
 import { useAuth } from '../context/AuthContext'
 import logoLight from '../assets/logo-light.svg'
@@ -16,7 +16,8 @@ const NAV = [
   { to: '/admin/orders',       label: 'Orders',       Icon: ShoppingBag },
   { to: '/admin/transactions', label: 'Transactions', Icon: Receipt2    },
   { to: '/admin/topups',       label: 'Top-up Monitor', Icon: Wallet2   },
-  { to: '/admin/users',        label: 'Users',        Icon: People      },
+  { to: '/admin/store',        label: 'Store Overview', Icon: Shop      },
+  { to: '/admin/users',        label: 'Users',          Icon: People    },
 ]
 
 export default function AdminLayout() {
