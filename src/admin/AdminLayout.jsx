@@ -1,15 +1,16 @@
 import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { HambergerMenu, CloseCircle, MoneyRecive, LogoutCurve, ShoppingBag, People } from 'iconsax-react'
+import { HambergerMenu, CloseCircle, MoneyRecive, LogoutCurve, ShoppingBag, People, Category } from 'iconsax-react'
 import { useAuth } from '../context/AuthContext'
 import logoLight from '../assets/logo-light.svg'
 import logoDark  from '../assets/logo-dark.svg'
 import styles from './AdminLayout.module.css'
 
 const NAV = [
+  { to: '/admin/dashboard',   label: 'Dashboard',   Icon: Category    },
   { to: '/admin/withdrawals', label: 'Withdrawals', Icon: MoneyRecive },
-  { to: '/admin/orders',      label: 'Orders',      Icon: ShoppingBag  },
-  { to: '/admin/users',       label: 'Users',       Icon: People       },
+  { to: '/admin/orders',      label: 'Orders',      Icon: ShoppingBag },
+  { to: '/admin/users',       label: 'Users',       Icon: People      },
 ]
 
 export default function AdminLayout() {

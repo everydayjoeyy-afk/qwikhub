@@ -6,6 +6,7 @@ import AdminLayout from './AdminLayout'
 import AdminWithdrawals from './pages/AdminWithdrawals'
 import AdminOrders      from './pages/AdminOrders'
 import AdminUsers       from './pages/AdminUsers'
+import AdminDashboard  from './pages/AdminDashboard'
 
 export default function AdminApp({ theme }) {
   // Keep the same data-theme in sync so CSS variables work correctly
@@ -26,8 +27,8 @@ export default function AdminApp({ theme }) {
             </AdminGuard>
           }
         >
-          {/* Default: redirect /admin → /admin/withdrawals */}
-          <Route index element={<Navigate to="/admin/withdrawals" replace />} />
+          <Route index element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="dashboard"   element={<AdminDashboard />} />
           <Route path="withdrawals" element={<AdminWithdrawals />} />
           <Route path="orders"      element={<AdminOrders />} />
           <Route path="users"       element={<AdminUsers />} />

@@ -79,3 +79,8 @@ export async function adminGetUserTransactions(userId) {
     body: { p_user_id: userId },
   })
 }
+
+/** Returns a single-row snapshot of all platform KPIs. */
+export async function adminGetDashboard() {
+  return adminFetch('rpc/admin_get_dashboard', { method: 'POST', body: {} })
+}
