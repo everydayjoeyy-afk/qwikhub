@@ -26,6 +26,7 @@ import SignIn from './pages/SignIn'
 import SignUp from './pages/SignUp'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
+import AdminApp from './admin/AdminApp'
 
 const GREETINGS = ['Welcome', 'Akwaaba']
 function useGreeting() {
@@ -92,6 +93,9 @@ export default function App() {
   }, [profileOpen])
 
   const isDark = theme === 'dark'
+
+  // ── Admin section — completely separate layout, no main app chrome ──
+  if (location.pathname.startsWith('/admin')) return <AdminApp theme={theme} />
 
   if (isStorefront || isAuthPage) {
     return (
