@@ -9,7 +9,8 @@ import AdminUsers        from './pages/AdminUsers'
 import AdminDashboard    from './pages/AdminDashboard'
 import AdminTransactions  from './pages/AdminTransactions'
 import AdminTopups        from './pages/AdminTopups'
-import AdminStoreOverview from './pages/AdminStoreOverview'
+import AdminStoreOverview  from './pages/AdminStoreOverview'
+import AdminFailedOrders  from './pages/AdminFailedOrders'
 
 export default function AdminApp({ theme }) {
   // Keep the same data-theme in sync so CSS variables work correctly
@@ -37,6 +38,7 @@ export default function AdminApp({ theme }) {
           <Route path="transactions" element={<AdminTransactions />} />
           <Route path="topups"       element={<AdminTopups />} />
           <Route path="store"        element={<AdminStoreOverview />} />
+          <Route path="failed"       element={<AdminFailedOrders />} />
           <Route path="users"        element={<AdminUsers />} />
         </Route>
       </Routes>

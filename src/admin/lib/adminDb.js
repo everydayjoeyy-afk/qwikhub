@@ -109,6 +109,14 @@ export async function adminGetTopups(limit = 300) {
   })
 }
 
+/**
+ * Returns storefront orders with status = 'failed' or 'pending', newest first.
+ * Requires the admin_get_failed_orders RPC in Supabase.
+ */
+export async function adminGetFailedOrders() {
+  return adminFetch('rpc/admin_get_failed_orders', { method: 'POST', body: {} })
+}
+
 /** Returns all bundles (active + inactive) with per-bundle store_bundle count. */
 export async function adminGetBundles() {
   return adminFetch('rpc/admin_get_bundles', { method: 'POST', body: {} })
