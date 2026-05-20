@@ -59,25 +59,29 @@ export default function AdminDashboard() {
 
   async function load() {
     setLoading(true)
-    const [dashRes, wdRes, trendRes] = await Promise.all([
-      adminGetDashboard(),
-      adminGetWithdrawals(),
-      adminGetRevenueTrend(7),
-    ])
-    if (dashRes.data?.[0]) setStats(dashRes.data[0])
-    if (Array.isArray(wdRes.data)) {
-      setPending(wdRes.data.filter(w => w.status === 'pending').slice(0, 3))
+    try {
+      const [dashRes, wdRes, trendRes] = await Promise.all([
+        adminGetDashboard(),
+        adminGetWithdrawals(),
+        adminGetRevenueTrend(7),
+      ])
+      if (dashRes.data?.[0]) setStats(dashRes.data[0])
+      if (Array.isArray(wdRes.data)) {
+        setPending(wdRes.data.filter(w => w.status === 'pending').slice(0, 3))
+      }
+      if (Array.isArray(trendRes.data)) {
+        setTrend(trendRes.data.map(row => ({
+          ...row,
+          label:   new Date(row.day).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' }),
+          revenue: Number(row.revenue),
+          orders:  Number(row.orders),
+        })))
+      }
+    } catch (e) {
+      console.error('[AdminDashboard] load error:', e)
+    } finally {
+      setLoading(false)
     }
-    if (Array.isArray(trendRes.data)) {
-      // Format day label: "Mon 19" style
-      setTrend(trendRes.data.map(row => ({
-        ...row,
-        label: new Date(row.day).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' }),
-        revenue: Number(row.revenue),
-        orders:  Number(row.orders),
-      })))
-    }
-    setLoading(false)
   }
 
   function showToast(msg) {
