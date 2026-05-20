@@ -3,8 +3,11 @@ import {
   CloseCircle, Timer1, Wallet2, Gift, Money2,
   MessageQuestion, Headphone, ArrowLeft, Add, MessageText,
 } from 'iconsax-react'
-import QIcon from '../../assets/Q.svg'
+import QIcon      from '../../assets/Q.svg'
+import WhatsAppIcon from '../../assets/icons8-whatsapp-48.png'
 import styles from './ChatBot.module.css'
+
+const WHATSAPP_CHANNEL = 'https://whatsapp.com/channel/0029VbCc8oQ545uuu3uM7u3e'
 
 // ── Q&A decision tree ─────────────────────────────────────────
 const MENU = [
@@ -156,6 +159,18 @@ export default function ChatBot() {
 
   return (
     <>
+      {/* WhatsApp channel button */}
+      <a
+        href={WHATSAPP_CHANNEL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={styles.fabWhatsApp}
+        aria-label="Follow QwikHub on WhatsApp"
+        style={{ display: open ? 'none' : 'flex' }}
+      >
+        <img src={WhatsAppIcon} alt="" aria-hidden="true" className={styles.fabIcon} />
+      </a>
+
       {/* Floating trigger button */}
       <button
         className={styles.fab}
