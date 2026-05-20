@@ -52,3 +52,11 @@ export async function adminRejectWithdrawal(id) {
     body: { p_withdrawal_id: id },
   })
 }
+
+/**
+ * Returns all orders (storefront + wallet) combined, newest first.
+ * p_limit defaults to 300 on the server side.
+ */
+export async function adminGetOrders() {
+  return adminFetch('rpc/admin_get_orders', { method: 'POST', body: {} })
+}
