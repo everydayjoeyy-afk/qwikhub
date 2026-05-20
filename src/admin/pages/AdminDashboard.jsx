@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ShoppingBag, People, Wallet2, MoneyRecive, TickCircle, CloseCircle } from 'iconsax-react'
+import {
+  ResponsiveContainer, AreaChart, Area,
+  XAxis, YAxis, CartesianGrid, Tooltip,
+} from 'recharts'
 import { useAuth } from '../../context/AuthContext'
-import { adminGetDashboard, adminGetWithdrawals, adminApproveWithdrawal, adminRejectWithdrawal } from '../lib/adminDb'
+import { adminGetDashboard, adminGetWithdrawals, adminApproveWithdrawal, adminRejectWithdrawal, adminGetRevenueTrend } from '../lib/adminDb'
 import styles from './AdminDashboard.module.css'
 
 // ── Helpers ──────────────────────────────────────────────────────
@@ -42,22 +46,36 @@ export default function AdminDashboard() {
   const [period,    setPeriod]    = useState('today')
   const [stats,     setStats]     = useState(null)
   const [pending,   setPending]   = useState([])
+  const [trend,     setTrend]     = useState([])
   const [loading,   setLoading]   = useState(true)
   const [confirming,setConfirming]= useState(null)   // { id, action }
   const [processing,setProcessing]= useState(new Set())
   const [toast,     setToast]     = useState('')
 
+  // detect dark mode for chart colours
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
+
   useEffect(() => { load() }, [])
 
   async function load() {
     setLoading(true)
-    const [dashRes, wdRes] = await Promise.all([
+    const [dashRes, wdRes, trendRes] = await Promise.all([
       adminGetDashboard(),
       adminGetWithdrawals(),
+      adminGetRevenueTrend(7),
     ])
     if (dashRes.data?.[0]) setStats(dashRes.data[0])
     if (Array.isArray(wdRes.data)) {
       setPending(wdRes.data.filter(w => w.status === 'pending').slice(0, 3))
+    }
+    if (Array.isArray(trendRes.data)) {
+      // Format day label: "Mon 19" style
+      setTrend(trendRes.data.map(row => ({
+        ...row,
+        label: new Date(row.day).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' }),
+        revenue: Number(row.revenue),
+        orders:  Number(row.orders),
+      })))
     }
     setLoading(false)
   }
@@ -194,6 +212,76 @@ export default function AdminDashboard() {
             {loading ? '—' : `₵${Number(stats?.total_earnings ?? 0).toFixed(2)}`}
           </span>
         </div>
+      </div>
+
+      {/* ── Revenue trend chart ── */}
+      <div className={styles.chartCard}>
+        <div className={styles.chartHeader}>
+          <span className={styles.chartTitle}>Revenue — last 7 days</span>
+          {!loading && trend.length > 0 && (
+            <span className={styles.chartTotal}>
+              ₵{trend.reduce((s, r) => s + r.revenue, 0).toFixed(2)} total
+            </span>
+          )}
+        </div>
+
+        {loading ? (
+          <div className={styles.chartSkeleton} />
+        ) : trend.length === 0 ? (
+          <div className={styles.chartEmpty}>No data yet</div>
+        ) : (
+          <ResponsiveContainer width="100%" height={200}>
+            <AreaChart data={trend} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%"  stopColor="#FFCC08" stopOpacity={0.35} />
+                  <stop offset="95%" stopColor="#FFCC08" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke={isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}
+                vertical={false}
+              />
+              <XAxis
+                dataKey="label"
+                tick={{ fontSize: 11, fill: isDark ? '#888' : '#999', fontFamily: 'inherit' }}
+                axisLine={false}
+                tickLine={false}
+                dy={6}
+              />
+              <YAxis
+                tick={{ fontSize: 11, fill: isDark ? '#888' : '#999', fontFamily: 'inherit' }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={v => `₵${v}`}
+                width={56}
+              />
+              <Tooltip
+                content={({ active, payload, label }) => {
+                  if (!active || !payload?.length) return null
+                  const d = payload[0].payload
+                  return (
+                    <div className={styles.chartTooltip}>
+                      <span className={styles.tooltipLabel}>{label}</span>
+                      <span className={styles.tooltipRevenue}>₵{d.revenue.toFixed(2)}</span>
+                      <span className={styles.tooltipOrders}>{d.orders} order{d.orders !== 1 ? 's' : ''}</span>
+                    </div>
+                  )
+                }}
+              />
+              <Area
+                type="monotone"
+                dataKey="revenue"
+                stroke="#FFCC08"
+                strokeWidth={2.5}
+                fill="url(#revenueGrad)"
+                dot={{ r: 3.5, fill: '#FFCC08', strokeWidth: 0 }}
+                activeDot={{ r: 5, fill: '#FFCC08', strokeWidth: 0 }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
       </div>
 
       {/* ── Pending withdrawals mini-queue ── */}

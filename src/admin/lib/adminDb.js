@@ -84,3 +84,11 @@ export async function adminGetUserTransactions(userId) {
 export async function adminGetDashboard() {
   return adminFetch('rpc/admin_get_dashboard', { method: 'POST', body: {} })
 }
+
+/** Returns daily revenue + order count for the last p_days days. */
+export async function adminGetRevenueTrend(days = 7) {
+  return adminFetch('rpc/admin_get_revenue_trend', {
+    method: 'POST',
+    body: { p_days: days },
+  })
+}
