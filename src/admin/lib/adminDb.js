@@ -92,3 +92,11 @@ export async function adminGetRevenueTrend(days = 7) {
     body: { p_days: days },
   })
 }
+
+/** Returns platform-wide transactions with user info, newest first. */
+export async function adminGetTransactions(limit = 500) {
+  return adminFetch('rpc/admin_get_transactions', {
+    method: 'POST',
+    body: { p_limit: limit },
+  })
+}

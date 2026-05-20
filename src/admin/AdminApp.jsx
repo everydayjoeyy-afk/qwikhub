@@ -3,10 +3,11 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import AdminGuard from './AdminGuard'
 import AdminSignIn from './AdminSignIn'
 import AdminLayout from './AdminLayout'
-import AdminWithdrawals from './pages/AdminWithdrawals'
-import AdminOrders      from './pages/AdminOrders'
-import AdminUsers       from './pages/AdminUsers'
-import AdminDashboard  from './pages/AdminDashboard'
+import AdminWithdrawals  from './pages/AdminWithdrawals'
+import AdminOrders       from './pages/AdminOrders'
+import AdminUsers        from './pages/AdminUsers'
+import AdminDashboard    from './pages/AdminDashboard'
+import AdminTransactions from './pages/AdminTransactions'
 
 export default function AdminApp({ theme }) {
   // Keep the same data-theme in sync so CSS variables work correctly
@@ -28,10 +29,11 @@ export default function AdminApp({ theme }) {
           }
         >
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
-          <Route path="dashboard"   element={<AdminDashboard />} />
-          <Route path="withdrawals" element={<AdminWithdrawals />} />
-          <Route path="orders"      element={<AdminOrders />} />
-          <Route path="users"       element={<AdminUsers />} />
+          <Route path="dashboard"    element={<AdminDashboard />} />
+          <Route path="withdrawals"  element={<AdminWithdrawals />} />
+          <Route path="orders"       element={<AdminOrders />} />
+          <Route path="transactions" element={<AdminTransactions />} />
+          <Route path="users"        element={<AdminUsers />} />
         </Route>
       </Routes>
     </div>
