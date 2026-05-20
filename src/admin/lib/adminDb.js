@@ -100,3 +100,11 @@ export async function adminGetTransactions(limit = 500) {
     body: { p_limit: limit },
   })
 }
+
+/** Returns wallet top-up credits with user info, newest first. */
+export async function adminGetTopups(limit = 300) {
+  return adminFetch('rpc/admin_get_topups', {
+    method: 'POST',
+    body: { p_limit: limit },
+  })
+}

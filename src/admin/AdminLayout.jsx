@@ -1,6 +1,10 @@
 import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { HambergerMenu, CloseCircle, MoneyRecive, LogoutCurve, ShoppingBag, People, Category, Receipt2 } from 'iconsax-react'
+import {
+  HambergerMenu, CloseCircle, MoneyRecive, LogoutCurve,
+  ShoppingBag, People, Category, Receipt2, ArrowLeft2, ArrowRight2,
+  Wallet2,
+} from 'iconsax-react'
 import { useAuth } from '../context/AuthContext'
 import logoLight from '../assets/logo-light.svg'
 import logoDark  from '../assets/logo-dark.svg'
@@ -11,6 +15,7 @@ const NAV = [
   { to: '/admin/withdrawals',  label: 'Withdrawals',  Icon: MoneyRecive },
   { to: '/admin/orders',       label: 'Orders',       Icon: ShoppingBag },
   { to: '/admin/transactions', label: 'Transactions', Icon: Receipt2    },
+  { to: '/admin/topups',       label: 'Top-up Monitor', Icon: Wallet2   },
   { to: '/admin/users',        label: 'Users',        Icon: People      },
 ]
 
@@ -18,6 +23,9 @@ export default function AdminLayout() {
   const { profile, signOut } = useAuth()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(
+    () => localStorage.getItem('admin-sidebar-collapsed') === 'true'
+  )
 
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
 
@@ -26,27 +34,46 @@ export default function AdminLayout() {
     navigate('/admin/signin', { replace: true })
   }
 
-  const SidebarContent = () => (
+  function toggleCollapse() {
+    setCollapsed(prev => {
+      const next = !prev
+      localStorage.setItem('admin-sidebar-collapsed', String(next))
+      return next
+    })
+  }
+
+  const SidebarContent = ({ allowCollapse = false }) => (
     <div className={styles.sidebar}>
       <div className={styles.sidebarTop}>
+
+        {/* Brand */}
         <div className={styles.brand}>
-          <img src={isDark ? logoDark : logoLight} alt="QwikHub" className={styles.logo} />
-          <span className={styles.adminBadge}>Admin</span>
+          {!collapsed && (
+            <>
+              <img src={isDark ? logoDark : logoLight} alt="QwikHub" className={styles.logo} />
+              <span className={styles.adminBadge}>Admin</span>
+            </>
+          )}
+          {collapsed && (
+            <div className={styles.collapsedDot} title="QwikHub Admin" />
+          )}
         </div>
 
+        {/* Nav */}
         <nav>
           <ul className={styles.navList}>
             {NAV.map(({ to, label, Icon }) => (
               <li key={to}>
                 <NavLink
                   to={to}
+                  title={collapsed ? label : undefined}
                   className={({ isActive }) =>
-                    `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
+                    `${styles.navItem} ${collapsed ? styles.navItemCollapsed : ''} ${isActive ? styles.navItemActive : ''}`
                   }
                   onClick={() => setSidebarOpen(false)}
                 >
                   <Icon size={17} color="currentColor" variant="Bold" />
-                  {label}
+                  {!collapsed && <span className={styles.navLabel}>{label}</span>}
                 </NavLink>
               </li>
             ))}
@@ -54,25 +81,55 @@ export default function AdminLayout() {
         </nav>
       </div>
 
-      <div className={styles.sidebarFooter}>
-        <div className={styles.userInfo}>
-          <div className={styles.avatar}>
-            {(profile?.name ?? 'A').charAt(0).toUpperCase()}
-          </div>
+      {/* Collapse toggle (desktop only) */}
+      {allowCollapse && (
+        <button
+          className={`${styles.collapseBtn} ${collapsed ? styles.collapseBtnCollapsed : ''}`}
+          onClick={toggleCollapse}
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {collapsed
+            ? <ArrowRight2 size={14} color="currentColor" />
+            : <ArrowLeft2  size={14} color="currentColor" />
+          }
+          {!collapsed && <span>Collapse</span>}
+        </button>
+      )}
+
+      {/* Footer */}
+      <div className={`${styles.sidebarFooter} ${collapsed ? styles.sidebarFooterCollapsed : ''}`}>
+        <div className={styles.avatar} title={collapsed ? (profile?.name ?? 'Admin') : undefined}>
+          {(profile?.name ?? 'A').charAt(0).toUpperCase()}
+        </div>
+        {!collapsed && (
           <div className={styles.userMeta}>
             <span className={styles.userName}>{profile?.name ?? 'Admin'}</span>
             <span className={styles.userEmail}>{profile?.email ?? ''}</span>
           </div>
-        </div>
-        <button className={styles.signOutBtn} onClick={handleSignOut} aria-label="Sign out">
-          <LogoutCurve size={17} color="currentColor" />
-        </button>
+        )}
+        {!collapsed && (
+          <button className={styles.signOutBtn} onClick={handleSignOut} aria-label="Sign out">
+            <LogoutCurve size={17} color="currentColor" />
+          </button>
+        )}
+        {collapsed && (
+          <button
+            className={styles.signOutBtn}
+            onClick={handleSignOut}
+            title="Sign out"
+            aria-label="Sign out"
+            style={{ marginLeft: 'auto' }}
+          >
+            <LogoutCurve size={15} color="currentColor" />
+          </button>
+        )}
       </div>
     </div>
   )
 
   return (
-    <div className={styles.shell}>
+    <div className={styles.shell} data-collapsed={collapsed}>
 
       {/* ── Mobile top bar ── */}
       <header className={styles.topbar}>
@@ -88,8 +145,8 @@ export default function AdminLayout() {
       </header>
 
       {/* ── Desktop sidebar ── */}
-      <div className={styles.sidebarDesktop}>
-        <SidebarContent />
+      <div className={`${styles.sidebarDesktop} ${collapsed ? styles.sidebarDesktopCollapsed : ''}`}>
+        <SidebarContent allowCollapse />
       </div>
 
       {/* ── Mobile sidebar drawer ── */}
