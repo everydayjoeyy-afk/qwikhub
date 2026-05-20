@@ -87,8 +87,11 @@ export default function CartModal({ open, onClose, onPaymentSuccess }) {
       })
       if (!txRes.ok) throw new Error(`Transaction record failed (${txRes.status})`)
 
-      // 3. Credit 5% commission to whoever referred this buyer (fire-and-forget — non-fatal)
-      recordReferralCommission(user.id, total).catch(() => {})
+      // 3. Credit 1% commission on bundle purchases only (not subscriptions)
+      const bundlesTotal = items
+        .filter(i => i.type !== 'subscription')
+        .reduce((sum, i) => sum + i.price, 0)
+      if (bundlesTotal > 0) recordReferralCommission(user.id, bundlesTotal).catch(() => {})
 
       // 4. Refresh balance display, clear cart, notify home
       await refetchProfile()
