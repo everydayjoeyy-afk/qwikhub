@@ -4,7 +4,7 @@ import {
   MessageQuestion, Headphone, ArrowLeft, Add, MessageText,
 } from 'iconsax-react'
 import QIcon      from '../../assets/Q.svg'
-import WhatsAppIcon from '../../assets/icons8-whatsapp-48.png'
+import WhatsAppIcon from '../../assets/icons8-whatsapp.svg'
 import styles from './ChatBot.module.css'
 
 const WHATSAPP_CHANNEL = 'https://whatsapp.com/channel/0029VbCc8oQ545uuu3uM7u3e'
