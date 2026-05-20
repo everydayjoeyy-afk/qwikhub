@@ -60,3 +60,22 @@ export async function adminRejectWithdrawal(id) {
 export async function adminGetOrders() {
   return adminFetch('rpc/admin_get_orders', { method: 'POST', body: {} })
 }
+
+/**
+ * Search users by name, phone, or email.
+ * Empty query returns the 30 most recently joined users.
+ */
+export async function adminSearchUsers(query = '') {
+  return adminFetch('rpc/admin_search_users', {
+    method: 'POST',
+    body: { p_query: query.trim() },
+  })
+}
+
+/** Returns the last 15 transactions for a given user. */
+export async function adminGetUserTransactions(userId) {
+  return adminFetch('rpc/admin_get_user_transactions', {
+    method: 'POST',
+    body: { p_user_id: userId },
+  })
+}

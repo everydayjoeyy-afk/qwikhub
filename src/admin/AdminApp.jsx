@@ -5,6 +5,7 @@ import AdminSignIn from './AdminSignIn'
 import AdminLayout from './AdminLayout'
 import AdminWithdrawals from './pages/AdminWithdrawals'
 import AdminOrders      from './pages/AdminOrders'
+import AdminUsers       from './pages/AdminUsers'
 
 export default function AdminApp({ theme }) {
   // Keep the same data-theme in sync so CSS variables work correctly
@@ -29,6 +30,7 @@ export default function AdminApp({ theme }) {
           <Route index element={<Navigate to="/admin/withdrawals" replace />} />
           <Route path="withdrawals" element={<AdminWithdrawals />} />
           <Route path="orders"      element={<AdminOrders />} />
+          <Route path="users"       element={<AdminUsers />} />
         </Route>
       </Routes>
     </div>
