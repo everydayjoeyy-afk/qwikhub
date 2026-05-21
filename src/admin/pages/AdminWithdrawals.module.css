@@ -1,10 +1,12 @@
-/* ── Page ────────────────────────────────────────────────────── */
+/* -- Page ---------------------------------------------------- */
 .page {
   padding: 32px 32px 56px;
-  max-width: 1080px;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
 }
 
-/* ── Header ──────────────────────────────────────────────────── */
+/* -- Header -------------------------------------------------- */
 .pageHeader {
   display: flex;
   align-items: flex-start;
@@ -45,7 +47,7 @@
 .refreshBtn:hover:not(:disabled) { border-color: var(--color-accent); color: var(--color-text-primary); }
 .refreshBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* ── Stats ───────────────────────────────────────────────────── */
+/* -- Stats --------------------------------------------------- */
 .statsRow {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -85,7 +87,7 @@
 
 .statValueUrgent { color: #f59e0b; }
 
-/* ── Tabs ────────────────────────────────────────────────────── */
+/* -- Tabs ---------------------------------------------------- */
 .tabs {
   display: flex;
   gap: 0;
@@ -133,7 +135,7 @@
   color: var(--color-accent);
 }
 
-/* ── Centred states ──────────────────────────────────────────── */
+/* -- Centred states ------------------------------------------ */
 .centred {
   display: flex;
   flex-direction: column;
@@ -160,7 +162,7 @@
 }
 .errorText { color: #ef4444; }
 
-/* ── Desktop table ───────────────────────────────────────────── */
+/* -- Desktop table ------------------------------------------- */
 .tableWrap {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -367,7 +369,7 @@
   color: var(--color-text-tertiary);
 }
 
-/* ── Toast ───────────────────────────────────────────────────── */
+/* -- Toast --------------------------------------------------- */
 .toast {
   position: fixed;
   bottom: 24px;
@@ -390,7 +392,7 @@
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
-/* ── Pagination ──────────────────────────────────────────────── */
+/* -- Pagination ---------------------------------------------- */
 .pagination {
   display: flex;
   align-items: center;
@@ -436,10 +438,10 @@
 .pageBtn:disabled { opacity: 0.35; cursor: not-allowed; }
 .pageBtnActive { background: var(--color-accent); border-color: var(--color-accent); color: #000 !important; font-weight: 700; }
 
-/* ── Mobile cards (hidden on desktop) ────────────────────────── */
+/* -- Mobile cards -------------------------------------------- */
 .cards { display: none; }
 
-/* ── Mobile ───────────────────────────────────────────────────── */
+/* -- Mobile -------------------------------------------------- */
 @media (max-width: 768px) {
   .page { padding: 16px 16px 48px; }
 
@@ -536,3 +538,4 @@
   .confirmLabel { font-size: 13px; text-align: center; width: 100%; }
   .confirmRow .actionBtn { width: 100%; justify-content: center; }
 }
+

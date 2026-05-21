@@ -1,7 +1,9 @@
-/* ── Page ────────────────────────────────────────────────────── */
+/* -- Page ---------------------------------------------------- */
 .page {
   padding: 32px 32px 56px;
-  max-width: 1200px;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .pageHeader {
@@ -23,7 +25,7 @@
   margin-top: 3px;
 }
 
-/* ── Toolbar ─────────────────────────────────────────────────── */
+/* -- Toolbar ------------------------------------------------- */
 .toolbar {
   display: flex;
   align-items: center;
@@ -73,7 +75,7 @@
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Table card ──────────────────────────────────────────────── */
+/* -- Table card ---------------------------------------------- */
 .tableCard {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -98,7 +100,7 @@
   color: var(--color-text-primary);
 }
 
-/* ── States ──────────────────────────────────────────────────── */
+/* -- States -------------------------------------------------- */
 .centred {
   display: flex;
   align-items: center;
@@ -121,7 +123,7 @@
   color: var(--color-text-tertiary);
 }
 
-/* ── Desktop table ───────────────────────────────────────────── */
+/* -- Desktop table ------------------------------------------- */
 .tableWrap {
   overflow-x: auto;
 }
@@ -165,7 +167,7 @@
 .table tbody tr:hover { background: var(--color-surface-hover); }
 .rowSelected td { background: var(--color-accent-subtle) !important; }
 
-/* ── Cells ───────────────────────────────────────────────────── */
+/* -- Cells --------------------------------------------------- */
 .avatar {
   width: 34px;
   height: 34px;
@@ -261,7 +263,7 @@
 .statusBadge[data-active="true"]  { background: rgba(34,197,94,0.12); color: #22c55e; }
 .statusBadge[data-active="false"] { background: rgba(239,68,68,0.10); color: #ef4444; }
 
-/* ── Actions dropdown ────────────────────────────────────────── */
+/* -- Actions dropdown ---------------------------------------- */
 .actionsCell {
   position: relative;
 }
@@ -314,7 +316,7 @@
 }
 .menuDropdown button:hover { background: var(--color-surface-hover); }
 
-/* ── Pagination ──────────────────────────────────────────────── */
+/* -- Pagination ---------------------------------------------- */
 .pagination {
   display: flex;
   align-items: center;
@@ -380,7 +382,7 @@
   font-weight: 700;
 }
 
-/* ── Detail panel (slide in from right) ──────────────────────── */
+/* -- Detail panel -------------------------------------------- */
 .detailOverlay {
   position: fixed;
   inset: 0;
@@ -411,7 +413,7 @@
   to   { transform: translateX(0);     }
 }
 
-/* ── Detail content ──────────────────────────────────────────── */
+/* -- Detail content ------------------------------------------ */
 .detail {
   padding: 28px 24px 48px;
   position: relative;
@@ -662,10 +664,10 @@
 .txDate   { font-size: 11px; font-family: var(--font-sans); color: var(--color-text-tertiary); }
 .txAmount { font-size: 13px; font-weight: 700; font-family: var(--font-sans); white-space: nowrap; flex-shrink: 0; padding-top: 1px; }
 
-/* ── Mobile cards ────────────────────────────────────────────── */
+/* -- Mobile cards -------------------------------------------- */
 .cards { display: none; }
 
-/* ── Mobile ───────────────────────────────────────────────────── */
+/* -- Mobile -------------------------------------------------- */
 @media (max-width: 768px) {
   .page { padding: 16px 16px 48px; }
 
@@ -738,3 +740,4 @@
     to   { transform: translateY(0);   }
   }
 }
+

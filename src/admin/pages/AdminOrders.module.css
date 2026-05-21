@@ -1,10 +1,12 @@
-/* ── Page ────────────────────────────────────────────────────── */
+/* -- Page ---------------------------------------------------- */
 .page {
   padding: 32px 32px 56px;
-  max-width: 1100px;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
 }
 
-/* ── Header ──────────────────────────────────────────────────── */
+/* -- Header -------------------------------------------------- */
 .pageHeader {
   display: flex;
   align-items: flex-start;
@@ -45,7 +47,7 @@
 .refreshBtn:hover:not(:disabled) { border-color: var(--color-accent); color: var(--color-text-primary); }
 .refreshBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* ── Stats ───────────────────────────────────────────────────── */
+/* -- Stats --------------------------------------------------- */
 .statsRow {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -82,7 +84,7 @@
   line-height: 1;
 }
 
-/* ── Toolbar (search + filters) ──────────────────────────────── */
+/* -- Toolbar ------------------------------------------------- */
 .toolbar {
   display: flex;
   flex-direction: column;
@@ -152,7 +154,7 @@
   font-weight: 700;
 }
 
-/* ── Tabs ────────────────────────────────────────────────────── */
+/* -- Tabs ---------------------------------------------------- */
 .tabs {
   display: flex;
   align-items: center;
@@ -207,7 +209,7 @@
   padding-right: 4px;
 }
 
-/* ── Centred states ──────────────────────────────────────────── */
+/* -- Centred states ------------------------------------------ */
 .centred {
   display: flex;
   flex-direction: column;
@@ -234,7 +236,7 @@
 }
 .errorText { color: #ef4444; }
 
-/* ── Desktop table ───────────────────────────────────────────── */
+/* -- Desktop table ------------------------------------------- */
 .tableWrap {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -351,7 +353,7 @@
   cursor: default;
 }
 
-/* ── Pagination ──────────────────────────────────────────────── */
+/* -- Pagination ---------------------------------------------- */
 .pagination {
   display: flex;
   align-items: center;
@@ -399,10 +401,10 @@
 .pageBtn:disabled { opacity: 0.35; cursor: not-allowed; }
 .pageBtnActive { background: var(--color-accent); border-color: var(--color-accent); color: #000 !important; font-weight: 700; }
 
-/* ── Mobile cards (hidden on desktop) ────────────────────────── */
+/* -- Mobile cards -------------------------------------------- */
 .cards { display: none; }
 
-/* ── Mobile ───────────────────────────────────────────────────── */
+/* -- Mobile -------------------------------------------------- */
 @media (max-width: 768px) {
   .page { padding: 16px 16px 48px; }
 
@@ -501,3 +503,4 @@
     font-family: var(--font-sans);
   }
 }
+

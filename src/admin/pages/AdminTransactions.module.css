@@ -1,10 +1,12 @@
-/* ── Page ────────────────────────────────────────────────────── */
+/* -- Page ---------------------------------------------------- */
 .page {
   padding: 32px 32px 56px;
-  max-width: 1100px;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
 }
 
-/* ── Header ──────────────────────────────────────────────────── */
+/* -- Header -------------------------------------------------- */
 .pageHeader {
   display: flex;
   align-items: flex-start;
@@ -45,7 +47,7 @@
 .refreshBtn:hover:not(:disabled) { border-color: var(--color-accent); color: var(--color-text-primary); }
 .refreshBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* ── Stats ───────────────────────────────────────────────────── */
+/* -- Stats --------------------------------------------------- */
 .statsRow {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -85,7 +87,7 @@
 .statDebit  { color: #ef4444; }
 .statCredit { color: #22c55e; }
 
-/* ── Toolbar ─────────────────────────────────────────────────── */
+/* -- Toolbar ------------------------------------------------- */
 .toolbar {
   display: flex;
   align-items: center;
@@ -147,7 +149,7 @@
 .periodBtn:hover { border-color: var(--color-accent); color: var(--color-text-primary); }
 .periodBtnActive { border-color: var(--color-accent); background: var(--color-accent); color: #000; }
 
-/* ── Tabs ────────────────────────────────────────────────────── */
+/* -- Tabs ---------------------------------------------------- */
 .tabs {
   display: flex;
   align-items: center;
@@ -201,7 +203,7 @@
   padding-right: 4px;
 }
 
-/* ── States ──────────────────────────────────────────────────── */
+/* -- States -------------------------------------------------- */
 .centred {
   display: flex;
   flex-direction: column;
@@ -224,7 +226,7 @@
 .emptyText { font-size: 14px; font-family: var(--font-sans); color: var(--color-text-tertiary); }
 .errorText  { font-size: 14px; font-family: var(--font-sans); color: #ef4444; }
 
-/* ── Desktop table ───────────────────────────────────────────── */
+/* -- Desktop table ------------------------------------------- */
 .tableWrap {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -270,7 +272,7 @@
 .table tbody tr:last-child td { border-bottom: none; }
 .table tbody tr:hover { background: var(--color-surface-hover); }
 
-/* ── Cells ───────────────────────────────────────────────────── */
+/* -- Cells --------------------------------------------------- */
 .typeIcon {
   width: 28px;
   height: 28px;
@@ -346,7 +348,7 @@
   cursor: default;
 }
 
-/* ── Pagination ──────────────────────────────────────────────── */
+/* -- Pagination ---------------------------------------------- */
 .pagination {
   display: flex;
   align-items: center;
@@ -395,10 +397,10 @@
 .pageBtn:disabled { opacity: 0.35; cursor: not-allowed; }
 .pageBtnActive { background: var(--color-accent); border-color: var(--color-accent); color: #000 !important; font-weight: 700; }
 
-/* ── Mobile cards ────────────────────────────────────────────── */
+/* -- Mobile cards -------------------------------------------- */
 .cards { display: none; }
 
-/* ── Mobile ───────────────────────────────────────────────────── */
+/* -- Mobile -------------------------------------------------- */
 @media (max-width: 768px) {
   .page { padding: 16px 16px 48px; }
 
@@ -474,3 +476,4 @@
     align-items: flex-start;
   }
 }
+

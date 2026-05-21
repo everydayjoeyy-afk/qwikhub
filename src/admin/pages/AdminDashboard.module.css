@@ -1,13 +1,15 @@
-/* ── Page ────────────────────────────────────────────────────── */
+/* -- Page ---------------------------------------------------- */
 .page {
   padding: 32px 32px 56px;
-  max-width: 1080px;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-/* ── Welcome bar ─────────────────────────────────────────────── */
+/* -- Welcome bar --------------------------------------------- */
 .welcomeBar {
   display: flex;
   align-items: flex-start;
@@ -48,7 +50,7 @@
 .refreshBtn:hover:not(:disabled) { border-color: var(--color-accent); color: var(--color-text-primary); }
 .refreshBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* ── Period pills ────────────────────────────────────────────── */
+/* -- Period pills -------------------------------------------- */
 .periodRow {
   display: flex;
   gap: 8px;
@@ -75,7 +77,7 @@
   color: #000;
 }
 
-/* ── KPI row ─────────────────────────────────────────────────── */
+/* -- KPI row ------------------------------------------------- */
 .kpiRow {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -155,7 +157,7 @@
   50%       { opacity: 1;   }
 }
 
-/* ── Platform health ─────────────────────────────────────────── */
+/* -- Platform health ----------------------------------------- */
 .healthRow {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -201,7 +203,7 @@
 }
 [data-theme="dark"] .healthDivider { background: rgba(255,255,255,0.08); }
 
-/* ── Revenue chart ───────────────────────────────────────────── */
+/* -- Revenue chart ------------------------------------------- */
 .chartCard {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -282,7 +284,7 @@
   color: var(--color-text-secondary);
 }
 
-/* ── Section (mini-queue) ────────────────────────────────────── */
+/* -- Section ------------------------------------------------- */
 .section {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -336,7 +338,7 @@
 }
 .sectionLink:hover { opacity: 0.75; }
 
-/* ── Mini-queue loading / empty ──────────────────────────────── */
+/* -- Mini ---------------------------------------------------- */
 .miniLoading {
   display: flex;
   align-items: center;
@@ -365,7 +367,7 @@
   color: var(--color-text-tertiary);
 }
 
-/* ── Mini-queue list ─────────────────────────────────────────── */
+/* -- Mini ---------------------------------------------------- */
 .miniList {
   display: flex;
   flex-direction: column;
@@ -491,7 +493,7 @@
 }
 .miniBtnCancel:hover { background: var(--color-surface-hover); color: var(--color-text-primary); }
 
-/* ── Toast ───────────────────────────────────────────────────── */
+/* -- Toast --------------------------------------------------- */
 .toast {
   position: fixed;
   bottom: 24px;
@@ -514,7 +516,7 @@
   to   { opacity: 1; transform: translateX(-50%) translateY(0);   }
 }
 
-/* ── Mobile ───────────────────────────────────────────────────── */
+/* -- Mobile -------------------------------------------------- */
 @media (max-width: 900px) {
   .kpiRow { grid-template-columns: repeat(2, 1fr); }
 }
@@ -548,3 +550,4 @@
   .kpiIconWrap { width: 34px; height: 34px; }
   .kpiValue { font-size: 16px; }
 }
+

@@ -1,5 +1,5 @@
-/* ── Page ─────────────────────────────────────────────────────── */
-.page { padding: 32px 32px 56px; max-width: 1100px; }
+/* -- Page ---------------------------------------------------- */
+.page { padding: 32px 32px 56px; max-width: 1280px; margin: 0 auto; width: 100%; }
 
 .pageHeader {
   display: flex; align-items: flex-start; justify-content: space-between;
@@ -17,7 +17,7 @@
 .refreshBtn:hover:not(:disabled) { border-color: var(--color-accent); color: var(--color-text-primary); }
 .refreshBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* ── Stats ───────────────────────────────────────────────────── */
+/* -- Stats --------------------------------------------------- */
 .statsRow { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 24px; }
 .statCard {
   background: var(--color-surface); border: 1px solid var(--color-border);
@@ -28,14 +28,14 @@
 .statValue { font-size: 20px; font-weight: 800; font-family: var(--font-sans); color: var(--color-text-primary); letter-spacing: -0.03em; line-height: 1; }
 .statGreen { color: #22c55e; }
 
-/* ── Section header ──────────────────────────────────────────── */
+/* -- Section header ------------------------------------------ */
 .sectionHeader {
   display: flex; align-items: center; justify-content: space-between;
   gap: 16px; margin-bottom: 0; flex-wrap: wrap;
 }
 .sectionTitle { font-size: 15px; font-weight: 700; font-family: var(--font-sans); color: var(--color-text-primary); }
 
-/* ── Carrier tabs ────────────────────────────────────────────── */
+/* -- Carrier tabs -------------------------------------------- */
 .tabRow { display: flex; gap: 6px; flex-wrap: wrap; }
 .tabBtn {
   padding: 6px 14px; border-radius: 999px; border: 1.5px solid var(--color-border);
@@ -45,21 +45,21 @@
 .tabBtn:hover { border-color: var(--color-accent); color: var(--color-text-primary); }
 .tabBtnActive { border-color: var(--color-accent); background: var(--color-accent); color: #000; }
 
-/* ── Save error banner ───────────────────────────────────────── */
+/* -- Save error banner --------------------------------------- */
 .saveErrorBanner {
   margin-top: 12px; padding: 10px 14px; border-radius: 8px;
   background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25);
   font-size: 12px; font-family: var(--font-sans); color: #ef4444;
 }
 
-/* ── States ──────────────────────────────────────────────────── */
+/* -- States -------------------------------------------------- */
 .centred { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 72px 20px; }
 .spin { width: 28px; height: 28px; border: 3px solid var(--color-border); border-top-color: var(--color-accent); border-radius: 50%; animation: spin 0.65s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .emptyText { font-size: 14px; font-family: var(--font-sans); color: var(--color-text-tertiary); }
 .errorText  { font-size: 14px; font-family: var(--font-sans); color: #ef4444; }
 
-/* ── Table ───────────────────────────────────────────────────── */
+/* -- Table --------------------------------------------------- */
 .tableWrap {
   background: var(--color-surface); border: 1px solid var(--color-border);
   border-radius: 14px; overflow-x: auto; margin-top: 14px;
@@ -76,7 +76,7 @@
 .rowInactive td { opacity: 0.5; }
 .rowInactive:hover td { opacity: 0.7; }
 
-/* ── Carrier badge ───────────────────────────────────────────── */
+/* -- Carrier badge ------------------------------------------- */
 .carrierBadge {
   display: inline-block; padding: 3px 9px; border-radius: 999px;
   font-size: 11px; font-weight: 700; font-family: var(--font-sans);
@@ -88,12 +88,12 @@
 [data-theme="dark"] .carrierBadge[data-carrier="telecel"]    { background: rgba(59,130,246,0.18); color: #60a5fa; }
 [data-theme="dark"] .carrierBadge[data-carrier="airteltigo"] { background: rgba(239,68,68,0.15); color: #f87171; }
 
-/* ── Table cells ─────────────────────────────────────────────── */
+/* -- Table cells --------------------------------------------- */
 .dataSize   { font-size: 13px; font-weight: 700; color: var(--color-text-primary); white-space: nowrap; }
 .priceText  { font-size: 14px; font-weight: 700; font-family: 'Roboto Mono', monospace; color: var(--color-text-primary); }
 .storeCount { font-size: 13px; color: var(--color-text-secondary); text-align: center; }
 
-/* ── Inline price edit ───────────────────────────────────────── */
+/* -- Inline price edit --------------------------------------- */
 .priceEditWrap {
   display: flex; align-items: center; gap: 4px;
   background: var(--color-bg); border: 1.5px solid var(--color-accent);
@@ -108,7 +108,7 @@
 .priceInput::-webkit-outer-spin-button,
 .priceInput::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
-/* ── Status toggle ───────────────────────────────────────────── */
+/* -- Status toggle ------------------------------------------- */
 .statusToggle {
   display: inline-block; padding: 4px 11px; border-radius: 999px;
   font-size: 11px; font-weight: 700; font-family: var(--font-sans);
@@ -118,7 +118,7 @@
 .statusActive  { background: rgba(34,197,94,0.12); color: #22c55e; }
 .statusInactive { background: rgba(100,116,139,0.12); color: var(--color-text-tertiary); }
 
-/* ── Action buttons ──────────────────────────────────────────── */
+/* -- Action buttons ------------------------------------------ */
 .actionBtns { display: flex; align-items: center; gap: 6px; }
 .editBtn {
   display: flex; align-items: center; gap: 5px;
@@ -140,7 +140,7 @@
 }
 .cancelBtn:hover { border-color: #ef4444; color: #ef4444; }
 
-/* ── Mobile cards ────────────────────────────────────────────── */
+/* -- Mobile cards -------------------------------------------- */
 .cards { display: none; }
 
 @media (max-width: 768px) {
@@ -164,3 +164,4 @@
   .cardRow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .storeCountLabel { font-size: 11px; color: var(--color-text-tertiary); font-family: var(--font-sans); }
 }
+
