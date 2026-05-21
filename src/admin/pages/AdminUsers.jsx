@@ -209,6 +209,7 @@ export default function AdminUsers() {
   const [confirmUser, setConfirmUser] = useState(null)  // user pending delete confirm
   const [deleting,    setDeleting]    = useState(false)
   const [deleteError, setDeleteError] = useState('')
+  const [toast,       setToast]       = useState('')
   const debounceRef = useRef(null)
 
   useEffect(() => { search('') }, [])
@@ -237,9 +238,13 @@ export default function AdminUsers() {
     setDeleting(false)
     if (error) { setDeleteError(error.message); return }
     // Remove from local list + close panels
+    const deletedName = confirmUser.name ?? confirmUser.phone ?? 'User'
     setUsers(prev => prev.filter(u => u.id !== confirmUser.id))
     if (selected?.id === confirmUser.id) setSelected(null)
     setConfirmUser(null)
+    // Show toast
+    setToast(`${deletedName} has been deleted`)
+    setTimeout(() => setToast(''), 3500)
   }
 
   // Close dropdown when clicking outside
@@ -413,6 +418,9 @@ export default function AdminUsers() {
           </div>
         </>
       )}
+
+      {/* Toast */}
+      {toast && <div className={styles.toast}>{toast}</div>}
 
       {/* Delete confirmation modal */}
       <DeleteConfirmModal
