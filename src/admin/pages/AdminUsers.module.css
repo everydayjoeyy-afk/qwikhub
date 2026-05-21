@@ -315,6 +315,70 @@
   transition: background 0.1s;
 }
 .menuDropdown button:hover { background: var(--color-surface-hover); }
+.menuItemDelete { color: #ef4444 !important; }
+.menuItemDelete:hover { background: rgba(239,68,68,0.08) !important; }
+
+/* -- Delete confirmation modal ------------------------------- */
+.modalOverlay {
+  position: fixed; inset: 0; z-index: 300;
+  background: rgba(0,0,0,0.55);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.15s ease;
+}
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+
+.modal {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 32px 28px 28px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  animation: slideUp 0.18s cubic-bezier(0.32,0.72,0,1);
+}
+@keyframes slideUp { from { transform: translateY(12px); opacity: 0 } to { transform: none; opacity: 1 } }
+[data-theme="dark"] .modal { border-color: rgba(255,255,255,0.1); }
+
+.modalIcon {
+  font-size: 32px; margin-bottom: 12px; line-height: 1;
+  color: #f59e0b;
+}
+.modalTitle {
+  font-size: 18px; font-weight: 800; font-family: var(--font-sans);
+  color: var(--color-text-primary); margin: 0 0 10px; letter-spacing: -0.02em;
+}
+.modalBody {
+  font-size: 14px; font-family: var(--font-sans); color: var(--color-text-secondary);
+  line-height: 1.55; margin: 0 0 20px;
+}
+.modalBody strong { color: var(--color-text-primary); }
+.modalError {
+  font-size: 13px; font-family: var(--font-sans); color: #ef4444;
+  background: rgba(239,68,68,0.08); border-radius: 8px;
+  padding: 8px 12px; margin-bottom: 16px;
+}
+.modalActions {
+  display: flex; gap: 10px; justify-content: center;
+}
+.modalCancelBtn {
+  flex: 1; padding: 10px; border-radius: 9px;
+  border: 1px solid var(--color-border); background: transparent;
+  font-size: 14px; font-weight: 600; font-family: var(--font-sans);
+  color: var(--color-text-secondary); cursor: pointer; transition: all 0.15s;
+}
+.modalCancelBtn:hover:not(:disabled) { border-color: var(--color-text-secondary); color: var(--color-text-primary); }
+.modalCancelBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+.modalDeleteBtn {
+  flex: 1; padding: 10px; border-radius: 9px;
+  border: none; background: #ef4444;
+  font-size: 14px; font-weight: 700; font-family: var(--font-sans);
+  color: #fff; cursor: pointer; transition: opacity 0.15s;
+}
+.modalDeleteBtn:hover:not(:disabled) { opacity: 0.88; }
+.modalDeleteBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* -- Pagination ---------------------------------------------- */
 .pagination {

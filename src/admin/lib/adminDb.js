@@ -110,6 +110,17 @@ export async function adminGetTopups(limit = 300) {
 }
 
 /**
+ * Permanently deletes a user (auth.users + cascade).
+ * Cannot delete yourself.
+ */
+export async function adminDeleteUser(userId) {
+  return adminFetch('rpc/admin_delete_user', {
+    method: 'POST',
+    body: { p_user_id: userId },
+  })
+}
+
+/**
  * Returns storefront orders with status = 'failed' or 'pending', newest first.
  * Requires the admin_get_failed_orders RPC in Supabase.
  */

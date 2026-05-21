@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { SearchNormal1, CloseCircle, Shop } from 'iconsax-react'
-import { adminSearchUsers, adminGetUserTransactions } from '../lib/adminDb'
+import { adminSearchUsers, adminGetUserTransactions, adminDeleteUser } from '../lib/adminDb'
 import styles from './AdminUsers.module.css'
 
 // ── Helpers ──────────────────────────────────────────────────────
@@ -171,15 +171,44 @@ function UserDetail({ user, onClose }) {
   )
 }
 
+// ── Delete confirmation modal ─────────────────────────────────────
+function DeleteConfirmModal({ user, onConfirm, onCancel, deleting, error }) {
+  if (!user) return null
+  return (
+    <div className={styles.modalOverlay}>
+      <div className={styles.modal}>
+        <div className={styles.modalIcon}>⚠</div>
+        <h2 className={styles.modalTitle}>Delete user?</h2>
+        <p className={styles.modalBody}>
+          This will permanently delete <strong>{user.name ?? user.phone ?? 'this user'}</strong> and all their data.
+          This action <strong>cannot be undone.</strong>
+        </p>
+        {error && <p className={styles.modalError}>{error}</p>}
+        <div className={styles.modalActions}>
+          <button className={styles.modalCancelBtn} onClick={onCancel} disabled={deleting}>
+            Cancel
+          </button>
+          <button className={styles.modalDeleteBtn} onClick={onConfirm} disabled={deleting}>
+            {deleting ? 'Deleting…' : 'Yes, delete'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Main component ────────────────────────────────────────────────
 export default function AdminUsers() {
-  const [query,    setQuery]    = useState('')
-  const [users,    setUsers]    = useState([])
-  const [loading,  setLoading]  = useState(false)
-  const [selected, setSelected] = useState(null)
-  const [openMenu, setOpenMenu] = useState(null)
-  const [page,     setPage]     = useState(1)
-  const [pageSize, setPageSize] = useState(10)
+  const [query,       setQuery]       = useState('')
+  const [users,       setUsers]       = useState([])
+  const [loading,     setLoading]     = useState(false)
+  const [selected,    setSelected]    = useState(null)
+  const [openMenu,    setOpenMenu]    = useState(null)
+  const [page,        setPage]        = useState(1)
+  const [pageSize,    setPageSize]    = useState(10)
+  const [confirmUser, setConfirmUser] = useState(null)  // user pending delete confirm
+  const [deleting,    setDeleting]    = useState(false)
+  const [deleteError, setDeleteError] = useState('')
   const debounceRef = useRef(null)
 
   useEffect(() => { search('') }, [])
@@ -199,6 +228,18 @@ export default function AdminUsers() {
     const q = e.target.value
     setQuery(q)
     search(q)
+  }
+
+  async function handleDeleteConfirm() {
+    if (!confirmUser) return
+    setDeleting(true); setDeleteError('')
+    const { error } = await adminDeleteUser(confirmUser.id)
+    setDeleting(false)
+    if (error) { setDeleteError(error.message); return }
+    // Remove from local list + close panels
+    setUsers(prev => prev.filter(u => u.id !== confirmUser.id))
+    if (selected?.id === confirmUser.id) setSelected(null)
+    setConfirmUser(null)
   }
 
   // Close dropdown when clicking outside
@@ -312,6 +353,10 @@ export default function AdminUsers() {
                           {openMenu === u.id && (
                             <div className={styles.menuDropdown}>
                               <button onClick={() => { setSelected(u); setOpenMenu(null) }}>View</button>
+                              <button
+                                className={styles.menuItemDelete}
+                                onClick={() => { setConfirmUser(u); setOpenMenu(null) }}
+                              >Delete</button>
                             </div>
                           )}
                         </div>
@@ -368,6 +413,15 @@ export default function AdminUsers() {
           </div>
         </>
       )}
+
+      {/* Delete confirmation modal */}
+      <DeleteConfirmModal
+        user={confirmUser}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => { setConfirmUser(null); setDeleteError('') }}
+        deleting={deleting}
+        error={deleteError}
+      />
     </div>
   )
 }
