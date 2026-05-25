@@ -1,20 +1,35 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ArrowDown2, ShoppingCart } from 'iconsax-react'
 import BundleSelect, { BUNDLE_OPTIONS } from '../BundleSelect/BundleSelect'
 import { useCart } from '../../context/CartContext'
+import { getBundles } from '../../lib/db'
 import styles from './BundleList.module.css'
 import mtn     from '../../assets/mtn.jpg'
 import telecel from '../../assets/telecel.jpg'
 import tigo    from '../../assets/tigo.jpg'
 
 const NETWORKS = [
-  { id: 'mtn',     label: 'Buy MTN Bundles',       fullName: 'MTN Bundles',        logo: mtn     },
-  { id: 'telecel', label: 'Buy Telecel Bundles',    fullName: 'Telecel Bundles',    logo: telecel },
-  { id: 'tigo',    label: 'Buy AirtelTigo Bundles', fullName: 'AirtelTigo Bundles', logo: tigo    },
+  { id: 'mtn',     label: 'Buy MTN Bundles',       fullName: 'MTN Bundles',       logo: mtn,     dbCarrier: 'MTN'        },
+  { id: 'telecel', label: 'Buy Telecel Bundles',    fullName: 'Telecel Bundles',   logo: telecel, dbCarrier: 'Telecel'    },
+  { id: 'tigo',    label: 'Buy AirtelTigo Bundles', fullName: 'AirtelTigo Bundles',logo: tigo,    dbCarrier: 'AirtelTigo' },
 ]
 
 export default function BundleList() {
-  const [expanded, setExpanded] = useState(null)
+  const [expanded,  setExpanded]  = useState(null)
+  const [priceMaps, setPriceMaps] = useState(undefined)
+
+  useEffect(() => {
+    getBundles().then(({ data }) => {
+      const maps = { mtn: {}, telecel: {}, tigo: {} }
+      for (const bundle of (data ?? [])) {
+        const network = NETWORKS.find(n => n.dbCarrier === bundle.carrier)
+        if (!network) continue
+        const key = bundle.data_size?.toLowerCase() // '1GB' → '1gb'
+        if (key) maps[network.id][key] = Number(bundle.platform_price)
+      }
+      setPriceMaps(maps)
+    })
+  }, [])
 
   const toggle = (id) => setExpanded(prev => prev === id ? null : id)
 
@@ -26,21 +41,30 @@ export default function BundleList() {
           network={network}
           isOpen={expanded === network.id}
           onToggle={() => toggle(network.id)}
+          priceMap={priceMaps?.[network.id]}
         />
       ))}
     </div>
   )
 }
 
-function BundleCard({ network, isOpen, onToggle }) {
+function BundleCard({ network, isOpen, onToggle, priceMap }) {
   const [phone, setPhone]   = useState('')
   const [bundle, setBundle] = useState(null)
   const { addToCart }       = useCart()
 
   const phoneValid = /^0[235]\d{8}$/.test(phone.trim())
 
+  // While loading (undefined): show all with hardcoded prices.
+  // Once loaded: only show bundles the API actually offers at real prices.
+  const options = priceMap === undefined
+    ? BUNDLE_OPTIONS
+    : BUNDLE_OPTIONS
+        .filter(opt => priceMap[opt.value] != null)
+        .map(opt => ({ ...opt, price: priceMap[opt.value] }))
+
   const handleAdd = () => {
-    const opt = BUNDLE_OPTIONS.find(o => o.value === bundle)
+    const opt = options.find(o => o.value === bundle)
     if (!opt) return
     addToCart({
       networkId:   network.id,
@@ -89,7 +113,7 @@ function BundleCard({ network, isOpen, onToggle }) {
             )}
           </div>
 
-          <BundleSelect value={bundle} onChange={setBundle} />
+          <BundleSelect value={bundle} onChange={setBundle} options={options} />
 
           <button
             className={styles.addBtn}
