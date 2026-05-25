@@ -16,9 +16,12 @@ export default function AdminStoreOverview() {
   const [editPrice, setEditPrice] = useState('')
   const [saving,    setSaving]    = useState(false)
   const [saveError, setSaveError] = useState('')
-  const [syncing,   setSyncing]   = useState(false)
-  const [packages,  setPackages]  = useState(null)
-  const [syncError, setSyncError] = useState('')
+  const [syncing,        setSyncing]        = useState(false)
+  const [packages,       setPackages]       = useState(null)
+  const [syncError,      setSyncError]      = useState('')
+  const [syncingPrices,  setSyncingPrices]  = useState(false)
+  const [markupPct,      setMarkupPct]      = useState('4.88')
+  const [priceResult,    setPriceResult]    = useState(null)
 
   useEffect(() => { load() }, [])
 
@@ -103,6 +106,46 @@ export default function AdminStoreOverview() {
     setPackages({ grouped, samples })
   }
 
+  // Maps Cheap Bundles network_id → our carrier name in the DB
+  const NETWORK_TO_CARRIER = { 1: 'AirtelTigo', 2: 'Telecel', 3: 'MTN' }
+
+  async function handleSyncPrices() {
+    const markup = parseFloat(markupPct)
+    if (isNaN(markup) || markup < 0) { setSyncError('Enter a valid markup %'); return }
+
+    setSyncingPrices(true); setSyncError(''); setPriceResult(null)
+
+    const result = await getAvailablePackages()
+    if (!result.success) {
+      setSyncError(result.error ?? 'Failed to fetch packages')
+      setSyncingPrices(false); return
+    }
+
+    // Build lookup: 'MTN-5GB' → console_price
+    const costMap = {}
+    for (const pkg of (result.packages ?? [])) {
+      const carrier = NETWORK_TO_CARRIER[pkg.network_id]
+      if (!carrier) continue
+      costMap[`${carrier}-${pkg.volume}GB`] = pkg.console_price
+    }
+
+    const factor = 1 + markup / 100
+    let updated = 0; let skipped = 0
+
+    for (const bundle of bundles) {
+      const key = `${bundle.carrier}-${bundle.data_size}`
+      const cost = costMap[key]
+      if (cost == null) { skipped++; continue }
+      const newPrice = Math.round(cost * factor * 100) / 100
+      const { error: err } = await adminUpdateBundle(bundle.id, { platform_price: newPrice })
+      if (!err) updated++
+    }
+
+    await load()
+    setSyncingPrices(false)
+    setPriceResult({ updated, skipped })
+  }
+
   const activeBundles   = bundles.filter(b => b.is_active).length
   const inactiveBundles = bundles.length - activeBundles
 
@@ -115,9 +158,24 @@ export default function AdminStoreOverview() {
           <h1 className={styles.pageTitle}>Store Overview</h1>
           <p className={styles.pageSubtitle}>Manage the master bundle catalogue and monitor storefront activity</p>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div className={styles.syncPricesWrap}>
+            <span className={styles.syncPricesLabel}>Markup</span>
+            <input
+              type="number"
+              className={styles.markupInput}
+              value={markupPct}
+              onChange={e => setMarkupPct(e.target.value)}
+              min="0"
+              step="0.1"
+            />
+            <span className={styles.syncPricesLabel}>%</span>
+            <button className={styles.syncPricesBtn} onClick={handleSyncPrices} disabled={syncingPrices}>
+              {syncingPrices ? 'Updating…' : 'Sync Prices'}
+            </button>
+          </div>
           <button className={styles.refreshBtn} onClick={handleSyncPackages} disabled={syncing}>
-            {syncing ? 'Fetching…' : 'Sync Packages'}
+            {syncing ? 'Fetching…' : 'Check Networks'}
           </button>
           <button className={styles.refreshBtn} onClick={load} disabled={loading}>
             {loading ? 'Loading…' : 'Refresh'}
@@ -128,6 +186,12 @@ export default function AdminStoreOverview() {
       {/* Sync Packages panel */}
       {syncError && (
         <div className={styles.saveErrorBanner} style={{ marginBottom: 16 }}>{syncError}</div>
+      )}
+      {priceResult && (
+        <div className={styles.priceResultBanner}>
+          ✓ Updated {priceResult.updated} bundle prices from API
+          {priceResult.skipped > 0 && ` — ${priceResult.skipped} skipped (not available on API)`}
+        </div>
       )}
       {packages && (
         <div className={styles.packagesPanel}>
