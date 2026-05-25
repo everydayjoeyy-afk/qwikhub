@@ -11,10 +11,10 @@ const SERVICE_ROLE_KEY   = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 // to see the real IDs returned by /all-packages.
 // -----------------------------------------------------------------
 const NETWORK_IDS: Record<string, number> = {
-  mtn:        1,  // TODO: replace with real ID from /all-packages
-  telecel:    2,  // TODO: replace with real ID
-  airteltigo: 3,  // TODO: replace with real ID
-  tigo:       3,  // alias used by the Bundles page (same as airteltigo)
+  mtn:        3,  // MTN Ghana
+  telecel:    2,  // Telecel Ghana
+  airteltigo: 1,  // AirtelTigo (AT - iShare)
+  tigo:       1,  // alias used by the Bundles page (same as airteltigo)
 }
 
 function parseGb(bundleValue: string): number {
