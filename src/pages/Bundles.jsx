@@ -122,7 +122,7 @@ export default function Bundles() {
 
       {/* Show only the selected network's card */}
       <div className={styles.list}>
-        <BundleCard key={activeNetwork.id} network={activeNetwork} priceMap={priceMaps[activeNetwork.id]} />
+        <BundleCard key={activeNetwork.id} network={activeNetwork} priceMap={priceMaps?.[activeNetwork.id]} />
       </div>
     </div>
   )

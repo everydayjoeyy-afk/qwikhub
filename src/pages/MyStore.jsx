@@ -454,28 +454,38 @@ export default function MyStore() {
 
                 {isOpen && (
                   <div className={styles.networkPrices}>
-                    {BUNDLE_OPTIONS.map((opt, i) => (
-                      <div key={opt.value}>
-                        <div className={styles.priceRow}>
-                          <div className={styles.priceInfo}>
-                            <span className={styles.priceLabel}>{opt.label}</span>
-                            <span className={styles.priceBase}>Base ₵{opt.price.toFixed(2)}</span>
+                    {BUNDLE_OPTIONS
+                      .filter(opt => {
+                        const dbCarrier = CARRIER_MAP[network.id]
+                        return bundleMap[dbCarrier]?.[toDataSize(opt.value)] != null
+                      })
+                      .map((opt, i, arr) => {
+                        const dbCarrier  = CARRIER_MAP[network.id]
+                        const basePrice  = bundleMap[dbCarrier]?.[toDataSize(opt.value)]?.platform_price ?? opt.price
+                        return (
+                          <div key={opt.value}>
+                            <div className={styles.priceRow}>
+                              <div className={styles.priceInfo}>
+                                <span className={styles.priceLabel}>{opt.label}</span>
+                                <span className={styles.priceBase}>Base ₵{Number(basePrice).toFixed(2)}</span>
+                              </div>
+                              <div className={styles.priceInputWrap}>
+                                <span className={styles.pricePrefix}>₵</span>
+                                <input
+                                  type="number"
+                                  className={styles.priceInput}
+                                  value={prices[network.id][opt.value] ?? Number(basePrice).toFixed(2)}
+                                  min={basePrice}
+                                  step="0.50"
+                                  onChange={e => handlePriceChange(network.id, opt.value, e.target.value)}
+                                />
+                              </div>
+                            </div>
+                            {i < arr.length - 1 && <div className={styles.divider} />}
                           </div>
-                          <div className={styles.priceInputWrap}>
-                            <span className={styles.pricePrefix}>₵</span>
-                            <input
-                              type="number"
-                              className={styles.priceInput}
-                              value={prices[network.id][opt.value]}
-                              min={opt.price}
-                              step="0.50"
-                              onChange={e => handlePriceChange(network.id, opt.value, e.target.value)}
-                            />
-                          </div>
-                        </div>
-                        {i < BUNDLE_OPTIONS.length - 1 && <div className={styles.divider} />}
-                      </div>
-                    ))}
+                        )
+                      })
+                    }
                     {isNetworkDirty(network.id) && (
                       <button
                         className={styles.savePricesBtn}
