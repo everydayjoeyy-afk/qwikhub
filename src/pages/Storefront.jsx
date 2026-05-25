@@ -132,11 +132,12 @@ export default function Storefront() {
         getBundles(),
       ])
 
-      const p   = { mtn: { ...makeDefaultNetworkPrices() }, telecel: { ...makeDefaultNetworkPrices() }, airteltigo: { ...makeDefaultNetworkPrices() } }
+      const p   = { mtn: {}, telecel: {}, airteltigo: {} }
       const bId = { mtn: {}, telecel: {}, airteltigo: {} }
       const pp  = { mtn: {}, telecel: {}, airteltigo: {} }
 
-      // First, seed bundleId + platformPrice from master bundles (covers all 45 bundles)
+      // Seed price, bundleId, and platformPrice from active master bundles only.
+      // Only bundles active in DB (available via API) get an entry — others are hidden.
       if (masterBundles) {
         for (const mb of masterBundles) {
           const networkId   = CARRIER_TO_NETWORK[mb.carrier]
@@ -144,6 +145,7 @@ export default function Storefront() {
           if (networkId && bundleValue) {
             bId[networkId][bundleValue] = mb.id
             pp[networkId][bundleValue]  = mb.platform_price ?? 0
+            p[networkId][bundleValue]   = Number(mb.platform_price ?? 0).toFixed(2)
           }
         }
       }
@@ -177,12 +179,12 @@ export default function Storefront() {
 
   const theme         = THEMES.find(t => t.id === store.theme) ?? THEMES[0]
   const network       = NETWORKS.find(n => n.id === activeNetwork)
-  const networkPrices = prices[activeNetwork] ?? makeDefaultNetworkPrices()
+  const networkPrices = prices[activeNetwork] ?? {}
 
-  const bundleOptions = BUNDLE_OPTIONS.map(o => ({
+  const bundleOptions = BUNDLE_OPTIONS.filter(o => networkPrices[o.value] != null).map(o => ({
     value: o.value,
     label: o.label,
-    price: networkPrices[o.value] ?? (o.price * 1.15).toFixed(2),
+    price: networkPrices[o.value],
   }))
 
   const canAdd = isValidGhanaPhone(phone) && bundle !== ''

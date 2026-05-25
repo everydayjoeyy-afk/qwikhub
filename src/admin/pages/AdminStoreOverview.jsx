@@ -135,9 +135,14 @@ export default function AdminStoreOverview() {
     for (const bundle of bundles) {
       const key = `${bundle.carrier}-${bundle.data_size}`
       const cost = costMap[key]
-      if (cost == null) { skipped++; continue }
+      if (cost == null) {
+        // Not offered by API — deactivate so users don't see it
+        if (bundle.is_active) await adminUpdateBundle(bundle.id, { is_active: false })
+        skipped++
+        continue
+      }
       const newPrice = Math.round(cost * factor * 100) / 100
-      const { error: err } = await adminUpdateBundle(bundle.id, { platform_price: newPrice })
+      const { error: err } = await adminUpdateBundle(bundle.id, { platform_price: newPrice, is_active: true })
       if (!err) updated++
     }
 

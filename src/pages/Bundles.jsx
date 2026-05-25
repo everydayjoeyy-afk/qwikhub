@@ -20,11 +20,13 @@ function BundleCard({ network, priceMap }) {
   const [bundle, setBundle] = useState(null)
   const { addToCart } = useCart()
 
-  // Override BUNDLE_OPTIONS prices with real DB prices where available
-  const options = BUNDLE_OPTIONS.map(opt => ({
-    ...opt,
-    price: priceMap?.[opt.value] ?? opt.price,
-  }))
+  // While prices are still loading (undefined), show all with hardcoded prices.
+  // Once loaded, only show bundles the API actually offers (priceMap has an entry).
+  const options = priceMap === undefined
+    ? BUNDLE_OPTIONS
+    : BUNDLE_OPTIONS
+        .filter(opt => priceMap[opt.value] != null)
+        .map(opt => ({ ...opt, price: priceMap[opt.value] }))
 
   return (
     <div className={styles.card}>
@@ -76,20 +78,15 @@ function BundleCard({ network, priceMap }) {
 export default function Bundles() {
   const navigate = useNavigate()
   const { sub } = useParams()
-  const [priceMaps, setPriceMaps] = useState({})
+  const [priceMaps, setPriceMaps] = useState(undefined)
 
   useEffect(() => {
     getBundles().then(({ data }) => {
-      if (!data?.length) return
-      // Build { networkId: { '1gb': price, '2gb': price, ... } }
-      const maps = {}
-      for (const network of NETWORKS) {
-        maps[network.id] = {}
-      }
-      for (const bundle of data) {
+      const maps = { mtn: {}, telecel: {}, tigo: {} }
+      for (const bundle of (data ?? [])) {
         const network = NETWORKS.find(n => n.dbCarrier === bundle.carrier)
         if (!network) continue
-        const key = bundle.data_size?.toLowerCase() // '1GB' → '1gb'
+        const key = bundle.data_size?.toLowerCase()
         if (key) maps[network.id][key] = Number(bundle.platform_price)
       }
       setPriceMaps(maps)
