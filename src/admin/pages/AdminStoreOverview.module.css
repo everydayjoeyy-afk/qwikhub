@@ -172,6 +172,18 @@
 .packageGroupHeader strong { font-size: 15px; font-weight: 800; color: var(--color-accent); }
 .packageGroupCount { font-size: 11px; color: var(--color-text-tertiary); margin-left: auto; }
 .packageGroupSample { display: flex; gap: 6px; flex-wrap: wrap; }
+.packageNetworkName {
+  font-size: 12px; font-weight: 700; font-family: var(--font-sans);
+  color: var(--color-text-primary); background: var(--color-accent-subtle);
+  padding: 2px 8px; border-radius: 999px;
+}
+.packageRawFields {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;
+}
+.packageRaw {
+  font-size: 11px; font-family: 'Roboto Mono', monospace; color: var(--color-text-tertiary);
+}
+.packageRaw em { font-style: normal; color: var(--color-text-secondary); }
 .packageChip {
   font-size: 11px; font-family: var(--font-sans); font-weight: 600;
   padding: 3px 9px; border-radius: 999px;

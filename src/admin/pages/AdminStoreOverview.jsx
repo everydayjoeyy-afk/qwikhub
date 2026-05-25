@@ -95,7 +95,12 @@ export default function AdminStoreOverview() {
       if (!grouped[nid]) grouped[nid] = []
       grouped[nid].push(pkg)
     }
-    setPackages(grouped)
+    // Capture one sample package per group to show all raw fields
+    const samples = {}
+    for (const pkg of (result.packages ?? [])) {
+      if (!samples[pkg.network_id]) samples[pkg.network_id] = pkg
+    }
+    setPackages({ grouped, samples })
   }
 
   const activeBundles   = bundles.filter(b => b.is_active).length
@@ -138,22 +143,35 @@ export default function AdminStoreOverview() {
             Update <code>NETWORK_IDS</code> in <code>supabase/functions/buy-bundle/index.ts</code> with these values, then run <code>npx supabase@latest functions deploy buy-bundle</code>.
           </p>
           <div className={styles.packagesPanelGrid}>
-            {Object.entries(packages).map(([networkId, pkgs]) => (
-              <div key={networkId} className={styles.packageGroup}>
-                <div className={styles.packageGroupHeader}>
-                  Network ID: <strong>{networkId}</strong>
-                  <span className={styles.packageGroupCount}>{pkgs.length} packages</span>
+            {Object.entries(packages.grouped).map(([networkId, pkgs]) => {
+              const sample = packages.samples[networkId] ?? {}
+              const networkName = sample.network_name ?? sample.carrier ?? sample.name ?? sample.provider ?? null
+              return (
+                <div key={networkId} className={styles.packageGroup}>
+                  <div className={styles.packageGroupHeader}>
+                    Network ID: <strong>{networkId}</strong>
+                    {networkName && <span className={styles.packageNetworkName}>{networkName}</span>}
+                    <span className={styles.packageGroupCount}>{pkgs.length} packages</span>
+                  </div>
+                  <div className={styles.packageGroupSample}>
+                    {pkgs.slice(0, 3).map((p, i) => (
+                      <span key={i} className={styles.packageChip}>
+                        {p.volume}GB — ₵{p.price}
+                      </span>
+                    ))}
+                    {pkgs.length > 3 && <span className={styles.packageChip}>+{pkgs.length - 3} more</span>}
+                  </div>
+                  <div className={styles.packageRawFields}>
+                    {Object.entries(sample)
+                      .filter(([k]) => !['volume','price','network_id'].includes(k))
+                      .map(([k, v]) => (
+                        <span key={k} className={styles.packageRaw}><em>{k}:</em> {String(v)}</span>
+                      ))
+                    }
+                  </div>
                 </div>
-                <div className={styles.packageGroupSample}>
-                  {pkgs.slice(0, 3).map((p, i) => (
-                    <span key={i} className={styles.packageChip}>
-                      {p.volume}GB — ₵{p.price}
-                    </span>
-                  ))}
-                  {pkgs.length > 3 && <span className={styles.packageChip}>+{pkgs.length - 3} more</span>}
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}
