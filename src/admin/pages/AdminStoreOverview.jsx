@@ -142,7 +142,7 @@ export default function AdminStoreOverview() {
         continue
       }
       const newPrice = Math.round(cost * factor * 100) / 100
-      const { error: err } = await adminUpdateBundle(bundle.id, { platform_price: newPrice, is_active: true })
+      const { error: err } = await adminUpdateBundle(bundle.id, { platform_price: newPrice, is_active: true, cost_price: cost })
       if (!err) updated++
     }
 

@@ -139,12 +139,13 @@ export async function adminGetStoreOverview() {
 }
 
 /**
- * Update a bundle's platform price and/or active status.
+ * Update a bundle's platform price, cost price, and/or active status.
  * Pass only the fields you want to change.
  */
-export async function adminUpdateBundle(bundleId, { platform_price, is_active } = {}) {
+export async function adminUpdateBundle(bundleId, { platform_price, is_active, cost_price } = {}) {
   const body = { p_bundle_id: bundleId }
   if (platform_price !== undefined) body.p_platform_price = platform_price
   if (is_active      !== undefined) body.p_is_active      = is_active
+  if (cost_price     !== undefined) body.p_cost_price     = cost_price
   return adminFetch('rpc/admin_update_bundle', { method: 'POST', body })
 }

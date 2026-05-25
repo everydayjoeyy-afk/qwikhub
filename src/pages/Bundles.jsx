@@ -15,7 +15,7 @@ const NETWORKS = [
   { id: 'tigo',    name: 'AirtelTigo', fullName: 'AirtelTigo Bundles', logo: tigo,    dbCarrier: 'AirtelTigo' },
 ]
 
-function BundleCard({ network, priceMap }) {
+function BundleCard({ network, priceMap, costMap = {} }) {
   const [phone, setPhone]   = useState('')
   const [bundle, setBundle] = useState(null)
   const { addToCart } = useCart()
@@ -64,6 +64,7 @@ function BundleCard({ network, priceMap }) {
             bundleValue: bundle,
             bundleLabel: opt.label,
             price:       opt.price,
+            costPrice:   costMap[bundle] ?? 0,
             phone,
           })
         }}
@@ -79,17 +80,23 @@ export default function Bundles() {
   const navigate = useNavigate()
   const { sub } = useParams()
   const [priceMaps, setPriceMaps] = useState(undefined)
+  const [costMaps,  setCostMaps]  = useState({})
 
   useEffect(() => {
     getBundles().then(({ data }) => {
-      const maps = { mtn: {}, telecel: {}, tigo: {} }
+      const maps  = { mtn: {}, telecel: {}, tigo: {} }
+      const costs = { mtn: {}, telecel: {}, tigo: {} }
       for (const bundle of (data ?? [])) {
         const network = NETWORKS.find(n => n.dbCarrier === bundle.carrier)
         if (!network) continue
         const key = bundle.data_size?.toLowerCase()
-        if (key) maps[network.id][key] = Number(bundle.platform_price)
+        if (key) {
+          maps[network.id][key]  = Number(bundle.platform_price)
+          costs[network.id][key] = Number(bundle.cost_price ?? 0)
+        }
       }
       setPriceMaps(maps)
+      setCostMaps(costs)
     })
   }, [])
 
@@ -122,7 +129,7 @@ export default function Bundles() {
 
       {/* Show only the selected network's card */}
       <div className={styles.list}>
-        <BundleCard key={activeNetwork.id} network={activeNetwork} priceMap={priceMaps?.[activeNetwork.id]} />
+        <BundleCard key={activeNetwork.id} network={activeNetwork} priceMap={priceMaps?.[activeNetwork.id]} costMap={costMaps[activeNetwork.id] ?? {}} />
       </div>
     </div>
   )

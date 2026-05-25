@@ -262,11 +262,16 @@ export async function creditEarnings(userId, amount, description, reference = nu
   return { data, error }
 }
 
-// recordReferralCommission: credits 1% of purchase to the buyer's referrer (if any)
-export async function recordReferralCommission(buyerUserId, amountPaid) {
+// recordReferralCommission: credits 20% of QwikHub's profit to the buyer's referrer (if any).
+// commissionAmount is pre-calculated by the caller as 0.20 × (salePrice − costPrice).
+export async function recordReferralCommission(buyerUserId, amountPaid, commissionAmount) {
   const { data, error } = await restFetch('rpc/record_referral_commission', {
     method: 'POST',
-    body: { p_buyer_user_id: buyerUserId, p_amount_paid: amountPaid },
+    body: {
+      p_buyer_user_id:     buyerUserId,
+      p_amount_paid:       amountPaid,
+      p_commission_amount: commissionAmount,
+    },
   })
   return { data, error }
 }

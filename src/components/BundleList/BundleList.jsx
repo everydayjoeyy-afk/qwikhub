@@ -17,17 +17,23 @@ const NETWORKS = [
 export default function BundleList() {
   const [expanded,  setExpanded]  = useState(null)
   const [priceMaps, setPriceMaps] = useState(undefined)
+  const [costMaps,  setCostMaps]  = useState({})
 
   useEffect(() => {
     getBundles().then(({ data }) => {
-      const maps = { mtn: {}, telecel: {}, tigo: {} }
+      const maps  = { mtn: {}, telecel: {}, tigo: {} }
+      const costs = { mtn: {}, telecel: {}, tigo: {} }
       for (const bundle of (data ?? [])) {
         const network = NETWORKS.find(n => n.dbCarrier === bundle.carrier)
         if (!network) continue
         const key = bundle.data_size?.toLowerCase() // '1GB' → '1gb'
-        if (key) maps[network.id][key] = Number(bundle.platform_price)
+        if (key) {
+          maps[network.id][key]  = Number(bundle.platform_price)
+          costs[network.id][key] = Number(bundle.cost_price ?? 0)
+        }
       }
       setPriceMaps(maps)
+      setCostMaps(costs)
     })
   }, [])
 
@@ -42,13 +48,14 @@ export default function BundleList() {
           isOpen={expanded === network.id}
           onToggle={() => toggle(network.id)}
           priceMap={priceMaps?.[network.id]}
+          costMap={costMaps[network.id] ?? {}}
         />
       ))}
     </div>
   )
 }
 
-function BundleCard({ network, isOpen, onToggle, priceMap }) {
+function BundleCard({ network, isOpen, onToggle, priceMap, costMap = {} }) {
   const [phone, setPhone]   = useState('')
   const [bundle, setBundle] = useState(null)
   const { addToCart }       = useCart()
@@ -73,6 +80,7 @@ function BundleCard({ network, isOpen, onToggle, priceMap }) {
       bundleValue: bundle,
       bundleLabel: opt.label,
       price:       opt.price,
+      costPrice:   costMap[bundle] ?? 0,
       phone,
     })
   }

@@ -6,8 +6,6 @@ import { useAuth } from '../context/AuthContext'
 import { getReferrals, getMyStore, transferReferralEarnings } from '../lib/db'
 import styles from './Refer.module.css'
 
-const COMMISSION_RATE = 0.01
-
 const STEPS = [
   {
     n: 1,
@@ -21,8 +19,8 @@ const STEPS = [
   },
   {
     n: 3,
-    title: 'Earn 1% on every purchase',
-    body: 'Paystack takes 2% on every transaction. Refer & Earn is our way of giving some of that back — you earn 1% of every purchase your referrals make, straight to your earnings.',
+    title: 'Earn 20% of every sale's profit',
+    body: 'Paystack takes 2% on every transaction — Refer & Earn is our way of giving some of that back. You earn 20% of QwikHub\'s profit on every bundle purchase your referrals make, straight to your earnings.',
   },
 ]
 
