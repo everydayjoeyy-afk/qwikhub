@@ -20,11 +20,12 @@ export const BUNDLE_OPTIONS = [
   { value: '100gb', label: '100GB', price: 345.00 },
 ]
 
-export default function BundleSelect({ value, onChange }) {
+export default function BundleSelect({ value, onChange, options: optionsProp }) {
+  const options = optionsProp ?? BUNDLE_OPTIONS
   const [open, setOpen] = useState(false)
   const wrapRef = useRef(null)
 
-  const selected = BUNDLE_OPTIONS.find(o => o.value === value) ?? null
+  const selected = options.find(o => o.value === value) ?? null
 
   // Close on outside click or Escape
   useEffect(() => {
@@ -69,7 +70,7 @@ export default function BundleSelect({ value, onChange }) {
       {/* Dropdown list */}
       {open && (
         <ul className={styles.dropdown} role="listbox">
-          {BUNDLE_OPTIONS.map((opt) => (
+          {options.map((opt) => (
             <li
               key={opt.value}
               role="option"

@@ -1,23 +1,30 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ShoppingCart } from 'iconsax-react'
 import styles from './Bundles.module.css'
 import BundleSelect, { BUNDLE_OPTIONS } from '../components/BundleSelect/BundleSelect'
 import { useCart } from '../context/CartContext'
+import { getBundles } from '../lib/db'
 import mtn from '../assets/mtn.jpg'
 import telecel from '../assets/telecel.jpg'
 import tigo from '../assets/tigo.jpg'
 
 const NETWORKS = [
-  { id: 'mtn',     name: 'MTN',        fullName: 'MTN Bundles',       logo: mtn     },
-  { id: 'telecel', name: 'Telecel',    fullName: 'Telecel Bundles',    logo: telecel },
-  { id: 'tigo',    name: 'AirtelTigo', fullName: 'AirtelTigo Bundles', logo: tigo    },
+  { id: 'mtn',     name: 'MTN',        fullName: 'MTN Bundles',       logo: mtn,     dbCarrier: 'MTN'        },
+  { id: 'telecel', name: 'Telecel',    fullName: 'Telecel Bundles',    logo: telecel, dbCarrier: 'Telecel'    },
+  { id: 'tigo',    name: 'AirtelTigo', fullName: 'AirtelTigo Bundles', logo: tigo,    dbCarrier: 'AirtelTigo' },
 ]
 
-function BundleCard({ network }) {
+function BundleCard({ network, priceMap }) {
   const [phone, setPhone]   = useState('')
   const [bundle, setBundle] = useState(null)
   const { addToCart } = useCart()
+
+  // Override BUNDLE_OPTIONS prices with real DB prices where available
+  const options = BUNDLE_OPTIONS.map(opt => ({
+    ...opt,
+    price: priceMap?.[opt.value] ?? opt.price,
+  }))
 
   return (
     <div className={styles.card}>
@@ -41,13 +48,13 @@ function BundleCard({ network }) {
         />
       </div>
 
-      <BundleSelect value={bundle} onChange={setBundle} />
+      <BundleSelect value={bundle} onChange={setBundle} options={options} />
 
       <button
         className={styles.addBtn}
         disabled={!phone.trim() || !bundle}
         onClick={() => {
-          const opt = BUNDLE_OPTIONS.find(o => o.value === bundle)
+          const opt = options.find(o => o.value === bundle)
           addToCart({
             networkId:   network.id,
             networkName: network.fullName,
@@ -69,8 +76,26 @@ function BundleCard({ network }) {
 export default function Bundles() {
   const navigate = useNavigate()
   const { sub } = useParams()
+  const [priceMaps, setPriceMaps] = useState({})
 
-  // Determine active network from URL param; default to first
+  useEffect(() => {
+    getBundles().then(({ data }) => {
+      if (!data?.length) return
+      // Build { networkId: { '1gb': price, '2gb': price, ... } }
+      const maps = {}
+      for (const network of NETWORKS) {
+        maps[network.id] = {}
+      }
+      for (const bundle of data) {
+        const network = NETWORKS.find(n => n.dbCarrier === bundle.carrier)
+        if (!network) continue
+        const key = bundle.data_size?.toLowerCase() // '1GB' → '1gb'
+        if (key) maps[network.id][key] = Number(bundle.platform_price)
+      }
+      setPriceMaps(maps)
+    })
+  }, [])
+
   const activeNetwork = NETWORKS.find(n => n.id === sub) ?? NETWORKS[0]
 
   return (
@@ -100,7 +125,7 @@ export default function Bundles() {
 
       {/* Show only the selected network's card */}
       <div className={styles.list}>
-        <BundleCard key={activeNetwork.id} network={activeNetwork} />
+        <BundleCard key={activeNetwork.id} network={activeNetwork} priceMap={priceMaps[activeNetwork.id]} />
       </div>
     </div>
   )
