@@ -9,6 +9,7 @@ import { ShoppingCart, Trash, ArrowDown2, TickCircle } from 'iconsax-react'
 import { THEMES } from '../components/CreateStoreModal/CreateStoreModal'
 import { BUNDLE_OPTIONS } from '../components/BundleSelect/BundleSelect'
 import { getStoreBySlug, getStoreBundles, getBundles, createOrder, creditEarnings } from '../lib/db'
+import { deliverStorefrontBundle } from '../lib/cheapBundles'
 import { openPaystackPopup } from '../lib/paystack'
 import mtnLogo     from '../assets/mtn.jpg'
 import telecelLogo from '../assets/telecel.jpg'
@@ -254,6 +255,18 @@ export default function Storefront() {
         })
         if (orderErr) {
           console.error('[Storefront] createOrder failed:', orderErr.message)
+        }
+
+        // Deliver bundle via Edge Function — fire-and-forget after order is recorded.
+        // On failure the order row is marked pending_verification; admin reviews before refunding.
+        if (!orderErr && item.bundleId) {
+          deliverStorefrontBundle({
+            paystackRef: reference,
+            buyerPhone:  item.phone,
+            bundleId:    item.bundleId,
+            networkId:   item.networkId,
+            bundleValue: item.bundleValue,
+          }).catch(err => console.error('[Storefront] delivery error:', err))
         }
       }
     }

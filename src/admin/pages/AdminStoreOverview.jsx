@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Shop, Edit2 } from 'iconsax-react'
+import { Shop, Edit2, CloseCircle } from 'iconsax-react'
 import { adminGetBundles, adminGetStoreOverview, adminUpdateBundle } from '../lib/adminDb'
+import { getAvailablePackages } from '../../lib/cheapBundles'
 import styles from './AdminStoreOverview.module.css'
 
 const CARRIERS = ['All', 'MTN', 'Telecel', 'AirtelTigo']
@@ -15,6 +16,9 @@ export default function AdminStoreOverview() {
   const [editPrice, setEditPrice] = useState('')
   const [saving,    setSaving]    = useState(false)
   const [saveError, setSaveError] = useState('')
+  const [syncing,   setSyncing]   = useState(false)
+  const [packages,  setPackages]  = useState(null)
+  const [syncError, setSyncError] = useState('')
 
   useEffect(() => { load() }, [])
 
@@ -79,6 +83,21 @@ export default function AdminStoreOverview() {
     if (e.key === 'Escape') cancelEdit()
   }
 
+  async function handleSyncPackages() {
+    setSyncing(true); setSyncError(''); setPackages(null)
+    const result = await getAvailablePackages()
+    setSyncing(false)
+    if (!result.success) { setSyncError(result.error ?? 'Failed to fetch packages'); return }
+    // Group by network_id so we can see unique IDs easily
+    const grouped = {}
+    for (const pkg of (result.packages ?? [])) {
+      const nid = pkg.network_id
+      if (!grouped[nid]) grouped[nid] = []
+      grouped[nid].push(pkg)
+    }
+    setPackages(grouped)
+  }
+
   const activeBundles   = bundles.filter(b => b.is_active).length
   const inactiveBundles = bundles.length - activeBundles
 
@@ -91,10 +110,53 @@ export default function AdminStoreOverview() {
           <h1 className={styles.pageTitle}>Store Overview</h1>
           <p className={styles.pageSubtitle}>Manage the master bundle catalogue and monitor storefront activity</p>
         </div>
-        <button className={styles.refreshBtn} onClick={load} disabled={loading}>
-          {loading ? 'Loading…' : 'Refresh'}
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className={styles.refreshBtn} onClick={handleSyncPackages} disabled={syncing}>
+            {syncing ? 'Fetching…' : 'Sync Packages'}
+          </button>
+          <button className={styles.refreshBtn} onClick={load} disabled={loading}>
+            {loading ? 'Loading…' : 'Refresh'}
+          </button>
+        </div>
       </div>
+
+      {/* Sync Packages panel */}
+      {syncError && (
+        <div className={styles.saveErrorBanner} style={{ marginBottom: 16 }}>{syncError}</div>
+      )}
+      {packages && (
+        <div className={styles.packagesPanel}>
+          <div className={styles.packagesPanelHeader}>
+            <span className={styles.packagesPanelTitle}>
+              Cheap Bundles API — Network IDs
+            </span>
+            <button className={styles.packagesPanelClose} onClick={() => setPackages(null)}>
+              <CloseCircle size={18} color="currentColor" />
+            </button>
+          </div>
+          <p className={styles.packagesPanelHint}>
+            Update <code>NETWORK_IDS</code> in <code>supabase/functions/buy-bundle/index.ts</code> with these values, then run <code>npx supabase@latest functions deploy buy-bundle</code>.
+          </p>
+          <div className={styles.packagesPanelGrid}>
+            {Object.entries(packages).map(([networkId, pkgs]) => (
+              <div key={networkId} className={styles.packageGroup}>
+                <div className={styles.packageGroupHeader}>
+                  Network ID: <strong>{networkId}</strong>
+                  <span className={styles.packageGroupCount}>{pkgs.length} packages</span>
+                </div>
+                <div className={styles.packageGroupSample}>
+                  {pkgs.slice(0, 3).map((p, i) => (
+                    <span key={i} className={styles.packageChip}>
+                      {p.volume}GB — ₵{p.price}
+                    </span>
+                  ))}
+                  {pkgs.length > 3 && <span className={styles.packageChip}>+{pkgs.length - 3} more</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <div className={styles.statsRow}>

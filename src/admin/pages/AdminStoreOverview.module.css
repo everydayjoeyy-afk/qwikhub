@@ -140,6 +140,44 @@
 }
 .cancelBtn:hover { border-color: #ef4444; color: #ef4444; }
 
+/* -- Sync Packages panel ------------------------------------- */
+.packagesPanel {
+  background: var(--color-surface); border: 1px solid var(--color-accent);
+  border-radius: 14px; padding: 16px 20px; margin-bottom: 24px;
+}
+[data-theme="dark"] .packagesPanel { border-color: rgba(255,255,255,0.15); }
+.packagesPanelHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.packagesPanelTitle { font-size: 14px; font-weight: 700; font-family: var(--font-sans); color: var(--color-text-primary); }
+.packagesPanelClose { background: none; border: none; cursor: pointer; color: var(--color-text-tertiary); display: flex; padding: 0; }
+.packagesPanelClose:hover { color: var(--color-text-primary); }
+.packagesPanelHint {
+  font-size: 12px; font-family: var(--font-sans); color: var(--color-text-secondary);
+  margin-bottom: 14px; line-height: 1.6;
+}
+.packagesPanelHint code {
+  font-family: 'Roboto Mono', monospace; font-size: 11px;
+  background: var(--color-surface-hover); padding: 1px 5px; border-radius: 4px;
+}
+.packagesPanelGrid { display: flex; flex-direction: column; gap: 10px; }
+.packageGroup {
+  background: var(--color-bg); border: 1px solid var(--color-border);
+  border-radius: 10px; padding: 12px 14px;
+}
+[data-theme="dark"] .packageGroup { border-color: rgba(255,255,255,0.07); }
+.packageGroupHeader {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13px; font-family: var(--font-sans); color: var(--color-text-primary);
+  margin-bottom: 8px;
+}
+.packageGroupHeader strong { font-size: 15px; font-weight: 800; color: var(--color-accent); }
+.packageGroupCount { font-size: 11px; color: var(--color-text-tertiary); margin-left: auto; }
+.packageGroupSample { display: flex; gap: 6px; flex-wrap: wrap; }
+.packageChip {
+  font-size: 11px; font-family: var(--font-sans); font-weight: 600;
+  padding: 3px 9px; border-radius: 999px;
+  background: var(--color-surface-hover); color: var(--color-text-secondary);
+}
+
 /* -- Mobile cards -------------------------------------------- */
 .cards { display: none; }
 

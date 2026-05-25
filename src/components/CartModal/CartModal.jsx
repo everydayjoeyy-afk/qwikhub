@@ -3,6 +3,7 @@ import { CloseCircle, Trash, TickCircle } from 'iconsax-react'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 import { recordReferralCommission } from '../../lib/db'
+import { deliverWalletBundle } from '../../lib/cheapBundles'
 import styles from './CartModal.module.css'
 import { useFocusTrap } from '../../hooks/useFocusTrap'
 
@@ -70,22 +71,24 @@ export default function CartModal({ open, onClose, onPaymentSuccess }) {
         throw new Error(msg || `Debit failed (${debitRes.status})`)
       }
 
-      // 2. Record one transaction per cart item
+      // 2. Record one transaction per cart item (delivery_status tracks bundle send)
       const txRes = await fetch(`${SUPABASE_URL}/rest/v1/transactions`, {
         method: 'POST',
         headers,
         body: JSON.stringify(
           items.map(item => ({
-            user_id:     user.id,
-            type:        'debit',
-            amount:      item.price,
-            description: item.type === 'subscription'
+            user_id:         user.id,
+            type:            'debit',
+            amount:          item.price,
+            description:     item.type === 'subscription'
               ? `[Sub] ${item.bundleLabel} → ${item.phone}`
               : `${item.bundleLabel} → ${item.phone} (${item.networkName})`,
+            delivery_status: item.type === 'subscription' ? 'not_applicable' : 'pending',
           }))
         ),
       })
       if (!txRes.ok) throw new Error(`Transaction record failed (${txRes.status})`)
+      const txData = await txRes.json().catch(() => [])
 
       // 3. Credit 1% commission on bundle purchases only (not subscriptions)
       const bundlesTotal = items
@@ -100,6 +103,20 @@ export default function CartModal({ open, onClose, onPaymentSuccess }) {
       window.dispatchEvent(new Event('qwikhub:payment'))
       setStatus('success')
       setTimeout(() => onClose(), 2000)
+
+      // 5. Deliver bundles via Edge Function (after showing success — fire-and-forget)
+      //    On API failure we mark pending_verification; admin verifies before any refund.
+      items.forEach((item, i) => {
+        if (item.type === 'subscription') return
+        const txId = txData[i]?.id
+        if (!txId) return
+        deliverWalletBundle({
+          transactionId: txId,
+          phone:         item.phone,
+          networkId:     item.networkId,
+          bundleValue:   item.bundleValue,
+        }).catch(err => console.error('[CartModal] delivery error:', err))
+      })
     } catch (err) {
       console.error('[CartModal] payment error:', err)
       setErrorMsg('Payment failed. Please try again.')
