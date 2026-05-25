@@ -19,7 +19,7 @@ const STEPS = [
   },
   {
     n: 3,
-    title: 'Earn 20% of every sale's profit',
+    title: "Earn 20% of every sale's profit",
     body: 'Paystack takes 2% on every transaction — Refer & Earn is our way of giving some of that back. You earn 20% of QwikHub\'s profit on every bundle purchase your referrals make, straight to your earnings.',
   },
 ]
