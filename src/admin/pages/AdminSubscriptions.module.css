@@ -279,50 +279,55 @@
 .table tbody tr:last-child td { border-bottom: none; }
 .table tbody tr:hover { background: var(--color-surface-hover); }
 
-/* Type badge */
-.typeBadge {
+/* Service badge */
+.serviceBadge {
   display: inline-block;
-  padding: 3px 8px;
-  border-radius: 5px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  white-space: nowrap;
+  background: rgba(168, 85, 247, 0.12);
+  color: #a855f7;
+}
+[data-theme="dark"] .serviceBadge {
+  background: rgba(168, 85, 247, 0.18);
+  color: #c084fc;
+}
+
+/* Status badge */
+.statusBadge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
   font-size: 10px;
   font-weight: 700;
   font-family: var(--font-sans);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   white-space: nowrap;
+  border: 1px solid transparent;
 }
-.typeBadge[data-type="storefront"] { background: rgba(99,102,241,0.14); color: #818cf8; }
-.typeBadge[data-type="wallet"]     { background: rgba(255,204,8,0.14);  color: #d4a800; }
-[data-theme="dark"] .typeBadge[data-type="wallet"] { color: #FFCC08; }
-
-/* Network badge */
-.networkBadge {
-  display: inline-block;
-  padding: 2px 7px;
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: 700;
-  font-family: var(--font-sans);
-  white-space: nowrap;
+.statusBadge[data-status="delivered"] {
+  background: #F3FAF7;
+  border-color: #DEF7EC;
+  color: #03543F;
 }
-.networkBadge[data-network="mtn"]    { background: rgba(255,204,8,0.15);  color: #b38600; }
-[data-theme="dark"] .networkBadge[data-network="mtn"] { color: #FFCC08; }
-.networkBadge[data-network="telecel"]{ background: rgba(239,68,68,0.12);  color: #ef4444; }
-.networkBadge[data-network="airtel"] { background: rgba(59,130,246,0.12); color: #60a5fa; }
-.networkBadge[data-network="other"]  { background: var(--color-surface-hover); color: var(--color-text-secondary); }
-
-/* Bundle cell */
-.bundleCell {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
+.statusBadge[data-status="pending"] {
+  background: #FFF9E6;
+  border-color: #FFEBB0;
+  color: #8C6900;
+}
+.statusBadge[data-status="failed"] {
+  background: #FEF2F2;
+  border-color: #FECACA;
+  color: #991B1B;
 }
 
-.bundleName {
-  font-size: 13px;
+/* Cell styles */
+.planCell {
   font-weight: 500;
-  color: var(--color-text-primary);
 }
 
 .phoneCell {
@@ -353,40 +358,7 @@
   cursor: default;
 }
 
-/* -- Status badge -------------------------------------------- */
-.statusBadge {
-  display: inline-block;
-  padding: 3px 9px;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 700;
-  font-family: var(--font-sans);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-  border: 1px solid transparent;
-}
-.statusBadge[data-status="delivered"] {
-  background: #F3FAF7;
-  border-color: #DEF7EC;
-  color: #03543F;
-}
-.statusBadge[data-status="pending"] {
-  background: #FFF9E6;
-  border-color: #FFEBB0;
-  color: #8C6900;
-}
-.statusBadge[data-status="failed"] {
-  background: #FEF2F2;
-  border-color: #FECACA;
-  color: #991B1B;
-}
-.statusBadge[data-status="na"] {
-  background: var(--color-surface-hover);
-  color: var(--color-text-tertiary);
-}
-
-/* -- Action buttons ------------------------------------------ */
+/* Action buttons */
 .actionBtns {
   display: flex;
   align-items: center;
@@ -543,7 +515,7 @@
     flex-shrink: 0;
   }
 
-  .cardBundle {
+  .cardPlan {
     font-size: 14px;
     font-weight: 600;
     font-family: var(--font-sans);
@@ -587,4 +559,3 @@
     font-family: var(--font-sans);
   }
 }
-

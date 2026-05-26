@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { SearchNormal1, Clock } from 'iconsax-react'
-import { adminGetOrders, adminUpdateDeliveryStatus } from '../lib/adminDb'
-import styles from './AdminOrders.module.css'
+import { adminGetSubscriptionOrders, adminUpdateSubStatus } from '../lib/adminDb'
+import styles from './AdminSubscriptions.module.css'
 
 // ── Helpers ──────────────────────────────────────────────────────
 function timeAgo(iso) {
@@ -24,15 +24,16 @@ function formatFullDate(iso) {
   })
 }
 
-// Parse wallet transaction description: "1GB → 0244123456 (MTN Bundles)"
-function parseDesc(desc = '') {
-  const arrowIdx = desc.indexOf(' → ')
-  const parenIdx = desc.lastIndexOf(' (')
-  if (arrowIdx === -1) return { bundle: desc, phone: '', network: '' }
-  const bundle  = desc.slice(0, arrowIdx)
-  const phone   = parenIdx > arrowIdx ? desc.slice(arrowIdx + 3, parenIdx) : desc.slice(arrowIdx + 3)
-  const network = parenIdx > -1 ? desc.slice(parenIdx + 2, -1) : ''
-  return { bundle, phone, network }
+// Parse "[Sub] Netflix Premium → 0244123456 (Netflix)"
+function parseSub(desc = '') {
+  const clean = desc.replace(/^\[Sub\]\s*/, '')
+  const arrowIdx = clean.indexOf(' → ')
+  const parenIdx = clean.lastIndexOf(' (')
+  if (arrowIdx === -1) return { plan: clean, phone: '', service: '' }
+  const plan    = clean.slice(0, arrowIdx)
+  const phone   = parenIdx > arrowIdx ? clean.slice(arrowIdx + 3, parenIdx) : clean.slice(arrowIdx + 3)
+  const service = parenIdx > -1 ? clean.slice(parenIdx + 2, -1) : ''
+  return { plan, phone, service }
 }
 
 function isInPeriod(iso, period) {
@@ -45,8 +46,6 @@ function isInPeriod(iso, period) {
   return true
 }
 
-const NETWORKS = ['MTN', 'Telecel', 'AirtelTigo']
-
 const PERIODS = [
   { key: 'all',   label: 'All time' },
   { key: 'today', label: 'Today'    },
@@ -54,53 +53,36 @@ const PERIODS = [
   { key: 'month', label: 'This month'},
 ]
 
-const TABS = [
-  { key: 'all',        label: 'All'        },
-  { key: 'storefront', label: 'Storefront' },
-  { key: 'wallet',     label: 'Wallet'     },
+const STATUS_TABS = [
+  { key: 'all',       label: 'All'       },
+  { key: 'pending',   label: 'Pending'   },
+  { key: 'delivered', label: 'Fulfilled' },
+  { key: 'failed',    label: 'Failed'    },
 ]
-
-// ── Sub-components ────────────────────────────────────────────────
-function TypeBadge({ type }) {
-  return (
-    <span className={styles.typeBadge} data-type={type}>
-      {type === 'storefront' ? 'Store' : 'Wallet'}
-    </span>
-  )
-}
-
-function NetworkBadge({ network }) {
-  if (!network) return null
-  const n = network.toLowerCase()
-  const key = n.includes('mtn') ? 'mtn' : n.includes('telecel') ? 'telecel' : n.includes('airtel') ? 'airtel' : 'other'
-  return <span className={styles.networkBadge} data-network={key}>{network}</span>
-}
 
 function StatusBadge({ status }) {
   const label =
-    status === 'delivered' ? 'Delivered' :
+    status === 'delivered' ? 'Fulfilled' :
     status === 'pending_verification' ? 'Failed' :
-    status === 'pending' ? 'Processing' :
-    status === 'not_applicable' ? 'N/A' :
-    status || 'Unknown'
+    status === 'not_applicable' ? 'Pending' :
+    status === 'pending' ? 'Pending' :
+    status || 'Pending'
   const key =
     status === 'delivered' ? 'delivered' :
-    status === 'pending_verification' ? 'failed' :
-    status === 'pending' ? 'pending' : 'na'
+    status === 'pending_verification' ? 'failed' : 'pending'
   return <span className={styles.statusBadge} data-status={key}>{label}</span>
 }
 
 // ── Main component ────────────────────────────────────────────────
-export default function AdminOrders() {
+export default function AdminSubscriptions() {
   const [orders,   setOrders]   = useState([])
   const [loading,  setLoading]  = useState(true)
   const [error,    setError]    = useState('')
   const [query,    setQuery]    = useState('')
-  const [tab,      setTab]      = useState('all')
-  const [network,  setNetwork]  = useState('all')
+  const [statusTab, setStatusTab] = useState('all')
   const [period,   setPeriod]   = useState('all')
   const [page,     setPage]     = useState(1)
-  const [updating, setUpdating] = useState(null) // order_id being updated
+  const [updating, setUpdating] = useState(null)
   const PAGE_SIZE = 15
 
   useEffect(() => { load() }, [])
@@ -108,72 +90,55 @@ export default function AdminOrders() {
   async function load() {
     setLoading(true)
     setError('')
-    const { data, error: err } = await adminGetOrders()
+    const { data, error: err } = await adminGetSubscriptionOrders()
     setLoading(false)
     if (err) { setError(err.message); return }
     setOrders(Array.isArray(data) ? data : [])
   }
 
-  async function handleStatusChange(orderId, newStatus) {
-    setUpdating(orderId)
-    const { error: err } = await adminUpdateDeliveryStatus(orderId, newStatus)
+  async function handleStatusChange(id, newStatus) {
+    setUpdating(id)
+    const { error: err } = await adminUpdateSubStatus(id, newStatus)
     setUpdating(null)
-    if (err) { alert(`Failed to update status: ${err.message}`); return }
-    // Optimistically update local state
+    if (err) { alert(`Failed to update: ${err.message}`); return }
     setOrders(prev => prev.map(o =>
-      o.order_id === orderId ? { ...o, delivery_status: newStatus } : o
+      o.id === id ? { ...o, delivery_status: newStatus } : o
     ))
   }
 
-  // Normalise each order into a flat display object
-  const normalised = useMemo(() => orders.map(o => {
-    if (o.order_type === 'wallet') {
-      const { bundle, phone, network: net } = parseDesc(o.description ?? '')
-      return {
-        ...o,
-        displayBundle:  bundle,
-        displayPhone:   phone || o.buyer_phone || '—',
-        displayNetwork: net   || o.network || '',
-        displayBuyer:   o.buyer_name || '—',
-      }
-    }
-    // storefront
-    return {
-      ...o,
-      displayBundle:  o.description || '—',
-      displayPhone:   o.buyer_phone || '—',
-      displayNetwork: o.network || '',
-      displayBuyer:   o.store_name ? `via ${o.store_name}` : '—',
-    }
+  // Parse each order
+  const parsed = useMemo(() => orders.map(o => {
+    const { plan, phone, service } = parseSub(o.description ?? '')
+    return { ...o, plan, phone: phone || '—', service: service || '—' }
   }), [orders])
 
-  // Reset to page 1 when filters change
-  useEffect(() => { setPage(1) }, [tab, network, period, query])
+  useEffect(() => { setPage(1) }, [statusTab, period, query])
 
-  const filtered = useMemo(() => normalised.filter(o => {
-    if (tab !== 'all' && o.order_type !== tab) return false
-    if (network !== 'all' && !o.displayNetwork?.toLowerCase().includes(network.toLowerCase())) return false
+  const filtered = useMemo(() => parsed.filter(o => {
+    // Status tab filter
+    if (statusTab === 'pending'   && o.delivery_status !== 'not_applicable' && o.delivery_status !== 'pending') return false
+    if (statusTab === 'delivered' && o.delivery_status !== 'delivered') return false
+    if (statusTab === 'failed'    && o.delivery_status !== 'pending_verification') return false
     if (!isInPeriod(o.created_at, period)) return false
     if (query.trim()) {
       const q = query.toLowerCase()
       if (
-        !o.displayPhone?.includes(q) &&
-        !o.displayBundle?.toLowerCase().includes(q) &&
-        !o.displayNetwork?.toLowerCase().includes(q) &&
-        !o.displayBuyer?.toLowerCase().includes(q) &&
-        !o.store_name?.toLowerCase().includes(q)
+        !o.plan?.toLowerCase().includes(q) &&
+        !o.phone?.includes(q) &&
+        !o.service?.toLowerCase().includes(q) &&
+        !o.buyer_name?.toLowerCase().includes(q)
       ) return false
     }
     return true
-  }), [normalised, tab, network, period, query])
+  }), [parsed, statusTab, period, query])
 
-  // ── Stats (always from full unfiltered set) ─────────────────────
+  // Stats
   const todayStr     = new Date().toDateString()
   const todayOrders  = orders.filter(o => new Date(o.created_at).toDateString() === todayStr)
-  const todayRevenue = todayOrders.reduce((s, o) => s + Number(o.amount), 0)
+  const pendingCount = orders.filter(o => o.delivery_status === 'not_applicable' || o.delivery_status === 'pending').length
   const totalRevenue = orders.reduce((s, o) => s + Number(o.amount), 0)
 
-  // ── Pagination ───────────────────────────────────────────────────
+  // Pagination
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const pageStart  = (page - 1) * PAGE_SIZE
   const paged      = filtered.slice(pageStart, pageStart + PAGE_SIZE)
@@ -184,8 +149,8 @@ export default function AdminOrders() {
       {/* Header */}
       <div className={styles.pageHeader}>
         <div>
-          <h1 className={styles.pageTitle}>Order Feed</h1>
-          <p className={styles.pageSubtitle}>All bundle orders across the platform</p>
+          <h1 className={styles.pageTitle}>Subscription Orders</h1>
+          <p className={styles.pageSubtitle}>Netflix, Spotify, and other subscription purchases</p>
         </div>
         <button className={styles.refreshBtn} onClick={load} disabled={loading}>
           {loading ? 'Loading…' : 'Refresh'}
@@ -199,8 +164,8 @@ export default function AdminOrders() {
           <span className={styles.statValue}>{todayOrders.length}</span>
         </div>
         <div className={styles.statCard}>
-          <span className={styles.statLabel}>Revenue today</span>
-          <span className={styles.statValue}>₵{todayRevenue.toFixed(2)}</span>
+          <span className={styles.statLabel}>Pending fulfilment</span>
+          <span className={styles.statValue}>{pendingCount}</span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Total orders</span>
@@ -212,38 +177,20 @@ export default function AdminOrders() {
         </div>
       </div>
 
-      {/* Search + filters */}
+      {/* Toolbar */}
       <div className={styles.toolbar}>
         <div className={styles.searchWrap}>
           <SearchNormal1 size={15} color="var(--color-text-tertiary)" className={styles.searchIcon} />
           <input
             type="search"
             className={styles.searchInput}
-            placeholder="Search by phone, bundle, network or store…"
+            placeholder="Search by plan, phone, service or buyer…"
             value={query}
             onChange={e => setQuery(e.target.value)}
           />
         </div>
 
         <div className={styles.filterRow}>
-          {/* Network filter */}
-          <div className={styles.filterGroup}>
-            <button
-              className={`${styles.filterPill} ${network === 'all' ? styles.filterPillActive : ''}`}
-              onClick={() => setNetwork('all')}
-            >All networks</button>
-            {NETWORKS.map(n => (
-              <button
-                key={n}
-                className={`${styles.filterPill} ${network === n ? styles.filterPillActive : ''}`}
-                onClick={() => setNetwork(network === n ? 'all' : n)}
-              >
-                {n}
-              </button>
-            ))}
-          </div>
-
-          {/* Period filter */}
           <div className={styles.filterGroup}>
             {PERIODS.map(p => (
               <button
@@ -258,17 +205,19 @@ export default function AdminOrders() {
         </div>
       </div>
 
-      {/* Type tabs */}
+      {/* Status tabs */}
       <div className={styles.tabs}>
-        {TABS.map(t => {
-          const count = t.key === 'all'
-            ? orders.length
-            : orders.filter(o => o.order_type === t.key).length
+        {STATUS_TABS.map(t => {
+          const count =
+            t.key === 'all' ? orders.length :
+            t.key === 'pending' ? orders.filter(o => o.delivery_status === 'not_applicable' || o.delivery_status === 'pending').length :
+            t.key === 'delivered' ? orders.filter(o => o.delivery_status === 'delivered').length :
+            orders.filter(o => o.delivery_status === 'pending_verification').length
           return (
             <button
               key={t.key}
-              className={`${styles.tab} ${tab === t.key ? styles.tabActive : ''}`}
-              onClick={() => setTab(t.key)}
+              className={`${styles.tab} ${statusTab === t.key ? styles.tabActive : ''}`}
+              onClick={() => setStatusTab(t.key)}
             >
               {t.label}
               <span className={styles.tabCount}>{count}</span>
@@ -291,19 +240,19 @@ export default function AdminOrders() {
       ) : filtered.length === 0 ? (
         <div className={styles.centred}>
           <Clock size={36} color="var(--color-text-tertiary)" />
-          <p className={styles.emptyText}>No orders match your filters</p>
+          <p className={styles.emptyText}>No subscription orders match your filters</p>
         </div>
       ) : (
         <>
-          {/* ── Desktop table ── */}
+          {/* Desktop table */}
           <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Type</th>
-                  <th>Bundle · Network</th>
+                  <th>Service</th>
+                  <th>Plan</th>
                   <th>Sent to</th>
-                  <th>Buyer / Store</th>
+                  <th>Buyer</th>
                   <th>Amount</th>
                   <th>Status</th>
                   <th>Time</th>
@@ -312,16 +261,11 @@ export default function AdminOrders() {
               </thead>
               <tbody>
                 {paged.map(o => (
-                  <tr key={o.order_id}>
-                    <td><TypeBadge type={o.order_type} /></td>
-                    <td>
-                      <div className={styles.bundleCell}>
-                        <span className={styles.bundleName}>{o.displayBundle}</span>
-                        <NetworkBadge network={o.displayNetwork} />
-                      </div>
-                    </td>
-                    <td className={styles.phoneCell}>{o.displayPhone}</td>
-                    <td className={styles.buyerCell}>{o.displayBuyer}</td>
+                  <tr key={o.id}>
+                    <td><span className={styles.serviceBadge}>{o.service}</span></td>
+                    <td className={styles.planCell}>{o.plan}</td>
+                    <td className={styles.phoneCell}>{o.phone}</td>
+                    <td className={styles.buyerCell}>{o.buyer_name || '—'}</td>
                     <td className={styles.amountCell}>₵{Number(o.amount).toFixed(2)}</td>
                     <td><StatusBadge status={o.delivery_status} /></td>
                     <td>
@@ -330,22 +274,22 @@ export default function AdminOrders() {
                       </span>
                     </td>
                     <td>
-                      {o.delivery_status !== 'delivered' && o.delivery_status !== 'not_applicable' && (
+                      {o.delivery_status !== 'delivered' && (
                         <div className={styles.actionBtns}>
                           <button
                             className={styles.actionBtn}
                             data-action="deliver"
-                            disabled={updating === o.order_id}
-                            onClick={() => handleStatusChange(o.order_id, 'delivered')}
+                            disabled={updating === o.id}
+                            onClick={() => handleStatusChange(o.id, 'delivered')}
                           >
-                            {updating === o.order_id ? '…' : '✓ Delivered'}
+                            {updating === o.id ? '…' : '✓ Fulfilled'}
                           </button>
                           {o.delivery_status !== 'pending_verification' && (
                             <button
                               className={styles.actionBtn}
                               data-action="fail"
-                              disabled={updating === o.order_id}
-                              onClick={() => handleStatusChange(o.order_id, 'pending_verification')}
+                              disabled={updating === o.id}
+                              onClick={() => handleStatusChange(o.id, 'pending_verification')}
                             >
                               ✗ Failed
                             </button>
@@ -359,10 +303,10 @@ export default function AdminOrders() {
             </table>
           </div>
 
-          {/* ── Pagination ── */}
+          {/* Pagination */}
           <div className={styles.pagination}>
             <span className={styles.paginationInfo}>
-              Showing {filtered.length === 0 ? 0 : pageStart + 1} to {Math.min(pageStart + PAGE_SIZE, filtered.length)} of {filtered.length} orders
+              Showing {filtered.length === 0 ? 0 : pageStart + 1} to {Math.min(pageStart + PAGE_SIZE, filtered.length)} of {filtered.length}
             </span>
             <div className={styles.paginationControls}>
               <button className={styles.pageBtn} onClick={() => setPage(p => p - 1)} disabled={page === 1}>‹</button>
@@ -382,43 +326,42 @@ export default function AdminOrders() {
             </div>
           </div>
 
-          {/* ── Mobile cards ── */}
+          {/* Mobile cards */}
           <div className={styles.cards}>
             {paged.map(o => (
-              <div key={o.order_id} className={styles.card}>
+              <div key={o.id} className={styles.card}>
                 <div className={styles.cardTop}>
                   <div className={styles.cardTopLeft}>
-                    <TypeBadge type={o.order_type} />
-                    <NetworkBadge network={o.displayNetwork} />
+                    <span className={styles.serviceBadge}>{o.service}</span>
+                    <StatusBadge status={o.delivery_status} />
                   </div>
                   <span className={styles.cardAmount}>₵{Number(o.amount).toFixed(2)}</span>
                 </div>
-                <div className={styles.cardBundle}>{o.displayBundle}</div>
+                <div className={styles.cardPlan}>{o.plan}</div>
                 <div className={styles.cardMeta}>
-                  <span className={styles.cardPhone}>{o.displayPhone}</span>
+                  <span className={styles.cardPhone}>{o.phone}</span>
                   <span className={styles.cardDot}>·</span>
-                  <span className={styles.cardBuyer}>{o.displayBuyer}</span>
+                  <span className={styles.cardBuyer}>{o.buyer_name || '—'}</span>
                 </div>
                 <div className={styles.cardBottom}>
                   <span className={styles.cardDate}>{timeAgo(o.created_at)}</span>
-                  <StatusBadge status={o.delivery_status} />
                 </div>
-                {o.delivery_status !== 'delivered' && o.delivery_status !== 'not_applicable' && (
+                {o.delivery_status !== 'delivered' && (
                   <div className={styles.actionBtns}>
                     <button
                       className={styles.actionBtn}
                       data-action="deliver"
-                      disabled={updating === o.order_id}
-                      onClick={() => handleStatusChange(o.order_id, 'delivered')}
+                      disabled={updating === o.id}
+                      onClick={() => handleStatusChange(o.id, 'delivered')}
                     >
-                      {updating === o.order_id ? '…' : '✓ Delivered'}
+                      {updating === o.id ? '…' : '✓ Fulfilled'}
                     </button>
                     {o.delivery_status !== 'pending_verification' && (
                       <button
                         className={styles.actionBtn}
                         data-action="fail"
-                        disabled={updating === o.order_id}
-                        onClick={() => handleStatusChange(o.order_id, 'pending_verification')}
+                        disabled={updating === o.id}
+                        onClick={() => handleStatusChange(o.id, 'pending_verification')}
                       >
                         ✗ Failed
                       </button>

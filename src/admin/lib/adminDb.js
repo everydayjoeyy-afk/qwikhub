@@ -128,6 +128,30 @@ export async function adminGetFailedOrders() {
   return adminFetch('rpc/admin_get_failed_orders', { method: 'POST', body: {} })
 }
 
+/** Admin: update delivery_status on a transaction (for manual overrides). */
+export async function adminUpdateDeliveryStatus(transactionId, newStatus) {
+  return adminFetch('rpc/admin_update_delivery_status', {
+    method: 'POST',
+    body: { p_transaction_id: transactionId, p_status: newStatus },
+  })
+}
+
+/** Returns subscription orders ([Sub] prefix), newest first. */
+export async function adminGetSubscriptionOrders(limit = 300) {
+  return adminFetch('rpc/admin_get_subscription_orders', {
+    method: 'POST',
+    body: { p_limit: limit },
+  })
+}
+
+/** Admin: update delivery_status on a subscription order. */
+export async function adminUpdateSubStatus(transactionId, newStatus) {
+  return adminFetch('rpc/admin_update_delivery_status', {
+    method: 'POST',
+    body: { p_transaction_id: transactionId, p_status: newStatus },
+  })
+}
+
 /** Returns all bundles (active + inactive) with per-bundle store_bundle count. */
 export async function adminGetBundles() {
   return adminFetch('rpc/admin_get_bundles', { method: 'POST', body: {} })
