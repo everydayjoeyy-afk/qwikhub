@@ -216,6 +216,10 @@ export default function Storefront() {
 
   const handlePay = async () => {
     if (cart.length === 0 || paying) return
+    if (!store.id) {
+      setPayError('This store is not available right now. Please try again later.')
+      return
+    }
     setPaying(true)
     setPayError('')
 

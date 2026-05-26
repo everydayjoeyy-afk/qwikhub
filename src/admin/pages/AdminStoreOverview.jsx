@@ -43,10 +43,11 @@ export default function AdminStoreOverview() {
 
       // Auto-sync cost_price from API on first load if any active bundle is missing it.
       // Runs once per session — prevents referral commission from being miscalculated.
+      // Passes bundleList directly so it doesn't depend on React state flush timing.
       const needsSync = bundleList.some(b => b.is_active && b.cost_price == null)
       if (needsSync && !autoSyncedRef.current) {
         autoSyncedRef.current = true
-        setTimeout(() => handleSyncPrices(), 100)
+        handleSyncPrices(bundleList)
       }
     } catch (e) { setError(e.message) }
     finally { setLoading(false) }
@@ -120,7 +121,7 @@ export default function AdminStoreOverview() {
   // Maps Cheap Bundles network_id → our carrier name in the DB
   const NETWORK_TO_CARRIER = { 1: 'AirtelTigo', 2: 'Telecel', 3: 'MTN' }
 
-  async function handleSyncPrices() {
+  async function handleSyncPrices(bundleListOverride) {
     const markup = parseFloat(markupPct)
     if (isNaN(markup) || markup < 0) { setSyncError('Enter a valid markup %'); return }
 
@@ -143,7 +144,9 @@ export default function AdminStoreOverview() {
     const factor = 1 + markup / 100
     let updated = 0; let skipped = 0
 
-    for (const bundle of bundles) {
+    // Use passed-in list (from auto-sync) or current state (from manual button click)
+    const bundlesToSync = bundleListOverride ?? bundles
+    for (const bundle of bundlesToSync) {
       const key = `${bundle.carrier}-${bundle.data_size}`
       const cost = costMap[key]
       if (cost == null) {

@@ -185,6 +185,14 @@
 }
 
 
+.inputHint {
+  font-size: 11px;
+  color: #f43f5e;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  margin-top: 4px;
+}
+
 /* Add to cart button */
 .addBtn {
   display: flex;

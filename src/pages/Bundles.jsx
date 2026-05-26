@@ -20,6 +20,8 @@ function BundleCard({ network, priceMap, costMap = {} }) {
   const [bundle, setBundle] = useState(null)
   const { addToCart } = useCart()
 
+  const phoneValid = /^0(2[0-9]|5[0-9])\d{7}$/.test(phone.trim())
+
   // While prices are still loading (undefined), show all with hardcoded prices.
   // Once loaded, only show bundles the API actually offers (priceMap has an entry).
   const options = priceMap === undefined
@@ -45,16 +47,19 @@ function BundleCard({ network, priceMap, costMap = {} }) {
           className={styles.input}
           placeholder="eg. 024XXXXXXXX"
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          maxLength={12}
+          onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+          maxLength={10}
         />
+        {phone.length > 0 && !phoneValid && (
+          <span className={styles.inputHint}>Enter a valid 10-digit Ghana number (02X, 05X)</span>
+        )}
       </div>
 
       <BundleSelect value={bundle} onChange={setBundle} options={options} />
 
       <button
         className={styles.addBtn}
-        disabled={!phone.trim() || !bundle}
+        disabled={!phoneValid || !bundle}
         onClick={() => {
           const opt = options.find(o => o.value === bundle)
           addToCart({

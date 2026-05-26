@@ -60,7 +60,7 @@ function BundleCard({ network, isOpen, onToggle, priceMap, costMap = {} }) {
   const [bundle, setBundle] = useState(null)
   const { addToCart }       = useCart()
 
-  const phoneValid = /^0[235]\d{8}$/.test(phone.trim())
+  const phoneValid = /^0(2[0-9]|5[0-9])\d{7}$/.test(phone.trim())
 
   // While loading (undefined): show all with hardcoded prices.
   // Once loaded: only show bundles the API actually offers at real prices.
