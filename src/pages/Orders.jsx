@@ -118,7 +118,13 @@ export default function Orders() {
                         </div>
                         <div className={styles.right}>
                           <span className={styles.price}>₵{Number(order.amount).toFixed(2)}</span>
-                          <span className={styles.status} data-status="pending">Processing</span>
+                          {order.delivery_status === 'delivered' ? (
+                            <span className={styles.status} data-status="delivered">Delivered</span>
+                          ) : order.delivery_status === 'pending_verification' ? (
+                            <span className={styles.status} data-status="failed">Failed</span>
+                          ) : (
+                            <span className={styles.status} data-status="pending">Processing</span>
+                          )}
                         </div>
                       </div>
                       {i < group.items.length - 1 && <div className={styles.divider} />}
