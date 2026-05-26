@@ -33,6 +33,14 @@ export default function AddMoneyModal({ open, onClose, onPaymentSuccess }) {
     amount:    kobo,
     currency:  'GHS',
     publicKey: PAYSTACK_KEY,
+    metadata:  {
+      user_id:       user?.id ?? '',
+      wallet_amount: parsed,
+      custom_fields: [
+        { display_name: 'User ID', variable_name: 'user_id', value: user?.id ?? '' },
+        { display_name: 'Wallet Amount', variable_name: 'wallet_amount', value: String(parsed) },
+      ],
+    },
   }
 
   const initPaystack = usePaystackPayment(paystackConfig)
