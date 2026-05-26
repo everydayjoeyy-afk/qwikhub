@@ -60,35 +60,28 @@ export default function CartModal({ open, onClose, onPaymentSuccess }) {
         Prefer:         'return=representation',
       }
 
-      // 1. Atomically deduct total from wallet (direct REST — avoids init-lock deadlock)
-      const debitRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/decrement_wallet`, {
+      // 1. Atomically debit wallet + insert all transaction rows in one DB transaction.
+      //    If either step fails the whole thing rolls back — no debit-without-record risk.
+      const debitRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/debit_wallet_and_record`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ p_user_id: user.id, p_amount: total }),
-      })
-      if (!debitRes.ok) {
-        const msg = await debitRes.text().catch(() => '')
-        throw new Error(msg || `Debit failed (${debitRes.status})`)
-      }
-
-      // 2. Record one transaction per cart item (delivery_status tracks bundle send)
-      const txRes = await fetch(`${SUPABASE_URL}/rest/v1/transactions`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(
-          items.map(item => ({
-            user_id:         user.id,
-            type:            'debit',
+        body: JSON.stringify({
+          p_user_id: user.id,
+          p_total:   total,
+          p_items:   items.map(item => ({
             amount:          item.price,
             description:     item.type === 'subscription'
               ? `[Sub] ${item.bundleLabel} → ${item.phone}`
               : `${item.bundleLabel} → ${item.phone} (${item.networkName})`,
             delivery_status: item.type === 'subscription' ? 'not_applicable' : 'pending',
-          }))
-        ),
+          })),
+        }),
       })
-      if (!txRes.ok) throw new Error(`Transaction record failed (${txRes.status})`)
-      const txData = await txRes.json().catch(() => [])
+      if (!debitRes.ok) {
+        const msg = await debitRes.text().catch(() => '')
+        throw new Error(msg || `Payment failed (${debitRes.status})`)
+      }
+      const txData = await debitRes.json().catch(() => [])
 
       // 3. Credit 20% of QwikHub's profit as referral commission (bundle purchases only)
       //    Profit per item = sale price − API cost price. Commission = 20% of total profit.
