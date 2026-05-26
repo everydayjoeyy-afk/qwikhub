@@ -88,7 +88,7 @@ export default function CartModal({ open, onClose, onPaymentSuccess }) {
       const bundleItems  = items.filter(i => i.type !== 'subscription')
       const bundlesTotal = bundleItems.reduce((sum, i) => sum + i.price, 0)
       const totalProfit  = bundleItems.reduce(
-        (sum, i) => sum + Math.max(0, i.price - (i.costPrice ?? 0)), 0
+        (sum, i) => sum + Math.max(0, i.price - (i.costPrice || i.price)), 0
       )
       const commission = Math.round(totalProfit * 0.20 * 100) / 100
       if (bundlesTotal > 0 && commission > 0) {

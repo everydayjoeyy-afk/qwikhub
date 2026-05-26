@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Shop, Edit2, CloseCircle } from 'iconsax-react'
 import { adminGetBundles, adminGetStoreOverview, adminUpdateBundle } from '../lib/adminDb'
 import { getAvailablePackages } from '../../lib/cheapBundles'
@@ -23,6 +23,8 @@ export default function AdminStoreOverview() {
   const [markupPct,      setMarkupPct]      = useState('4.88')
   const [priceResult,    setPriceResult]    = useState(null)
 
+  const autoSyncedRef = useRef(false)
+
   useEffect(() => { load() }, [])
 
   async function load() {
@@ -33,9 +35,18 @@ export default function AdminStoreOverview() {
         adminGetStoreOverview(),
       ])
       if (bundlesRes.error) { setError(bundlesRes.error.message); return }
-      setBundles(Array.isArray(bundlesRes.data) ? bundlesRes.data : [])
+      const bundleList = Array.isArray(bundlesRes.data) ? bundlesRes.data : []
+      setBundles(bundleList)
       if (!statsRes.error && statsRes.data) {
         setStats(Array.isArray(statsRes.data) ? (statsRes.data[0] ?? null) : statsRes.data)
+      }
+
+      // Auto-sync cost_price from API on first load if any active bundle is missing it.
+      // Runs once per session — prevents referral commission from being miscalculated.
+      const needsSync = bundleList.some(b => b.is_active && b.cost_price == null)
+      if (needsSync && !autoSyncedRef.current) {
+        autoSyncedRef.current = true
+        setTimeout(() => handleSyncPrices(), 100)
       }
     } catch (e) { setError(e.message) }
     finally { setLoading(false) }
