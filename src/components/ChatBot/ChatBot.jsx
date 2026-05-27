@@ -77,7 +77,7 @@ function buildWhatsAppUrl(topic) {
 }
 
 // ── One-time WhatsApp channel reminder ────────────────────────
-const WA_REMINDER_KEY = 'qwikhub_wa_reminder_dismissed'
+const WA_REMINDER_KEY = 'qwikhub_wa_reminder_v2'
 
 function WhatsAppReminder() {
   const [show, setShow] = useState(() => !localStorage.getItem(WA_REMINDER_KEY))
@@ -91,7 +91,7 @@ function WhatsAppReminder() {
 
   return (
     <>
-      <div className={styles.reminderBackdrop} onClick={dismiss} />
+      <div className={styles.reminderBackdrop} />
       <div className={styles.reminderModal}>
         <img src={WhatsAppIcon} alt="" className={styles.reminderIcon} />
         <p className={styles.reminderTitle}>Stay in the loop!</p>
