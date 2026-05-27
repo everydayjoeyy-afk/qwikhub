@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, ArrowRight2, ArrowDown2, Share, MoneyRecive, Shop } from 'iconsax-react'
+import { ArrowLeft, ArrowRight2, ArrowDown2, Copy, Share, MoneyRecive, Shop } from 'iconsax-react'
 import LoadingScreen from '../components/LoadingScreen/LoadingScreen'
 import CreateStoreModal from '../components/CreateStoreModal/CreateStoreModal'
 import { BUNDLE_OPTIONS } from '../components/BundleSelect/BundleSelect'
@@ -283,14 +283,16 @@ export default function MyStore() {
         <div className={styles.storeCardTop}>
           <span className={styles.storeLinkLabel}>Your store link</span>
           <span className={styles.storeNameText}>{storeName}</span>
-          <div className={styles.storeLinkRow}>
-            <button className={styles.storeLinkBtn} onClick={handleCopyLink}>
-              {storeLink}
-            </button>
-            <button className={styles.shareIconBtn} onClick={handleShareLink} aria-label="Share store link">
-              <Share size={16} color="#FFCC08" variant="Bold" />
+          <div className={styles.storeLinkBox}>
+            <span className={styles.storeLinkText}>{storeLink}</span>
+            <button className={styles.storeLinkCopyBtn} onClick={handleCopyLink} aria-label="Copy store link">
+              <Copy size={18} color="#FFCC08" variant="Bold" />
             </button>
           </div>
+          <button className={styles.storeShareBtn} onClick={handleShareLink}>
+            <Share size={18} color="currentColor" variant="Bold" />
+            Share with friends
+          </button>
         </div>
         <div className={styles.statsRow}>
           <div className={styles.statBox}>

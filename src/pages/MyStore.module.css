@@ -52,7 +52,7 @@
 .storeCardTop {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .storeLinkLabel {
@@ -72,50 +72,84 @@
   letter-spacing: -0.02em;
 }
 
-.storeLinkText {
-  font-size: 13px;
-  font-weight: 600;
-  color: #FFCC08;
-  font-family: var(--font-sans);
-  letter-spacing: -0.01em;
-}
-
-.storeLinkBtn {
-  background: transparent;
-  border: none;
-  padding: 0;
-  font-size: 13px;
-  font-weight: 600;
-  color: #FFCC08;
-  font-family: var(--font-sans);
-  letter-spacing: -0.01em;
-  cursor: pointer;
-  text-align: left;
-  transition: opacity 0.15s;
-}
-.storeLinkBtn:hover { opacity: 0.75; }
-.storeLinkBtn:focus-visible { outline: 2px solid #FFCC08; outline-offset: 2px; border-radius: 4px; }
-
-.storeLinkRow {
+/* Dashed link box (inside always-dark store card) */
+.storeLinkBox {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  background: rgba(255,255,255,0.06);
+  border: 1.5px dashed #FFCC08;
+  border-radius: 12px;
+  padding: 10px 14px;
+  width: 100%;
+  margin-top: 6px;
 }
 
-.shareIconBtn {
-  background: transparent;
-  border: none;
-  padding: 4px;
-  cursor: pointer;
+.storeLinkText {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.7);
+  font-family: var(--font-sans);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.storeLinkCopyBtn {
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
-  transition: opacity 0.15s;
+  background: rgba(255, 204, 8, 0.15);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #FFCC08;
+  transition: background 0.15s;
   flex-shrink: 0;
 }
-.shareIconBtn:hover { opacity: 0.75; }
-.shareIconBtn:focus-visible { outline: 2px solid #FFCC08; outline-offset: 2px; }
+.storeLinkCopyBtn:hover {
+  background: rgba(255, 204, 8, 0.28);
+}
+.storeLinkCopyBtn:focus-visible {
+  outline: 2px solid #FFCC08;
+  outline-offset: 2px;
+}
+
+/* Share button (inside always-dark store card) */
+.storeShareBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #FFCC08;
+  color: #000000;
+  border: none;
+  border-radius: 999px;
+  padding: 0 28px;
+  height: 40px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+  letter-spacing: -0.01em;
+  width: 100%;
+}
+.storeShareBtn:hover {
+  opacity: 0.88;
+  transform: scale(1.01);
+}
+.storeShareBtn:active {
+  transform: scale(0.98);
+}
+.storeShareBtn:focus-visible {
+  outline: 2px solid #FFCC08;
+  outline-offset: 3px;
+}
 
 /* Copied toast */
 .toast {
