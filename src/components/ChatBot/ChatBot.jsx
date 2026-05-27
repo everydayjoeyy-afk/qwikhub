@@ -76,6 +76,36 @@ function buildWhatsAppUrl(topic) {
   return `${SUPPORT_WHATSAPP}?text=${encodeURIComponent(msg)}`
 }
 
+// ── One-time WhatsApp channel reminder ────────────────────────
+const WA_REMINDER_KEY = 'qwikhub_wa_reminder_dismissed'
+
+function WhatsAppReminder() {
+  const [show, setShow] = useState(() => !localStorage.getItem(WA_REMINDER_KEY))
+
+  if (!show) return null
+
+  const dismiss = () => {
+    localStorage.setItem(WA_REMINDER_KEY, '1')
+    setShow(false)
+  }
+
+  return (
+    <>
+      <div className={styles.reminderBackdrop} onClick={dismiss} />
+      <div className={styles.reminderModal}>
+        <img src={WhatsAppIcon} alt="" className={styles.reminderIcon} />
+        <p className={styles.reminderTitle}>Stay in the loop!</p>
+        <p className={styles.reminderText}>
+          Join our WhatsApp channel for updates, new features and exclusive offers. Tap the green WhatsApp button on the bottom right corner to follow.
+        </p>
+        <button className={styles.reminderBtn} onClick={dismiss}>
+          Got it
+        </button>
+      </div>
+    </>
+  )
+}
+
 // ── Component ─────────────────────────────────────────────────
 export default function ChatBot() {
   const [open, setOpen]         = useState(false)
@@ -159,6 +189,9 @@ export default function ChatBot() {
 
   return (
     <>
+      {/* One-time WhatsApp channel reminder */}
+      <WhatsAppReminder />
+
       {/* WhatsApp channel button */}
       <a
         href={WHATSAPP_CHANNEL}

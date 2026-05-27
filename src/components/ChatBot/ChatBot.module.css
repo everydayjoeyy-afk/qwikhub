@@ -75,6 +75,83 @@
   border-color: rgba(255, 255, 255, 0.12);
 }
 
+/* ── WhatsApp channel reminder modal ────────────────────────── */
+.reminderBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 300;
+  animation: fadeIn 0.2s ease;
+}
+
+.reminderModal {
+  position: fixed;
+  bottom: 50%;
+  left: 50%;
+  transform: translate(-50%, 50%);
+  z-index: 301;
+  background: var(--color-surface);
+  border-radius: 20px;
+  padding: 28px 24px 24px;
+  width: calc(100% - 48px);
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: reminderSlide 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes reminderSlide {
+  from { opacity: 0; transform: translate(-50%, 50%) scale(0.92); }
+  to   { opacity: 1; transform: translate(-50%, 50%) scale(1); }
+}
+
+.reminderIcon {
+  width: 48px;
+  height: 48px;
+}
+
+.reminderTitle {
+  font-size: 18px;
+  font-weight: 800;
+  font-family: var(--font-sans);
+  color: var(--color-text-primary);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.reminderText {
+  font-size: 13px;
+  font-family: var(--font-sans);
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.reminderBtn {
+  width: 100%;
+  margin-top: 6px;
+  padding: 12px 24px;
+  background: #25D366;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.reminderBtn:hover {
+  opacity: 0.9;
+}
+.reminderBtn:active {
+  transform: scale(0.98);
+}
+
 /* ── Backdrop ───────────────────────────────────────────────── */
 .backdrop {
   position: fixed;
