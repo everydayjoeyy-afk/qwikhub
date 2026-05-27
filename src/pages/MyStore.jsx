@@ -226,6 +226,18 @@ export default function MyStore() {
     setTimeout(() => setLinkCopied(false), 2000)
   }
 
+  const handleShareLink = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: storeName ?? 'My QwikHub Store',
+        text: `Buy cheap data bundles from my store on QwikHub!`,
+        url: storeLink,
+      }).catch(() => {})
+    } else {
+      handleCopyLink()
+    }
+  }
+
   if (loadingStore) return <LoadingScreen />
 
   if (hasNoStore) return (
@@ -271,9 +283,14 @@ export default function MyStore() {
         <div className={styles.storeCardTop}>
           <span className={styles.storeLinkLabel}>Your store link</span>
           <span className={styles.storeNameText}>{storeName}</span>
-          <button className={styles.storeLinkBtn} onClick={handleCopyLink}>
-            {storeLink}
-          </button>
+          <div className={styles.storeLinkRow}>
+            <button className={styles.storeLinkBtn} onClick={handleCopyLink}>
+              {storeLink}
+            </button>
+            <button className={styles.shareIconBtn} onClick={handleShareLink} aria-label="Share store link">
+              <Share size={16} color="#FFCC08" variant="Bold" />
+            </button>
+          </div>
         </div>
         <div className={styles.statsRow}>
           <div className={styles.statBox}>

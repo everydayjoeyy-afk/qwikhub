@@ -96,6 +96,27 @@
 .storeLinkBtn:hover { opacity: 0.75; }
 .storeLinkBtn:focus-visible { outline: 2px solid #FFCC08; outline-offset: 2px; border-radius: 4px; }
 
+.storeLinkRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shareIconBtn {
+  background: transparent;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+.shareIconBtn:hover { opacity: 0.75; }
+.shareIconBtn:focus-visible { outline: 2px solid #FFCC08; outline-offset: 2px; }
+
 /* Copied toast */
 .toast {
   position: fixed;
