@@ -5,6 +5,7 @@ import {
 } from 'iconsax-react'
 import QIcon      from '../../assets/Q.svg'
 import WhatsAppIcon from '../../assets/icons8-whatsapp.svg'
+import { useAuth } from '../../context/AuthContext'
 import styles from './ChatBot.module.css'
 
 const WHATSAPP_CHANNEL = 'https://whatsapp.com/channel/0029VbCc8oQ545uuu3uM7u3e'
@@ -77,15 +78,22 @@ function buildWhatsAppUrl(topic) {
 }
 
 // ── One-time WhatsApp channel reminder ────────────────────────
-const WA_REMINDER_KEY = 'qwikhub_wa_reminder_v2'
+const WA_REMINDER_PREFIX = 'qwikhub_wa_reminder_v2_'
 
 function WhatsAppReminder() {
-  const [show, setShow] = useState(() => !localStorage.getItem(WA_REMINDER_KEY))
+  const { user } = useAuth()
+  const key = user ? `${WA_REMINDER_PREFIX}${user.id}` : null
+  const [show, setShow] = useState(false)
 
-  if (!show) return null
+  useEffect(() => {
+    if (key && !localStorage.getItem(key)) setShow(true)
+    else setShow(false)
+  }, [key])
+
+  if (!show || !key) return null
 
   const dismiss = () => {
-    localStorage.setItem(WA_REMINDER_KEY, '1')
+    localStorage.setItem(key, '1')
     setShow(false)
   }
 
