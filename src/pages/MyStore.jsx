@@ -291,7 +291,7 @@ export default function MyStore() {
           </div>
           <button className={styles.storeShareBtn} onClick={handleShareLink}>
             <Share size={18} color="currentColor" variant="Bold" />
-            Share with friends
+            Share with customers
           </button>
         </div>
         <div className={styles.statsRow}>
