@@ -382,6 +382,10 @@ export async function getReferrals(userId) {
     restFetch(`referrals?referrer_id=eq.${userId}&select=id,transferred,transferred_amount&order=created_at.desc`),
   ])
 
+  if (rpcError) {
+    console.warn('[getReferrals] RPC error:', rpcError.message ?? rpcError)
+  }
+
   if (!rpcError && Array.isArray(rpcData)) {
     // Build a fast lookup: referral id → { transferred, transferred_amount }
     const flagMap = {}
@@ -406,12 +410,12 @@ export async function getReferrals(userId) {
   // Used when get_my_referrals RPC hasn't been created in Supabase yet.
   // RLS policy "referrals_own" (referrer_id = auth.uid()) allows this read.
   // User name/phone won't be available here (blocked by RLS on users table).
-  console.warn('[getReferrals] RPC unavailable, falling back to table query', rpcError)
+  console.warn('[getReferrals] RPC unavailable, falling back to table query')
   const { data: rows, error: fallbackError } = await restFetch(
     `referrals?referrer_id=eq.${userId}&select=id,referred_user_id,commission_amount,transferred,transferred_amount,created_at&order=created_at.desc`
   )
   if (fallbackError) {
-    console.error('[getReferrals] fallback also failed', fallbackError)
+    console.error('[getReferrals] fallback also failed:', fallbackError.message ?? fallbackError)
     return { data: [], error: fallbackError }
   }
   return {

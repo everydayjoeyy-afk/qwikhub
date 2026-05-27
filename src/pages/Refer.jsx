@@ -46,6 +46,7 @@ export default function Refer() {
 
   const [referrals, setReferrals]                 = useState([])
   const [loading, setLoading]                     = useState(true)
+  const [fetchError, setFetchError]               = useState(false)
   const [hasStore, setHasStore]                   = useState(false)
   const [showNoStorePrompt, setShowNoStorePrompt] = useState(false)
   const [createStoreOpen, setCreateStoreOpen]     = useState(false)
@@ -58,23 +59,31 @@ export default function Refer() {
   const referralCode = profile?.referral_code ?? '—'
   const referralLink = `${window.location.origin}/signup?ref=${referralCode}`
 
-  useEffect(() => {
+  const fetchReferrals = async () => {
     if (!user) return
-    const timer = setTimeout(() => setLoading(false), 8000)
-    Promise.all([
-      getReferrals(user.id),
-      getMyStore(user.id),
-    ]).then(([{ data: refs }, { data: store }]) => {
-      clearTimeout(timer)
+    setLoading(true)
+    setFetchError(false)
+    try {
+      const [{ data: refs, error: refErr }, { data: store }] = await Promise.all([
+        getReferrals(user.id),
+        getMyStore(user.id),
+      ])
+      if (refErr) {
+        console.error('[Refer] getReferrals error', refErr)
+        setFetchError(true)
+      }
       setReferrals(refs ?? [])
       setHasStore(!!store)
-      setLoading(false)
-    }).catch((err) => {
+    } catch (err) {
       console.error('[Refer] fetch error', err)
-      clearTimeout(timer)
+      setFetchError(true)
+    } finally {
       setLoading(false)
-    })
-    return () => clearTimeout(timer)
+    }
+  }
+
+  useEffect(() => {
+    fetchReferrals()
   }, [user])
 
   // Available = commission earned since last transfer (commission_amount - transferred_amount)
@@ -214,6 +223,15 @@ export default function Refer() {
 
         {loading ? (
           <p className={styles.hint}>Loading…</p>
+        ) : fetchError && referrals.length === 0 ? (
+          <div className={styles.emptyReferrals}>
+            <span className={styles.emptyText}>
+              Couldn't load referrals. Check your connection and try again.
+            </span>
+            <button className={styles.retryBtn} onClick={fetchReferrals}>
+              Retry
+            </button>
+          </div>
         ) : referrals.length === 0 ? (
           <div className={styles.emptyReferrals}>
             <span className={styles.emptyText}>
