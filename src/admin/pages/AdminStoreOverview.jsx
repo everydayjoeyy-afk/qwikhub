@@ -141,6 +141,12 @@ export default function AdminStoreOverview() {
       costMap[`${carrier}-${pkg.volume}GB`] = pkg.console_price
     }
 
+    // Safety check: if API returned zero packages, don't deactivate anything
+    if (Object.keys(costMap).length === 0) {
+      setSyncError('API returned no packages — prices unchanged. Check your API key or try again later.')
+      setSyncingPrices(false); return
+    }
+
     const factor = 1 + markup / 100
     let updated = 0; let skipped = 0
 
