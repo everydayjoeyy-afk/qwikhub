@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import { usePaystackPayment } from 'react-paystack'
 import { CloseCircle, TickCircle } from 'iconsax-react'
 import { useAuth } from '../../context/AuthContext'
-import { creditWallet } from '../../lib/db'
 import styles from './AddMoneyModal.module.css'
 import { useFocusTrap } from '../../hooks/useFocusTrap'
 
@@ -12,7 +11,7 @@ const FEE_RATE     = 0.02
 export default function AddMoneyModal({ open, onClose, onPaymentSuccess }) {
   const { user, refetchProfile } = useAuth()
   const [amount, setAmount]       = useState('')
-  const [status, setStatus]       = useState('idle') // idle | loading | success | error
+  const [status, setStatus]       = useState('idle') // idle | loading | success
   const [showFallback, setShowFallback] = useState(false)
   const fallbackTimer = useRef(null)
   const inputRef   = useRef(null)
@@ -74,73 +73,40 @@ export default function AddMoneyModal({ open, onClose, onPaymentSuccess }) {
 
   const handleProceed = () => {
     if (!isValid || status === 'loading') return
-    const capturedAmount = parsed   // capture before any re-render
     setStatus('loading')
 
     // Fallback: if Paystack callback doesn't fire within 8s (mobile browser issue),
     // show a manual "I've paid" button so the user isn't stuck forever
     fallbackTimer.current = setTimeout(() => setShowFallback(true), 8000)
 
-    const handleSuccess = async (reference) => {
+    const handleSuccess = async () => {
       clearTimeout(fallbackTimer.current)
       setShowFallback(false)
 
-      if (!user?.id) {
-        setStatus('wallet_error')
-        return
-      }
-
-      // Race the RPC against a 12-second timeout so the UI can never freeze permanently
-      const timeoutResult = new Promise(resolve =>
-        setTimeout(() => resolve({ error: new Error('timeout') }), 12000)
-      )
-      const { error: walletErr } = await Promise.race([
-        creditWallet(user.id, capturedAmount, 'Wallet top-up via Paystack', reference),
-        timeoutResult,
-      ])
-
-      if (walletErr) {
-        console.error('[AddMoney] ❌ creditWallet RPC error:', JSON.stringify(walletErr))
-        setStatus('wallet_error')
-        return
-      }
-
-      await refetchProfile()
+      // Wallet credit is handled server-side by the Paystack webhook.
+      // Show success immediately and poll to refresh the balance.
       onPaymentSuccess?.()
       setStatus('success')
-      setTimeout(() => onClose(), 1800)
+
+      // Poll refetchProfile in the background so the balance updates on screen
+      ;(async () => {
+        for (let i = 0; i < 6; i++) {
+          await new Promise(r => setTimeout(r, 2500))
+          await refetchProfile()
+        }
+      })()
+
+      setTimeout(() => onClose(), 2500)
     }
 
     initPaystack({
-      onSuccess: (transaction) => handleSuccess(transaction.reference),
+      onSuccess: () => handleSuccess(),
       onClose: () => {
         clearTimeout(fallbackTimer.current)
         setShowFallback(false)
         setStatus('idle')
       },
     })
-  }
-
-  // ── Wallet error state (payment went through but DB update failed) ──
-  if (status === 'wallet_error') {
-    return (
-      <div className={styles.overlay} aria-modal="true" role="dialog">
-        <div ref={sheetRef} className={styles.sheet}>
-          <div className={styles.handle} />
-          <div className={styles.successBody}>
-            <TickCircle size={56} color="#f59e0b" variant="Bold" />
-            <p className={styles.successTitle}>Payment received!</p>
-            <p className={styles.successSub}>
-              Your payment went through but your balance couldn't be updated right now.
-              Please contact support — your money is safe.
-            </p>
-            <button className={styles.proceedBtn} onClick={onClose} style={{ marginTop: 8 }}>
-              Close
-            </button>
-          </div>
-        </div>
-      </div>
-    )
   }
 
   // ── Success state ────────────────────────────────────────────
@@ -152,7 +118,7 @@ export default function AddMoneyModal({ open, onClose, onPaymentSuccess }) {
           <div className={styles.successBody}>
             <TickCircle size={56} color="#22c55e" variant="Bold" />
             <p className={styles.successTitle}>Payment successful!</p>
-            <p className={styles.successSub}>₵{parsed.toFixed(2)} has been added to your wallet.</p>
+            <p className={styles.successSub}>₵{parsed.toFixed(2)} is being added to your wallet.</p>
           </div>
         </div>
       </div>
@@ -220,11 +186,6 @@ export default function AddMoneyModal({ open, onClose, onPaymentSuccess }) {
             </div>
           )}
 
-          {status === 'error' && (
-            <p className={styles.errorNote}>
-              Payment received but wallet update failed. Please contact support.
-            </p>
-          )}
         </div>
 
         <div className={styles.footer}>
