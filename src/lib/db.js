@@ -262,8 +262,8 @@ export async function creditEarnings(userId, amount, description, reference = nu
   return { data, error }
 }
 
-// recordReferralCommission: credits 20% of QwikHub's profit to the buyer's referrer (if any).
-// commissionAmount is pre-calculated by the caller as 0.20 × (salePrice − costPrice).
+// recordReferralCommission: credits 10% of QwikHub's profit to the buyer's referrer (if any).
+// commissionAmount is pre-calculated by the caller as 0.10 × (salePrice − costPrice).
 export async function recordReferralCommission(buyerUserId, amountPaid, commissionAmount) {
   const { data, error } = await restFetch('rpc/record_referral_commission', {
     method: 'POST',

@@ -83,14 +83,14 @@ export default function CartModal({ open, onClose, onPaymentSuccess }) {
       }
       const txData = await debitRes.json().catch(() => [])
 
-      // 3. Credit 20% of QwikHub's profit as referral commission (bundle purchases only)
-      //    Profit per item = sale price − API cost price. Commission = 20% of total profit.
+      // 3. Credit 10% of QwikHub's profit as referral commission (bundle purchases only)
+      //    Profit per item = sale price − API cost price. Commission = 10% of total profit.
       const bundleItems  = items.filter(i => i.type !== 'subscription')
       const bundlesTotal = bundleItems.reduce((sum, i) => sum + i.price, 0)
       const totalProfit  = bundleItems.reduce(
         (sum, i) => sum + Math.max(0, i.price - (i.costPrice || i.price)), 0
       )
-      const commission = Math.round(totalProfit * 0.20 * 100) / 100
+      const commission = Math.round(totalProfit * 0.10 * 100) / 100
       if (bundlesTotal > 0 && commission > 0) {
         recordReferralCommission(user.id, bundlesTotal, commission).catch(() => {})
       }

@@ -35,7 +35,7 @@ const TREE = {
     chips: [BACK],
   },
   referrals: {
-    text: 'We know Paystack takes 2% on every transaction — Refer & Earn is our way of giving some of that back.\n\nShare your unique referral code or link. When a friend signs up using your code and makes a bundle purchase, you automatically earn 20% of QwikHub\'s profit on that sale.\n\nCommissions land in your Earnings balance — separate from your wallet — and can be withdrawn to MoMo.',
+    text: 'We know Paystack takes 2% on every transaction — Refer & Earn is our way of giving some of that back.\n\nShare your unique referral code or link. When a friend signs up using your code and makes a bundle purchase, you automatically earn 10% of QwikHub\'s profit on that sale.\n\nCommissions land in your Earnings balance — separate from your wallet — and can be withdrawn to MoMo.',
     chips: [{ id: 'withdraw', label: 'How do I withdraw?', Icon: Money2 }, BACK],
   },
   withdraw: {

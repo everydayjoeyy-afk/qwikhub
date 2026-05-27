@@ -1,12 +1,17 @@
 import { useState, useEffect } from 'react'
 import { ArrowDown2, ShoppingCart } from 'iconsax-react'
 import BundleSelect, { BUNDLE_OPTIONS } from '../BundleSelect/BundleSelect'
+import SubscriptionSelect from '../SubscriptionSelect/SubscriptionSelect'
 import { useCart } from '../../context/CartContext'
 import { getBundles } from '../../lib/db'
 import styles from './BundleList.module.css'
 import mtn     from '../../assets/mtn.jpg'
 import telecel from '../../assets/telecel.jpg'
 import tigo    from '../../assets/tigo.jpg'
+import netflix  from '../../assets/netflix.jpg'
+import spotify  from '../../assets/spotify.jpg'
+import youtube  from '../../assets/youtube.jpg'
+import capcut   from '../../assets/capcut.jpg'
 
 const NETWORKS = [
   { id: 'mtn',     label: 'Buy MTN Bundles',       fullName: 'MTN Bundles',       logo: mtn,     dbCarrier: 'MTN'        },
@@ -51,6 +56,12 @@ export default function BundleList() {
           costMap={costMaps[network.id] ?? {}}
         />
       ))}
+
+      {/* Premium Offers accordion */}
+      <PremiumOffersCard
+        isOpen={expanded === 'premium'}
+        onToggle={() => toggle('premium')}
+      />
     </div>
   )
 }
@@ -126,6 +137,87 @@ function BundleCard({ network, isOpen, onToggle, priceMap, costMap = {} }) {
           <button
             className={styles.addBtn}
             disabled={!phoneValid || !bundle}
+            onClick={handleAdd}
+          >
+            <ShoppingCart size={20} color="currentColor" variant="Bold" />
+            Add to Cart
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Premium Offers accordion ──────────────────────────────────
+function PremiumOffersCard({ isOpen, onToggle }) {
+  const [selected, setSelected] = useState(null)
+  const [email, setEmail]       = useState('')
+  const { addToCart }           = useCart()
+
+  const emailValid = email.trim().includes('@') && email.trim().includes('.')
+
+  const handleAdd = () => {
+    if (!selected || !emailValid) return
+    addToCart({
+      type:        'subscription',
+      bundleLabel: selected.label,
+      bundleValue: selected.value,
+      price:       selected.price,
+      networkLogo: selected.logo,
+      phone:       email.trim(),
+    })
+  }
+
+  return (
+    <div className={`${styles.card} ${isOpen ? styles.cardOpen : ''}`}>
+      <button className={styles.cardHeader} onClick={onToggle} aria-expanded={isOpen}>
+        <div className={styles.logoGrid}>
+          <img src={netflix}  alt="" className={styles.logoGridImg} />
+          <img src={spotify}  alt="" className={styles.logoGridImg} />
+          <img src={youtube}  alt="" className={styles.logoGridImg} />
+          <img src={capcut}   alt="" className={styles.logoGridImg} />
+        </div>
+        <span className={styles.label}>Premium Offers</span>
+        <ArrowDown2
+          size={18}
+          color="currentColor"
+          className={`${styles.chevron} ${isOpen ? styles.chevronOpen : ''}`}
+        />
+      </button>
+
+      {isOpen && (
+        <div className={styles.body}>
+          <div className={styles.fieldGroup}>
+            <label className={styles.fieldLabel}>Service</label>
+            <SubscriptionSelect value={selected?.value ?? null} onChange={setSelected} />
+          </div>
+
+          <div className={styles.fieldGroup}>
+            <label className={styles.fieldLabel} htmlFor="premium-email">Email</label>
+            <input
+              id="premium-email"
+              type="email"
+              className={`${styles.input} ${email.length > 0 && !emailValid ? styles.inputError : ''}`}
+              placeholder="e.g. johndoe@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoFocus
+            />
+            {email.length > 0 && !emailValid && (
+              <span className={styles.inputHint}>Enter a valid email address</span>
+            )}
+          </div>
+
+          {selected && (
+            <div className={styles.priceRow}>
+              <span className={styles.fieldLabel}>Price</span>
+              <span className={styles.priceValue}>₵{selected.price.toFixed(2)}</span>
+            </div>
+          )}
+
+          <button
+            className={styles.addBtn}
+            disabled={!selected || !emailValid}
             onClick={handleAdd}
           >
             <ShoppingCart size={20} color="currentColor" variant="Bold" />

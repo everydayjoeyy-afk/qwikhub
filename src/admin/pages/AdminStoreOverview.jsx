@@ -20,7 +20,7 @@ export default function AdminStoreOverview() {
   const [packages,       setPackages]       = useState(null)
   const [syncError,      setSyncError]      = useState('')
   const [syncingPrices,  setSyncingPrices]  = useState(false)
-  const [markupPct,      setMarkupPct]      = useState('4.88')
+  const [markupPct,      setMarkupPct]      = useState('10')
   const [priceResult,    setPriceResult]    = useState(null)
 
   const autoSyncedRef = useRef(false)
@@ -144,6 +144,12 @@ export default function AdminStoreOverview() {
     const factor = 1 + markup / 100
     let updated = 0; let skipped = 0
 
+    // Price overrides — these bundles keep a fixed platform_price regardless of markup.
+    // Key format: 'Carrier-DataSize' (must match bundle.carrier + bundle.data_size exactly)
+    const PRICE_OVERRIDES = {
+      'MTN-1GB': 4.30,
+    }
+
     // Use passed-in list (from auto-sync) or current state (from manual button click)
     const bundlesToSync = bundleListOverride ?? bundles
     for (const bundle of bundlesToSync) {
@@ -155,7 +161,7 @@ export default function AdminStoreOverview() {
         skipped++
         continue
       }
-      const newPrice = Math.round(cost * factor * 100) / 100
+      const newPrice = PRICE_OVERRIDES[key] ?? Math.round(cost * factor * 100) / 100
       const { error: err } = await adminUpdateBundle(bundle.id, { platform_price: newPrice, is_active: true, cost_price: cost })
       if (!err) updated++
     }
