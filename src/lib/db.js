@@ -248,18 +248,28 @@ export async function creditWallet(userId, amount, description, reference = null
   return { data, error }
 }
 
-// creditEarnings: credits the withdrawable earnings_balance (store profits, referral transfers)
+// creditEarnings: credits the withdrawable earnings_balance (store profits, referral transfers).
+// Uses anon-key fetch (not restFetch) because storefront callers are unauthenticated.
+// The credit_earnings RPC is SECURITY DEFINER so it runs with elevated privileges.
 export async function creditEarnings(userId, amount, description, reference = null) {
-  const { data, error } = await restFetch('rpc/credit_earnings', {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/credit_earnings`, {
     method: 'POST',
-    body: {
+    headers: {
+      apikey:         ANON_KEY,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
       p_user_id:     userId,
       p_amount:      amount,
       p_description: description,
       p_reference:   reference,
-    },
+    }),
   })
-  return { data, error }
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    return { data: null, error: { message: text || `HTTP ${res.status}` } }
+  }
+  return { data: null, error: null }
 }
 
 // recordReferralCommission: credits 10% of QwikHub's profit to the buyer's referrer (if any).
