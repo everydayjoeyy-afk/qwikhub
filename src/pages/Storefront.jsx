@@ -8,8 +8,8 @@ import { useParams } from 'react-router-dom'
 import { ShoppingCart, Trash, ArrowDown2, TickCircle } from 'iconsax-react'
 import { THEMES } from '../components/CreateStoreModal/CreateStoreModal'
 import { BUNDLE_OPTIONS } from '../components/BundleSelect/BundleSelect'
-import { getStoreBySlug, getStoreBundles, getBundles, createOrder, creditEarnings } from '../lib/db'
-import { deliverStorefrontBundle } from '../lib/cheapBundles'
+import { getStoreBySlug, getStoreBundles, getBundles } from '../lib/db'
+import { completeStoreOrder } from '../lib/cheapBundles'
 import { openPaystackPopup } from '../lib/paystack'
 import mtnLogo     from '../assets/mtn.jpg'
 import telecelLogo from '../assets/telecel.jpg'
@@ -242,56 +242,27 @@ export default function Storefront() {
       return
     }
 
-    // Payment confirmed — record orders
-    // Errors here are logged but don't block the success screen
-    // (customer has paid; store owner reconciles via Paystack dashboard)
-    if (store.id) {
-      for (const item of cart) {
-        // Deduct 2% Paystack processing fee from the store owner's profit so
-        // QwikHub isn't left absorbing it. The fee is proportional to the sale price.
-        const paystackFee = item.price * 0.02
-        const profit = Math.max(0, item.price - item.platformPrice - paystackFee)
-        const { error: orderErr } = await createOrder({
+    // Payment confirmed — hand off to the server. The edge function verifies
+    // the payment with Paystack, then atomically records the order(s), delivers
+    // the bundle(s), and credits the seller. Prices/profit are computed
+    // server-side from the DB, so nothing here can be tampered with.
+    try {
+      const res = await completeStoreOrder({
+        reference,
+        storeId: store.id,
+        items: cart.map(item => ({
           buyerPhone:  item.phone,
           bundleId:    item.bundleId,
-          storeId:     store.id,
-          amountPaid:  item.price,
-          profit,
-          paystackRef: reference,
-        })
-        if (orderErr) {
-          console.error('[Storefront] createOrder failed:', orderErr.message)
-        }
-
-        // Deliver bundle via Edge Function — fire-and-forget after order is recorded.
-        // On failure the order row is marked pending_verification; admin reviews before refunding.
-        if (!orderErr && item.bundleId) {
-          deliverStorefrontBundle({
-            paystackRef: reference,
-            buyerPhone:  item.phone,
-            bundleId:    item.bundleId,
-            networkId:   item.networkId,
-            bundleValue: item.bundleValue,
-          }).catch(err => console.error('[Storefront] delivery error:', err))
-        }
+          networkId:   item.networkId,
+          bundleValue: item.bundleValue,
+        })),
+      })
+      if (!res?.success) {
+        console.error('[Storefront] completeStoreOrder issue:', res?.error)
       }
-    }
-
-    // Credit seller earnings balance with total profit (withdrawable, separate from deposits)
-    // Profit is after deducting the 2% Paystack fee proportional to each item's sale price.
-    const totalProfit = cart.reduce(
-      (s, item) => s + Math.max(0, item.price - item.platformPrice - item.price * 0.02), 0
-    )
-    if (totalProfit > 0 && store.user_id) {
-      const { error: earningsErr } = await creditEarnings(
-        store.user_id,
-        totalProfit,
-        `Sale from store (${cart.length} item${cart.length > 1 ? 's' : ''})`,
-        reference,
-      )
-      if (earningsErr) {
-        console.error('[Storefront] creditEarnings failed — profit not credited:', earningsErr)
-      }
+    } catch (err) {
+      // Money was charged; if this call failed the webhook safety net reconciles.
+      console.error('[Storefront] completeStoreOrder failed:', err)
     }
 
     setPaid(true)
