@@ -5,6 +5,7 @@ import AdminSignIn from './AdminSignIn'
 import AdminLayout from './AdminLayout'
 import AdminWithdrawals  from './pages/AdminWithdrawals'
 import AdminOrders       from './pages/AdminOrders'
+import AdminStorefrontOrders from './pages/AdminStorefrontOrders'
 import AdminUsers        from './pages/AdminUsers'
 import AdminDashboard    from './pages/AdminDashboard'
 import AdminTransactions  from './pages/AdminTransactions'
@@ -36,6 +37,7 @@ export default function AdminApp({ theme }) {
           <Route path="dashboard"    element={<AdminDashboard />} />
           <Route path="withdrawals"  element={<AdminWithdrawals />} />
           <Route path="orders"       element={<AdminOrders />} />
+          <Route path="storefront-orders" element={<AdminStorefrontOrders />} />
           <Route path="transactions" element={<AdminTransactions />} />
           <Route path="topups"       element={<AdminTopups />} />
           <Route path="store"        element={<AdminStoreOverview />} />

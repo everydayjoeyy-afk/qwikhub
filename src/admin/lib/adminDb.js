@@ -62,6 +62,25 @@ export async function adminGetOrders() {
 }
 
 /**
+ * Returns storefront orders (store_id IS NOT NULL) with store, owner, bundle,
+ * profit and delivery detail, newest first. Requires admin_get_storefront_orders.
+ */
+export async function adminGetStorefrontOrders(limit = 300) {
+  return adminFetch('rpc/admin_get_storefront_orders', {
+    method: 'POST',
+    body: { p_limit: limit },
+  })
+}
+
+/** Set delivery_status on a storefront order (orders table). */
+export async function adminSetOrderDeliveryStatus(orderId, newStatus) {
+  return adminFetch('rpc/admin_set_order_delivery_status', {
+    method: 'POST',
+    body: { p_order_id: orderId, p_status: newStatus },
+  })
+}
+
+/**
  * Search users by name, phone, or email.
  * Empty query returns the 30 most recently joined users.
  */
