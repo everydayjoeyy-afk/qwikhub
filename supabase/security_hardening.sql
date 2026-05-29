@@ -338,8 +338,57 @@ REVOKE UPDATE, INSERT, DELETE ON referrals   FROM authenticated, anon;
 REVOKE UPDATE, INSERT, DELETE ON withdrawals FROM authenticated, anon;
 
 -- ============================================================
+-- PART 3 — Admin withdrawal RPCs
+-- Both enforce is_admin(auth.uid()) server-side. admin_approve is already
+-- race-safe (atomic UPDATE ... WHERE status='pending'). admin_reject is
+-- rewritten below to flip status atomically BEFORE refunding, closing a
+-- concurrent-reject / approve-reject double-refund race.
+-- ============================================================
+
+-- 16. Approve a pending withdrawal (atomic; safe as-is — captured for repo)
+CREATE OR REPLACE FUNCTION public.admin_approve_withdrawal(p_withdrawal_id uuid)
+RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND is_admin = TRUE)
+    THEN RAISE EXCEPTION 'Access denied'; END IF;
+  UPDATE withdrawals SET status = 'completed'
+  WHERE id = p_withdrawal_id AND status = 'pending';
+  IF NOT FOUND THEN RAISE EXCEPTION 'Not found or already processed'; END IF;
+END;
+$function$;
+
+-- 17. Reject a pending withdrawal + refund (race-safe: claim row before refund)
+CREATE OR REPLACE FUNCTION public.admin_reject_withdrawal(p_withdrawal_id uuid)
+RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+DECLARE v_user_id UUID; v_amount NUMERIC;
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND is_admin = TRUE)
+    THEN RAISE EXCEPTION 'Access denied'; END IF;
+
+  UPDATE withdrawals SET status = 'rejected'
+  WHERE id = p_withdrawal_id AND status = 'pending'
+  RETURNING user_id, amount INTO v_user_id, v_amount;
+
+  IF v_user_id IS NULL THEN RAISE EXCEPTION 'Not found or already processed'; END IF;
+
+  UPDATE users SET earnings_balance = COALESCE(earnings_balance, 0) + v_amount WHERE id = v_user_id;
+  INSERT INTO transactions(user_id, type, amount, description)
+  VALUES(v_user_id, 'credit', v_amount, 'Withdrawal rejected — amount refunded to earnings');
+END;
+$function$;
+
+-- ============================================================
 -- STILL LIVE-ONLY (dump from the DB and add for full reproducibility):
---   check_email_exists, and all admin_* functions.
+--   check_email_exists, and the remaining admin_* functions
+--   (admin_get_*, admin_search_users, admin_update_bundle,
+--    admin_update_delivery_status, admin_delete_user, etc.).
 -- Dump with: SELECT pg_get_functiondef('<schema>.<name>(<argtypes>)'::regprocedure);
--- Also still to verify server-side: every admin_* RPC enforces is_admin(auth.uid()).
+-- Spot-check each still enforces is_admin(auth.uid()) — the two withdrawal
+-- RPCs above do, which is a good sign the pattern is consistent.
 -- ============================================================
