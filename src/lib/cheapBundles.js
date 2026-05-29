@@ -42,25 +42,10 @@ export async function deliverWalletBundle({ transactionId, phone, networkId, bun
   })
 }
 
-/**
- * Deliver a bundle purchased via the storefront (Paystack).
- * @param {string} paystackRef - Paystack payment reference
- * @param {string} buyerPhone  - recipient Ghana phone number
- * @param {string} bundleId    - UUID of the bundles row
- * @param {string} networkId   - 'mtn' | 'telecel' | 'airteltigo'
- * @param {string} bundleValue - e.g. '5gb'
- */
-export async function deliverStorefrontBundle({ paystackRef, buyerPhone, bundleId, networkId, bundleValue }) {
-  return callEdgeFunction({
-    action:       'buy',
-    paystack_ref: paystackRef,
-    buyer_phone:  buyerPhone,
-    bundle_id:    bundleId,
-    phone:        buyerPhone,
-    network_id:   networkId,
-    bundle_value: bundleValue,
-  })
-}
+// NOTE: Storefront delivery is now handled inside the complete-store-order
+// edge function (after server-side Paystack verification). The old
+// deliverStorefrontBundle helper and the buy-bundle storefront branch it
+// called were removed to close an unauthenticated delivery bypass.
 
 /**
  * Fetch all packages from the Cheap Bundles API.

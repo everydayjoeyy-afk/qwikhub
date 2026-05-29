@@ -52,9 +52,17 @@ serve(async (req: Request) => {
       return json({ success: true, packages: data })
     }
 
-    // ── action: buy ───────────────────────────────────────────────
+    // ── action: buy (WALLET purchases only) ───────────────────────
+    // Storefront purchases are handled by the complete-store-order function,
+    // which verifies the Paystack payment server-side before delivering.
+    // The old paystack_ref branch was removed: it delivered whenever a matching
+    // order row existed WITHOUT verifying payment — an unauthenticated bypass.
     if (action === 'buy') {
-      const { phone, network_id, bundle_value, transaction_id, paystack_ref, buyer_phone, bundle_id } = body
+      const { phone, network_id, bundle_value, transaction_id } = body
+
+      if (!transaction_id) {
+        return json({ success: false, error: 'Missing transaction_id' }, 400)
+      }
 
       const networkNum = NETWORK_IDS[network_id]
       if (!networkNum) return json({ success: false, error: `Unknown network: ${network_id}` }, 400)
@@ -64,34 +72,15 @@ serve(async (req: Request) => {
 
       const db = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
 
-      // --- Verify the request is legitimate and not a replay ---
-      if (transaction_id) {
-        // Wallet purchase: transaction must exist and not already delivered
-        const { data: tx, error } = await db
-          .from('transactions')
-          .select('id, delivery_status')
-          .eq('id', transaction_id)
-          .single()
+      // Wallet purchase: transaction must exist and not already delivered
+      const { data: tx, error } = await db
+        .from('transactions')
+        .select('id, delivery_status')
+        .eq('id', transaction_id)
+        .single()
 
-        if (error || !tx)                    return json({ success: false, error: 'Transaction not found' }, 404)
-        if (tx.delivery_status === 'delivered') return json({ success: false, error: 'Already delivered' }, 409)
-
-      } else if (paystack_ref && buyer_phone && bundle_id) {
-        // Storefront purchase: find the order row
-        const { data: order, error } = await db
-          .from('orders')
-          .select('id, delivery_status')
-          .eq('paystack_ref', paystack_ref)
-          .eq('buyer_phone',  buyer_phone)
-          .eq('bundle_id',    bundle_id)
-          .maybeSingle()
-
-        if (error || !order)                       return json({ success: false, error: 'Order not found' }, 404)
-        if (order.delivery_status === 'delivered') return json({ success: false, error: 'Already delivered' }, 409)
-
-      } else {
-        return json({ success: false, error: 'Missing transaction_id or paystack_ref+buyer_phone+bundle_id' }, 400)
-      }
+      if (error || !tx)                       return json({ success: false, error: 'Transaction not found' }, 404)
+      if (tx.delivery_status === 'delivered') return json({ success: false, error: 'Already delivered' }, 409)
 
       // --- Call the Cheap Bundles API ---
       const apiRes  = await fetch(`${CHEAP_BUNDLES_BASE}/buy-other`, {
@@ -103,37 +92,26 @@ serve(async (req: Request) => {
           shared_bundle:    sharedBundle,
         }),
       })
-      const apiData = await apiRes.json()
+      // Guard against non-JSON / malformed upstream responses so a debited
+      // wallet never gets stuck in 'pending' — treat any parse failure as a
+      // delivery failure that admin reviews.
+      const apiData = await apiRes.json().catch(() => ({ success: false, message: 'Invalid API response' }))
 
       if (apiData.success) {
-        // Mark delivered and store the transaction code for reconciliation
-        if (transaction_id) {
-          await db.from('transactions').update({
-            delivery_status:  'delivered',
-            transaction_code: apiData.transaction_code ?? null,
-            delivery_error:   null,
-          }).eq('id', transaction_id)
-        } else {
-          await db.from('orders').update({
-            delivery_status:  'delivered',
-            transaction_code: apiData.transaction_code ?? null,
-          }).eq('paystack_ref', paystack_ref).eq('buyer_phone', buyer_phone).eq('bundle_id', bundle_id)
-        }
+        await db.from('transactions').update({
+          delivery_status:  'delivered',
+          transaction_code: apiData.transaction_code ?? null,
+          delivery_error:   null,
+        }).eq('id', transaction_id)
         return json({ success: true, transaction_code: apiData.transaction_code })
 
       } else {
         // DO NOT auto-refund — admin verifies on Cheap Bundles dashboard first
         // to avoid the risk of double-credit (API can fail but still deliver).
-        if (transaction_id) {
-          await db.from('transactions').update({
-            delivery_status: 'pending_verification',
-            delivery_error:  apiData.message ?? 'API error',
-          }).eq('id', transaction_id)
-        } else {
-          await db.from('orders').update({
-            delivery_status: 'pending_verification',
-          }).eq('paystack_ref', paystack_ref).eq('buyer_phone', buyer_phone).eq('bundle_id', bundle_id)
-        }
+        await db.from('transactions').update({
+          delivery_status: 'pending_verification',
+          delivery_error:  apiData.message ?? 'API error',
+        }).eq('id', transaction_id)
         return json({ success: false, error: apiData.message ?? 'Delivery failed — pending admin review' })
       }
     }

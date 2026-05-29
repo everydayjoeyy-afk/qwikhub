@@ -207,31 +207,10 @@ export async function getStoreOrders(storeId) {
   return { data: data ?? [], error }
 }
 
-export async function createOrder({ buyerPhone, bundleId, storeId, amountPaid, profit, paystackRef }) {
-  // Storefront orders are placed by unauthenticated customers. We call a
-  // SECURITY DEFINER RPC so it runs with elevated privileges and bypasses RLS —
-  // the same pattern used by checkEmailExists. No auth token needed, just apikey.
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/create_storefront_order`, {
-    method: 'POST',
-    headers: {
-      apikey:         ANON_KEY,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      p_buyer_phone:  buyerPhone,
-      p_bundle_id:    bundleId,
-      p_store_id:     storeId,
-      p_amount_paid:  amountPaid,
-      p_profit:       profit,
-      p_paystack_ref: paystackRef,
-    }),
-  })
-  if (!res.ok) {
-    const text = await res.text().catch(() => '')
-    return { data: null, error: { message: text || `HTTP ${res.status}` } }
-  }
-  return { data: null, error: null }
-}
+// NOTE: Storefront order creation, delivery, and seller crediting are now
+// handled entirely server-side by the `complete-store-order` edge function
+// (it verifies the Paystack payment first). The old client-side createOrder /
+// creditEarnings helpers were removed — their RPCs are locked to service_role.
 
 // ── Wallet ───────────────────────────────────────────────────
 // creditWallet: credits the deposit wallet_balance (top-ups only)
@@ -246,30 +225,6 @@ export async function creditWallet(userId, amount, description, reference = null
     },
   })
   return { data, error }
-}
-
-// creditEarnings: credits the withdrawable earnings_balance (store profits, referral transfers).
-// Uses anon-key fetch (not restFetch) because storefront callers are unauthenticated.
-// The credit_earnings RPC is SECURITY DEFINER so it runs with elevated privileges.
-export async function creditEarnings(userId, amount, description, reference = null) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/credit_earnings`, {
-    method: 'POST',
-    headers: {
-      apikey:         ANON_KEY,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      p_user_id:     userId,
-      p_amount:      amount,
-      p_description: description,
-      p_reference:   reference,
-    }),
-  })
-  if (!res.ok) {
-    const text = await res.text().catch(() => '')
-    return { data: null, error: { message: text || `HTTP ${res.status}` } }
-  }
-  return { data: null, error: null }
 }
 
 // recordReferralCommission: credits 10% of QwikHub's profit to the buyer's referrer (if any).
