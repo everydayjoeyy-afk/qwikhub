@@ -241,55 +241,18 @@ export async function recordReferralCommission(buyerUserId, amountPaid, commissi
   return { data, error }
 }
 
-// transferReferralEarnings: moves available commissions → earnings_balance
-// availableReferrals : all referral rows (used to find rows with new commission)
-// amount             : pre-calculated sum of available commissions
-export async function transferReferralEarnings(userId, availableReferrals, amount) {
-  if (amount <= 0) return { data: null, error: null }
-
-  // Rows that have new commission since last transfer
-  const rowsToProcess = availableReferrals.filter(
-    r => (r.commission_amount ?? 0) > (r.transferredAmount ?? 0)
-  )
-
-  // 1. Reset transferred = false so the SECURITY DEFINER RPC can find and
-  //    process these rows (the RPC uses WHERE transferred = false).
-  //    Rows with transferred = true (prior transfer) but new commission need
-  //    this reset or the RPC will skip them.
-  if (rowsToProcess.length > 0) {
-    await Promise.all(
-      rowsToProcess.map(r =>
-        restFetch(`referrals?id=eq.${r.id}`, {
-          method: 'PATCH',
-          body: { transferred: false },
-        })
-      )
-    )
-  }
-
-  // 2. Call the SECURITY DEFINER RPC — atomically updates earnings_balance
-  //    and records a transaction. Cannot do this from REST directly (RLS blocks
-  //    direct writes to earnings_balance on profiles).
+// transferReferralEarnings: moves available commissions → earnings_balance.
+// The transfer_referral_earnings RPC now computes the untransferred delta
+// (commission_amount − transferred_amount) and stamps it atomically in one
+// transaction, so the old client-side PATCH choreography is gone (and direct
+// writes to the referrals table are revoked). Extra args kept for call-site
+// compatibility but no longer used.
+export async function transferReferralEarnings(userId, _availableReferrals, _amount) {
   const { data, error } = await restFetch('rpc/transfer_referral_earnings', {
     method: 'POST',
     body: { p_user_id: userId },
   })
-  if (error) return { data, error }
-
-  // 3. Stamp transferred_amount = commission_amount so the next incremental
-  //    commission from the same user is correctly detected as available.
-  if (rowsToProcess.length > 0) {
-    await Promise.all(
-      rowsToProcess.map(r =>
-        restFetch(`referrals?id=eq.${r.id}`, {
-          method: 'PATCH',
-          body: { transferred_amount: r.commission_amount, transferred: true },
-        })
-      )
-    )
-  }
-
-  return { data: null, error: null }
+  return { data, error }
 }
 
 // ── Transactions ─────────────────────────────────────────────
@@ -313,28 +276,14 @@ export async function getWithdrawals(userId) {
 export async function requestWithdrawal(userId, amount, momoNumber) {
   if (amount < 50) return { error: { message: 'Minimum withdrawal is ₵50' } }
 
-  // Deduct from earnings_balance (not wallet_balance — deposits are not withdrawable)
-  const { error: balErr } = await restFetch('rpc/decrement_earnings', {
+  // Single atomic RPC: balance check + decrement + withdrawal row + transaction,
+  // all in one transaction, scoped to the authenticated caller (auth.uid()).
+  // Returns the inserted withdrawal row so the UI can prepend it to the list.
+  const { data, error } = await restFetch('rpc/request_withdrawal', {
     method: 'POST',
-    body: { p_user_id: userId, p_amount: amount },
+    body: { p_amount: amount, p_momo_number: momoNumber },
   })
-  if (balErr) return { error: balErr }
-
-  // Create withdrawal record
-  const { data, error } = await restFetch('withdrawals', {
-    method: 'POST',
-    body: { user_id: userId, amount, momo_number: momoNumber, status: 'pending' },
-  })
-
-  // Record debit transaction
-  if (!error) {
-    await restFetch('transactions', {
-      method: 'POST',
-      body: { user_id: userId, type: 'debit', amount, description: 'Withdrawal request' },
-    })
-  }
-
-  return { data: Array.isArray(data) ? (data[0] ?? null) : data, error }
+  return { data, error }
 }
 
 // ── Referrals ────────────────────────────────────────────────
