@@ -18,13 +18,15 @@ function loadScript() {
 
 /**
  * @param {object} opts
- * @param {string} opts.email        - customer email (required by Paystack)
- * @param {number} opts.amount       - amount in GHS (we convert to pesewas)
- * @param {string} opts.phone        - customer phone
- * @param {string} opts.bundleLabel  - e.g. "MTN 5GB Bundle"
+ * @param {string}  opts.email        - customer email (required by Paystack)
+ * @param {number}  opts.amount       - amount in GHS (we convert to pesewas)
+ * @param {string}  opts.phone        - customer phone
+ * @param {string}  opts.bundleLabel  - e.g. "MTN 5GB Bundle"
+ * @param {string}  [opts.storeId]    - store UUID (storefront only)
+ * @param {Array}   [opts.items]      - cart items for the webhook safety net (storefront only)
  * @returns {Promise<{ reference: string }>}
  */
-export async function openPaystackPopup({ email, amount, phone, bundleLabel }) {
+export async function openPaystackPopup({ email, amount, phone, bundleLabel, storeId = null, items = null }) {
   await loadScript()
 
   return new Promise((resolve, reject) => {
@@ -39,6 +41,9 @@ export async function openPaystackPopup({ email, amount, phone, bundleLabel }) {
           { display_name: 'Phone', variable_name: 'phone', value: phone },
           { display_name: 'Bundle', variable_name: 'bundle', value: bundleLabel },
         ],
+        // Embedded so the Paystack webhook can complete the order server-side
+        // if the customer's browser dies before complete-store-order fires.
+        ...(storeId && items ? { qwikhub: { store_id: storeId, items } } : {}),
       },
       callback: (response) => resolve({ reference: response.reference }),
       onClose:  () => reject(new Error('Payment cancelled')),

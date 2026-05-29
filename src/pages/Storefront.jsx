@@ -225,12 +225,23 @@ export default function Storefront() {
 
     let reference = null
 
+    // Shared item shape used both for the Paystack metadata (webhook safety net)
+    // and the direct completion call below.
+    const orderItems = cart.map(item => ({
+      buyerPhone:  item.phone,
+      bundleId:    item.bundleId,
+      networkId:   item.networkId,
+      bundleValue: item.bundleValue,
+    }))
+
     try {
       const result = await openPaystackPopup({
         email:       null,
         amount:      total,
         phone:       cart[0].phone,
         bundleLabel: cart.map(i => `${i.networkName} ${i.bundleLabel}`).join(', '),
+        storeId:     store.id,
+        items:       orderItems,
       })
       reference = result.reference
     } catch (err) {
@@ -246,16 +257,13 @@ export default function Storefront() {
     // the payment with Paystack, then atomically records the order(s), delivers
     // the bundle(s), and credits the seller. Prices/profit are computed
     // server-side from the DB, so nothing here can be tampered with.
+    // If this call never fires (e.g. browser closes), the Paystack webhook
+    // completes the same order from the embedded metadata.
     try {
       const res = await completeStoreOrder({
         reference,
         storeId: store.id,
-        items: cart.map(item => ({
-          buyerPhone:  item.phone,
-          bundleId:    item.bundleId,
-          networkId:   item.networkId,
-          bundleValue: item.bundleValue,
-        })),
+        items:   orderItems,
       })
       if (!res?.success) {
         console.error('[Storefront] completeStoreOrder issue:', res?.error)

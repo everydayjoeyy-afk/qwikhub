@@ -4,6 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const PAYSTACK_SECRET  = Deno.env.get('PAYSTACK_SECRET_KEY') ?? ''
 const SUPABASE_URL     = Deno.env.get('SUPABASE_URL') ?? ''
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+const ANON_KEY         = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
 
 // ── Verify Paystack HMAC-SHA512 signature ─────────────────────
 async function verifySignature(body: string, signature: string): Promise<boolean> {
@@ -53,8 +54,44 @@ serve(async (req: Request) => {
   const data     = event.data as Record<string, unknown>
   const reference = String(data.reference ?? '')
 
-  // Only handle wallet top-ups (reference starts with 'qwikhub_').
-  // Storefront payments use 'QH-' prefix and are handled client-side.
+  // ── Storefront purchases ('QH-' prefix) — safety net ──────────
+  // Normally completed client-side by complete-store-order right after payment.
+  // If the customer's browser died before that fired, finish it here. The
+  // complete-store-order function re-verifies the payment and is idempotent,
+  // so a purchase already processed by the client is safely skipped.
+  if (reference.startsWith('QH-')) {
+    const metadata = (data.metadata ?? {}) as Record<string, unknown>
+    const qh       = (metadata.qwikhub ?? {}) as Record<string, unknown>
+    const storeId  = String(qh.store_id ?? '')
+    const items    = Array.isArray(qh.items) ? qh.items : []
+
+    if (!storeId || items.length === 0) {
+      // No embedded order info — can't recover automatically. Log for manual review.
+      console.error('[paystack-webhook] QH payment missing order metadata', { reference })
+      return new Response('OK', { status: 200 })
+    }
+
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/complete-store-order`, {
+      method:  'POST',
+      headers: {
+        apikey:         ANON_KEY,
+        Authorization:  `Bearer ${ANON_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ reference, store_id: storeId, items }),
+    })
+
+    if (!res.ok) {
+      console.error('[paystack-webhook] complete-store-order failed', { reference, status: res.status })
+      // Return 500 so Paystack retries (up to 72 hours)
+      return new Response('Processing failed', { status: 500 })
+    }
+
+    console.log('[paystack-webhook] ✅ Storefront order completed via webhook', { reference })
+    return new Response('OK', { status: 200 })
+  }
+
+  // ── Wallet top-ups ('qwikhub_' prefix) ────────────────────────
   if (!reference.startsWith('qwikhub_')) {
     return new Response('OK', { status: 200 })
   }
