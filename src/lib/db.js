@@ -379,3 +379,23 @@ export async function markComplaintRepliesRead() {
   })
   return { error }
 }
+
+// ── Announcements (admin broadcasts shown in the Updates feed) ─
+export async function getAnnouncements() {
+  const { data, error } = await restFetch(
+    'announcements?is_published=eq.true&select=*&order=created_at.desc'
+  )
+  return { data: data ?? [], error }
+}
+
+export async function getUnreadAnnouncementCount() {
+  const { data } = await restFetch('rpc/get_unread_announcement_count', { method: 'POST', body: {} })
+  if (typeof data === 'number') return data
+  if (Array.isArray(data)) return Number(data[0] ?? 0)
+  return 0
+}
+
+export async function markAnnouncementsRead() {
+  const { error } = await restFetch('rpc/mark_announcements_read', { method: 'POST', body: {} })
+  return { error }
+}

@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Notification, Messages2 } from 'iconsax-react'
 import { useAuth } from '../context/AuthContext'
-import { getMyComplaints, markComplaintRepliesRead } from '../lib/db'
-import { ANNOUNCEMENTS, getReadAnnouncementIds, markAnnouncementsRead } from '../lib/announcements'
+import {
+  getMyComplaints, markComplaintRepliesRead,
+  getAnnouncements, markAnnouncementsRead,
+} from '../lib/db'
 import styles from './Updates.module.css'
 
 function timeAgo(iso) {
@@ -20,30 +22,36 @@ function timeAgo(iso) {
 
 export default function Updates() {
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const [items, setItems]     = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!user) return
     let cancelled = false
+    // Snapshot the last-read marker now so per-item "unread" dots reflect
+    // state at page open (we mark everything read below).
+    const lastRead = profile?.announcements_last_read_at
+      ? new Date(profile.announcements_last_read_at).getTime()
+      : 0
     ;(async () => {
-      // Announcements (everyone) — compute unread BEFORE marking read
-      const readIds = getReadAnnouncementIds(user.id)
-      const announcementItems = ANNOUNCEMENTS.map(a => ({
+      const [{ data: anns }, { data: complaints }] = await Promise.all([
+        getAnnouncements(),
+        getMyComplaints(),
+      ])
+      if (cancelled) return
+
+      const announcementItems = (Array.isArray(anns) ? anns : []).map(a => ({
         id:     `ann-${a.id}`,
         kind:   'announcement',
         title:  a.title,
         body:   a.body,
-        date:   a.date,
+        date:   a.created_at,
         link:   a.link ?? null,
-        unread: !readIds.includes(a.id),
+        unread: new Date(a.created_at).getTime() > lastRead,
       }))
 
-      // Complaint replies (personal)
-      const { data } = await getMyComplaints()
-      if (cancelled) return
-      const replyItems = (Array.isArray(data) ? data : [])
+      const replyItems = (Array.isArray(complaints) ? complaints : [])
         .filter(c => c.admin_reply)
         .map(c => ({
           id:     `complaint-${c.id}`,
@@ -61,11 +69,12 @@ export default function Updates() {
       setLoading(false)
 
       // Mark everything read, then tell the bell to refresh its badge
-      markAnnouncementsRead(user.id)
+      await markAnnouncementsRead()
       await markComplaintRepliesRead()
       window.dispatchEvent(new Event('qwikhub:updates-read'))
     })()
     return () => { cancelled = true }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
   return (

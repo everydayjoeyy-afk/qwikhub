@@ -5,8 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import { HambergerMenu, ShoppingCart, Notification } from 'iconsax-react'
 import { useCart } from './context/CartContext'
 import { useAuth } from './context/AuthContext'
-import { getMyComplaints } from './lib/db'
-import { getUnreadAnnouncementCount } from './lib/announcements'
+import { getMyComplaints, getUnreadAnnouncementCount } from './lib/db'
 import logoDark from './assets/logo-dark.svg'
 import logoLight from './assets/logo-light.svg'
 import styles from './App.module.css'
@@ -58,7 +57,7 @@ function useSystemTheme() {
 
 export default function App() {
   const { count } = useCart()
-  const { user, profile } = useAuth()
+  const { profile } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const [unreadUpdates, setUnreadUpdates] = useState(0)
@@ -86,11 +85,13 @@ export default function App() {
     if (!profile) { setUnreadUpdates(0); return }
     let cancelled = false
     const fetchUnread = async () => {
-      const { data } = await getMyComplaints()
+      const [{ data }, announcements] = await Promise.all([
+        getMyComplaints(),
+        getUnreadAnnouncementCount(),
+      ])
       if (cancelled) return
       const replies = (Array.isArray(data) ? data : []).filter(c => c.admin_reply && !c.reply_read).length
-      const announcements = getUnreadAnnouncementCount(user?.id)
-      setUnreadUpdates(replies + announcements)
+      setUnreadUpdates(replies + (announcements ?? 0))
     }
     fetchUnread()
     const handler = () => fetchUnread()

@@ -101,6 +101,27 @@ export async function adminSetComplaintStatus(id, status) {
   })
 }
 
+/** Returns all announcements (published + unpublished), newest first. */
+export async function adminGetAnnouncements() {
+  return adminFetch('rpc/admin_get_announcements', { method: 'POST', body: {} })
+}
+
+/** Create + publish a new announcement (link optional). */
+export async function adminCreateAnnouncement(title, body, link = null) {
+  return adminFetch('rpc/admin_create_announcement', {
+    method: 'POST',
+    body: { p_title: title, p_body: body, p_link: link },
+  })
+}
+
+/** Permanently delete an announcement. */
+export async function adminDeleteAnnouncement(id) {
+  return adminFetch('rpc/admin_delete_announcement', {
+    method: 'POST',
+    body: { p_id: id },
+  })
+}
+
 /**
  * Search users by name, phone, or email.
  * Empty query returns the 30 most recently joined users.

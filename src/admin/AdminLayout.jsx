@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
   HambergerMenu, CloseCircle, MoneyRecive, LogoutCurve,
   ShoppingBag, People, Category, Receipt2, ArrowLeft2, ArrowRight2,
-  Wallet2, Shop, Warning2, VideoPlay, Bag2, Messages2,
+  Wallet2, Shop, Warning2, VideoPlay, Bag2, Messages2, Notification,
 } from 'iconsax-react'
 import { useAuth } from '../context/AuthContext'
 import logoLight from '../assets/logo-light.svg'
@@ -22,6 +22,7 @@ const NAV = [
   { to: '/admin/failed',         label: 'Failed Orders',    Icon: Warning2  },
   { to: '/admin/subscriptions', label: 'Subscriptions',   Icon: VideoPlay },
   { to: '/admin/complaints',    label: 'Complaints',       Icon: Messages2 },
+  { to: '/admin/announcements', label: 'Announcements',    Icon: Notification },
   { to: '/admin/users',         label: 'Users',            Icon: People    },
 ]
 
