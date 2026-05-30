@@ -39,30 +39,31 @@ export default function Home({ greeting, firstName }) {
       />
       <QuickActions />
       <BundleList />
-      <RecentTransactions txKey={txKey} />
 
-      <button
-        onClick={() => setComplaintOpen(true)}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 8,
-          width: '100%',
-          padding: '13px 16px',
-          background: 'transparent',
-          border: '1.5px solid var(--color-border)',
-          borderRadius: 14,
-          fontSize: 14,
-          fontWeight: 600,
-          color: 'var(--color-text-secondary)',
-          fontFamily: 'var(--font-sans)',
-          cursor: 'pointer',
-        }}
-      >
-        <MessageQuestion size={18} color="currentColor" variant="Bold" />
-        Have an issue? File a complaint
-      </button>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+        <button
+          onClick={() => setComplaintOpen(true)}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '8px 14px',
+            background: 'transparent',
+            border: '1.5px solid var(--color-border)',
+            borderRadius: 999,
+            fontSize: 13,
+            fontWeight: 600,
+            color: 'var(--color-text-secondary)',
+            fontFamily: 'var(--font-sans)',
+            cursor: 'pointer',
+          }}
+        >
+          <MessageQuestion size={16} color="currentColor" variant="Bold" />
+          Have an issue?
+        </button>
+      </div>
+
+      <RecentTransactions txKey={txKey} />
 
       <AddMoneyModal
         open={addMoneyOpen}

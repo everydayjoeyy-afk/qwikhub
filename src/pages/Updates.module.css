@@ -75,6 +75,8 @@
 }
 [data-theme="dark"] .item { border-color: rgba(255,255,255,0.08); }
 .itemUnread { border-color: #FFCC08; background: rgba(255,204,8,0.04); }
+.itemLink { text-decoration: none; color: inherit; cursor: pointer; transition: background 0.15s; }
+.itemLink:hover { background: var(--color-surface-hover); }
 
 .itemIcon {
   width: 36px;

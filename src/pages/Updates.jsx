@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Notification, Messages2 } from 'iconsax-react'
 import { useAuth } from '../context/AuthContext'
 import { getMyComplaints, markComplaintRepliesRead } from '../lib/db'
+import { ANNOUNCEMENTS, getReadAnnouncementIds, markAnnouncementsRead } from '../lib/announcements'
 import styles from './Updates.module.css'
 
 function timeAgo(iso) {
@@ -27,23 +28,40 @@ export default function Updates() {
     if (!user) return
     let cancelled = false
     ;(async () => {
+      // Announcements (everyone) — compute unread BEFORE marking read
+      const readIds = getReadAnnouncementIds(user.id)
+      const announcementItems = ANNOUNCEMENTS.map(a => ({
+        id:     `ann-${a.id}`,
+        kind:   'announcement',
+        title:  a.title,
+        body:   a.body,
+        date:   a.date,
+        link:   a.link ?? null,
+        unread: !readIds.includes(a.id),
+      }))
+
+      // Complaint replies (personal)
       const { data } = await getMyComplaints()
       if (cancelled) return
-      // Build the feed: complaint replies become "updates" (announcements merge here later)
-      const replies = (Array.isArray(data) ? data : [])
+      const replyItems = (Array.isArray(data) ? data : [])
         .filter(c => c.admin_reply)
         .map(c => ({
-          id:      `complaint-${c.id}`,
-          kind:    'reply',
-          title:   `Reply to your complaint · ${c.category}`,
-          body:    c.admin_reply,
-          date:    c.replied_at ?? c.created_at,
-          unread:  !c.reply_read,
+          id:     `complaint-${c.id}`,
+          kind:   'reply',
+          title:  `Reply to your complaint · ${c.category}`,
+          body:   c.admin_reply,
+          date:   c.replied_at ?? c.created_at,
+          link:   null,
+          unread: !c.reply_read,
         }))
-      replies.sort((a, b) => new Date(b.date) - new Date(a.date))
-      setItems(replies)
+
+      const merged = [...announcementItems, ...replyItems]
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+      setItems(merged)
       setLoading(false)
-      // Mark replies read so the bell badge clears, then tell the bell to refresh
+
+      // Mark everything read, then tell the bell to refresh its badge
+      markAnnouncementsRead(user.id)
       await markComplaintRepliesRead()
       window.dispatchEvent(new Event('qwikhub:updates-read'))
     })()
@@ -70,21 +88,41 @@ export default function Updates() {
         </div>
       ) : (
         <div className={styles.list}>
-          {items.map(it => (
-            <div key={it.id} className={`${styles.item} ${it.unread ? styles.itemUnread : ''}`}>
-              <div className={styles.itemIcon}>
-                <Messages2 size={18} color="#8a6800" variant="Bold" />
-              </div>
-              <div className={styles.itemBody}>
-                <div className={styles.itemTopRow}>
-                  <span className={styles.itemTitle}>{it.title}</span>
-                  {it.unread && <span className={styles.dot} aria-label="Unread" />}
+          {items.map(it => {
+            const Icon = it.kind === 'reply' ? Messages2 : Notification
+            const inner = (
+              <>
+                <div className={styles.itemIcon}>
+                  <Icon size={18} color="#8a6800" variant="Bold" />
                 </div>
-                <p className={styles.itemText}>{it.body}</p>
-                <span className={styles.itemTime}>{timeAgo(it.date)}</span>
+                <div className={styles.itemBody}>
+                  <div className={styles.itemTopRow}>
+                    <span className={styles.itemTitle}>{it.title}</span>
+                    {it.unread && <span className={styles.dot} aria-label="Unread" />}
+                  </div>
+                  <p className={styles.itemText}>{it.body}</p>
+                  <span className={styles.itemTime}>
+                    {timeAgo(it.date)}{it.link ? ' · Tap to open' : ''}
+                  </span>
+                </div>
+              </>
+            )
+            return it.link ? (
+              <a
+                key={it.id}
+                href={it.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${styles.item} ${styles.itemLink} ${it.unread ? styles.itemUnread : ''}`}
+              >
+                {inner}
+              </a>
+            ) : (
+              <div key={it.id} className={`${styles.item} ${it.unread ? styles.itemUnread : ''}`}>
+                {inner}
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
