@@ -114,13 +114,26 @@ BEGIN
 END;
 $$;
 
+-- Permanently delete a complaint (admin housekeeping once truly resolved).
+CREATE OR REPLACE FUNCTION admin_delete_complaint(p_complaint_id uuid)
+RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public'
+AS $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND is_admin = TRUE)
+    THEN RAISE EXCEPTION 'Access denied'; END IF;
+  DELETE FROM complaints WHERE id = p_complaint_id;
+END;
+$$;
+
 -- ── Execute grants ────────────────────────────────────────────
 DO $$
 DECLARE r record;
 BEGIN
   FOR r IN SELECT oid::regprocedure AS sig FROM pg_proc
            WHERE proname IN ('submit_complaint','mark_complaint_replies_read',
-                             'admin_get_complaints','admin_reply_complaint','admin_set_complaint_status')
+                             'admin_get_complaints','admin_reply_complaint','admin_set_complaint_status',
+                             'admin_delete_complaint')
   LOOP
     EXECUTE format('REVOKE EXECUTE ON FUNCTION %s FROM PUBLIC, anon;', r.sig);
     EXECUTE format('GRANT  EXECUTE ON FUNCTION %s TO authenticated, service_role;', r.sig);

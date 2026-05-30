@@ -149,3 +149,18 @@
   transition: background 0.15s, border-color 0.15s;
 }
 .statusBtn:hover { background: var(--color-surface-hover); border-color: var(--color-text-secondary); }
+
+.deleteBtn {
+  background: transparent;
+  border: 1.5px solid var(--color-border);
+  border-radius: 10px;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ef4444;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.deleteBtn:hover { background: rgba(239,68,68,0.08); border-color: #ef4444; }
+.deleteBtn:disabled { opacity: 0.5; cursor: not-allowed; }

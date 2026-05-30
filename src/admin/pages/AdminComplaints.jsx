@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { SearchNormal1, Messages2 } from 'iconsax-react'
-import { adminGetComplaints, adminReplyComplaint, adminSetComplaintStatus } from '../lib/adminDb'
+import { adminGetComplaints, adminReplyComplaint, adminSetComplaintStatus, adminDeleteComplaint } from '../lib/adminDb'
 import styles from './AdminOrders.module.css'
 import c from './AdminComplaints.module.css'
 
@@ -62,6 +62,15 @@ export default function AdminComplaints() {
     setBusyId(null)
     if (err) { alert(`Failed to update status: ${err.message}`); return }
     setRows(prev => prev.map(r => r.id === row.id ? { ...r, status: next } : r))
+  }
+
+  async function handleDelete(row) {
+    if (!confirm('Permanently delete this complaint? This cannot be undone and removes it for the customer too.')) return
+    setBusyId(row.id)
+    const { error: err } = await adminDeleteComplaint(row.id)
+    setBusyId(null)
+    if (err) { alert(`Failed to delete: ${err.message}`); return }
+    setRows(prev => prev.filter(r => r.id !== row.id))
   }
 
   const openCount     = rows.filter(r => r.status === 'open').length
@@ -199,6 +208,13 @@ export default function AdminComplaints() {
                     onClick={() => handleToggleStatus(row)}
                   >
                     {row.status === 'open' ? 'Mark resolved' : 'Reopen'}
+                  </button>
+                  <button
+                    className={c.deleteBtn}
+                    disabled={busyId === row.id}
+                    onClick={() => handleDelete(row)}
+                  >
+                    Delete
                   </button>
                 </div>
               </div>

@@ -101,6 +101,14 @@ export async function adminSetComplaintStatus(id, status) {
   })
 }
 
+/** Permanently delete a complaint (housekeeping). */
+export async function adminDeleteComplaint(id) {
+  return adminFetch('rpc/admin_delete_complaint', {
+    method: 'POST',
+    body: { p_complaint_id: id },
+  })
+}
+
 /** Returns all announcements (published + unpublished), newest first. */
 export async function adminGetAnnouncements() {
   return adminFetch('rpc/admin_get_announcements', { method: 'POST', body: {} })
