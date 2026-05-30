@@ -68,7 +68,9 @@ RETURNS TABLE (
 LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public'
 AS $$
 BEGIN
-  IF NOT EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND is_admin = TRUE)
+  -- Qualify users.id: this function has an OUT column named "id", so a bare
+  -- "id" here would be ambiguous (variable vs column).
+  IF NOT EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND is_admin = TRUE)
     THEN RAISE EXCEPTION 'Access denied'; END IF;
   RETURN QUERY
   SELECT c.id, c.user_id, c.category, c.message, c.status,
