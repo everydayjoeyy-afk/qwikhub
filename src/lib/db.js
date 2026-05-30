@@ -354,3 +354,28 @@ export async function getBundles(carrier = null) {
   const { data, error } = await anonFetch(path)
   return { data: data ?? [], error }
 }
+
+// ── Complaints ───────────────────────────────────────────────
+// submitComplaint: file a new complaint (SECURITY DEFINER RPC, self-scoped).
+export async function submitComplaint(category, message) {
+  const { data, error } = await restFetch('rpc/submit_complaint', {
+    method: 'POST',
+    body: { p_category: category, p_message: message },
+  })
+  return { data, error }
+}
+
+// getMyComplaints: my complaints + any admin replies (RLS scopes to me).
+export async function getMyComplaints() {
+  const { data, error } = await restFetch('complaints?select=*&order=created_at.desc')
+  return { data: data ?? [], error }
+}
+
+// markComplaintRepliesRead: clear the "unread reply" flag on my complaints.
+export async function markComplaintRepliesRead() {
+  const { error } = await restFetch('rpc/mark_complaint_replies_read', {
+    method: 'POST',
+    body: {},
+  })
+  return { error }
+}

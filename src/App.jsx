@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import Sidebar from './components/Sidebar/Sidebar'
 import ProtectedRoute from './components/ProtectedRoute'
-import { HambergerMenu, ShoppingCart } from 'iconsax-react'
+import { HambergerMenu, ShoppingCart, Notification } from 'iconsax-react'
 import { useCart } from './context/CartContext'
 import { useAuth } from './context/AuthContext'
+import { getMyComplaints } from './lib/db'
 import logoDark from './assets/logo-dark.svg'
 import logoLight from './assets/logo-light.svg'
 import styles from './App.module.css'
@@ -22,6 +23,7 @@ import Refer from './pages/Refer'
 import StoreOrders from './pages/StoreOrders'
 import Withdrawals from './pages/Withdrawals'
 import Storefront from './pages/Storefront'
+import Updates from './pages/Updates'
 import SignIn from './pages/SignIn'
 import SignUp from './pages/SignUp'
 import ForgotPassword from './pages/ForgotPassword'
@@ -57,6 +59,8 @@ export default function App() {
   const { count } = useCart()
   const { profile } = useAuth()
   const location = useLocation()
+  const navigate = useNavigate()
+  const [unreadUpdates, setUnreadUpdates] = useState(0)
   const isStorefront = /^\/store\/.+/.test(location.pathname)
   const isAuthPage   = ['/signin', '/signup', '/forgot-password', '/reset-password'].includes(location.pathname)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -75,6 +79,22 @@ export default function App() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
   }, [theme])
+
+  // Unread Updates badge (complaint replies now; announcements added later)
+  useEffect(() => {
+    if (!profile) { setUnreadUpdates(0); return }
+    let cancelled = false
+    const fetchUnread = async () => {
+      const { data } = await getMyComplaints()
+      if (cancelled) return
+      const n = (Array.isArray(data) ? data : []).filter(c => c.admin_reply && !c.reply_read).length
+      setUnreadUpdates(n)
+    }
+    fetchUnread()
+    const handler = () => fetchUnread()
+    window.addEventListener('qwikhub:updates-read', handler)
+    return () => { cancelled = true; window.removeEventListener('qwikhub:updates-read', handler) }
+  }, [profile])
 
   useEffect(() => {
     if (!profileOpen) return
@@ -131,6 +151,18 @@ export default function App() {
         <div className={styles.topbarRight}>
           <button
             className={styles.iconBtn}
+            aria-label="Updates"
+            style={{ position: 'relative' }}
+            onClick={() => navigate('/updates')}
+          >
+            <Notification size={20} color="currentColor" />
+            {unreadUpdates > 0 && (
+              <span className={styles.cartBadge}>{unreadUpdates}</span>
+            )}
+          </button>
+
+          <button
+            className={styles.iconBtn}
             aria-label="Cart"
             style={{ position: 'relative' }}
             onClick={() => setCartOpen(true)}
@@ -184,6 +216,7 @@ export default function App() {
           <Route path="/orders"              element={<ProtectedRoute><Orders /></ProtectedRoute>} />
           <Route path="/transactions"        element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
           <Route path="/refer"               element={<ProtectedRoute><Refer /></ProtectedRoute>} />
+          <Route path="/updates"             element={<ProtectedRoute><Updates /></ProtectedRoute>} />
         </Routes>
       </main>
 
