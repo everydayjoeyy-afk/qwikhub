@@ -34,3 +34,7 @@ npm-debug.log*
 mobile_sidebar_home_v4.html
 effect.png
 src/pages${page}.jsx
+
+# Local tooling / generated
+.claude/
+supabase/.temp/
