@@ -80,6 +80,27 @@ export async function adminSetOrderDeliveryStatus(orderId, newStatus) {
   })
 }
 
+/** Returns all complaints with the customer's name + phone, open ones first. */
+export async function adminGetComplaints() {
+  return adminFetch('rpc/admin_get_complaints', { method: 'POST', body: {} })
+}
+
+/** Reply to a complaint. Flags it unread for the customer; resolves by default. */
+export async function adminReplyComplaint(id, reply, resolve = true) {
+  return adminFetch('rpc/admin_reply_complaint', {
+    method: 'POST',
+    body: { p_complaint_id: id, p_reply: reply, p_resolve: resolve },
+  })
+}
+
+/** Set a complaint's status to 'open' or 'resolved' (no reply). */
+export async function adminSetComplaintStatus(id, status) {
+  return adminFetch('rpc/admin_set_complaint_status', {
+    method: 'POST',
+    body: { p_complaint_id: id, p_status: status },
+  })
+}
+
 /**
  * Search users by name, phone, or email.
  * Empty query returns the 30 most recently joined users.
